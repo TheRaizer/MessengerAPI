@@ -1,7 +1,7 @@
 version: '3.4'
 
 services:
-  messenger-api:
+  messenger:
     environment:
       - PY_ENV=PRODUCTION
       # add env var for RDS proxy endpoint only in prod

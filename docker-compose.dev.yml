@@ -1,6 +1,6 @@
 version: '3.4'
 
 services:
-  messenger-api:
+  messenger:
     environment:
       - PY_ENV=DEVELOPMENT
