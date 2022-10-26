@@ -2,9 +2,10 @@ from typing import Union
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from .routers import users
 
 app = FastAPI()
-
+app.include_router(users.router)
 
 # this will declare a schema for the body of a request.
 class Item(BaseModel):

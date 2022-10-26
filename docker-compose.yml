@@ -3,8 +3,13 @@ version: '3.4'
 services:
   messenger:
     build: .
-    volumes:
-      - ./:/app
     ports:
       # the port that uvicorn runs on in the Dockerfile command
       - 8000:8000
+    environment:
+      # add these other environment variables as imports from S3 in the run_locally.sh script
+      - RDS_ENDPOINT=messenger-database.cblnjtbhznmn.us-east-2.rds.amazonaws.com
+      - RDS_PASSWORD=$RDS_PASSWORD
+      - RDS_USER=$RDS_USER
+      - PORT=3306
+      - NAME=MessengerDB
