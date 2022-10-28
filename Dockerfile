@@ -1,10 +1,14 @@
-FROM python:3.9-alpine
+FROM python:3.9
 
 WORKDIR /app
 
 COPY ./requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+
+# Install submodule packages
+COPY _submodules/messenger_utils /app/_submodules/messenger_utils
+RUN pip install _submodules/messenger_utils --upgrade
 
 COPY . .
 

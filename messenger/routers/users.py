@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 
-from messenger.db.engine import database_session
-from messenger.db.schema.tables.User import User
+from messenger.models.user_model import UserModel
+from messenger.helpers.users import get_current_active_user
 
 router = APIRouter(
     prefix="/users",
@@ -9,8 +10,8 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.get("/{user_id}")
-def get_user(user_id: int):
-    with database_session() as session:
-        user = session.query(User).get({"userId": user_id})
-        return user
+
+@router.get("/me", response_model=UserModel)
+async def get_current_user(current_user: UserSchema = Depends(get_current_active_user)):
+    user: UserModel = UserModel(**(current_user.__dict__))
+    return user

@@ -11,3 +11,5 @@ This task definition defines a running task in ECS.
 It allows you to define the environment of the Docker container as well as other options.
 Here we fetch secrets from AWS parameter store or AWS secrets manager.
 We also declare that we will run ECS with Fargate.
+
+install utils submodule from private git repos: git submodule add https://github.com/TheRaizer/Messenger-Utils \_submodules/messenger_utils
