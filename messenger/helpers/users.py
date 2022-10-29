@@ -2,7 +2,7 @@ from typing import Union
 from fastapi import Depends
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.engine import database_session
+from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, SECRET_KEY, TokenData, get_password_hash, verify_password
 from messenger.helpers.auth import oauth2_scheme
@@ -91,7 +91,7 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
     
     if not user:
         return False
-    if not verify_password(password, user.passwordHash):
+    if not verify_password(password, user.password_hash):
         return False
     
     return user
@@ -111,8 +111,8 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     # TODO: create helper function to ensure password is valid
     # TODO: Create helper function to ensure username is valid
     # TODO: create helper function to ensure email is valid
-    passwordHash = get_password_hash(password)
-    user = UserSchema(username=username, passwordHash=passwordHash, email=email)
+    password_hash = get_password_hash(password)
+    user = UserSchema(username=username, password_hash=password_hash, email=email)
     
     # TODO: seperate this logic into its own function
     db.add(user)

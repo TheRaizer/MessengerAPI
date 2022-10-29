@@ -21,7 +21,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    userId: Union[str, None] = None
+    user_id: Union[str, None] = None
     username: Union[str, None] = None
     email: Union[str, None] = None
 
@@ -92,11 +92,11 @@ def create_login_token(user: UserSchema) -> str:
     Returns:
         str: the access token in the form of a JWT.
     """
-    tokenData: TokenData = TokenData(**(user.__dict__))
+    token_data: TokenData = TokenData(**(user.__dict__))
     access_token_expires = timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)
     
     access_token = create_access_token(
-        data=tokenData.dict(), expires_delta=access_token_expires
+        data=token_data.dict(), expires_delta=access_token_expires
     )
     
     return access_token

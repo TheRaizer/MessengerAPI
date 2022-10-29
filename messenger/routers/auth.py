@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.engine import database_session
+from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from messenger.helpers.auth import UNAUTHORIZED_CREDENTIALS_EXCEPTION, Token, create_login_token
 from messenger.helpers.users import authenticate_user, create_user, get_db_user
 

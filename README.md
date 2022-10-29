@@ -13,3 +13,9 @@ Here we fetch secrets from AWS parameter store or AWS secrets manager.
 We also declare that we will run ECS with Fargate.
 
 install utils submodule from private git repos: git submodule add https://github.com/TheRaizer/Messenger-Utils \_submodules/messenger_utils
+update sub module by running the following commands:
+git pull --recurse-submodules
+git submodule update --remote --recursive
+
+Run locally using the command:
+sh run_locally.sh
