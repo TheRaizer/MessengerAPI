@@ -12,6 +12,6 @@ router = APIRouter(
 
 
 @router.get("/me", response_model=UserModel)
-async def get_current_user(current_user: UserSchema = Depends(get_current_active_user)):
+def get_current_user(current_user: UserSchema = Depends(get_current_active_user)):
     user: UserModel = UserModel(**(current_user.__dict__))
     return user

@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.auth import UNAUTHORIZED_CREDENTIALS_EXCEPTION, Token, create_login_token
-from messenger.helpers.users import authenticate_user, create_user, get_db_user
+from messenger.helpers.db import filter_first
+from messenger.helpers.users import authenticate_user, create_user
 
 
 router = APIRouter(
@@ -13,7 +15,7 @@ router = APIRouter(
 )
 
 @router.post("/sign-up", response_model=Token)
-async def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
+def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
     """Signs the user up, adding the required user data into the database and producing a JWT access token which
     the user can use to prove that they're authorized.
 
@@ -29,7 +31,7 @@ async def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = De
     Returns:
         Token: the access token and token type
     """
-    user = get_db_user(db, email=form_data.username)
+    user = filter_first(db, UserSchema, email=form_data.username)
     
     if(user):
         raise HTTPException(
@@ -46,7 +48,7 @@ async def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = De
 
 
 @router.post("/sign-in", response_model=Token)
-async def sign_in(form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
+def sign_in(form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
     """Signs the user in using email and password authentication. Produces a JWT token proving the callers authorization.
 
     Args:

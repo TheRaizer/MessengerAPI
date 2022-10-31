@@ -4,16 +4,16 @@ from pydantic import BaseModel
 
 class UserBaseModel(BaseModel):
     email: str
-    firstName: Union[str , None] = None
-    lastName: Union[str , None] = None
-    birthDate: Union[datetime , None] = None
+    first_name: Union[str , None] = None
+    last_name: Union[str , None] = None
+    birthdate: Union[datetime , None] = None
 
 class UserCreateModel(UserBaseModel):
     password: str
 
 
 class UserModel(UserBaseModel):
-    userId: str
+    user_id: str
     username: str
     
     class Config:

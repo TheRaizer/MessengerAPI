@@ -6,22 +6,7 @@ from _submodules.messenger_utils.messenger_schemas.schema import database_sessio
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, SECRET_KEY, TokenData, get_password_hash, verify_password
 from messenger.helpers.auth import oauth2_scheme
-
-
-
-def get_db_user(db: Session, email: str) -> Union[UserSchema, None]:
-    """Returns the first instance of a database user by matching it to an email address, or 
-    None if noe user is found.
-
-    Args:
-        db (Session): a database session to use for queries.
-        email (str): an email address used to find a user.
-
-    Returns:
-        Union[UserSchema, None]: the user found in the database, or None if no user is found.
-    """
-    user: Union[UserSchema, None] = db.query(UserSchema).filter_by(email=email).first()
-    return user
+from messenger.helpers.db import filter_first
 
 async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> UserSchema:
     """Retrieves a user's data from the database using a given JWT token.
@@ -54,7 +39,7 @@ async def get_current_user(db: Session = Depends(database_session), token: str =
     except JWTError:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
     
-    user = get_db_user(db, token_data.email)
+    user = filter_first(db, UserSchema, email=token_data.email)
     
     if user is None:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
@@ -87,7 +72,7 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
         Union[UserSchema, bool]: if the user does not exist or the password is not correct, return False.
         Otherwise return the database user.
     """
-    user = get_db_user(db, email)
+    user = filter_first(db, UserSchema, email=email)
     
     if not user:
         return False
