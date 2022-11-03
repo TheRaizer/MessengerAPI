@@ -4,17 +4,17 @@ from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.auth import UNAUTHORIZED_CREDENTIALS_EXCEPTION, Token, create_login_token
-from messenger.helpers.db import filter_first
+from messenger.helpers.db import get_record
 from messenger.helpers.users import authenticate_user, create_user
 
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"],
-    responses={404: {"description": "Not found"}},
+    responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}}
 )
 
-@router.post("/sign-up", response_model=Token)
+@router.post("/sign-up", response_model=Token, status_code=status.HTTP_201_CREATED)
 def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
     """Signs the user up, adding the required user data into the database and producing a JWT access token which
     the user can use to prove that they're authorized.
@@ -31,7 +31,7 @@ def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(
     Returns:
         Token: the access token and token type
     """
-    user = filter_first(db, UserSchema, email=form_data.username)
+    user = get_record(db, UserSchema, UserSchema.email==form_data.username)
     
     if(user):
         raise HTTPException(
@@ -47,7 +47,7 @@ def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.post("/sign-in", response_model=Token)
+@router.post("/sign-in", response_model=Token, status_code=status.HTTP_201_CREATED)
 def sign_in(form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
     """Signs the user in using email and password authentication. Produces a JWT token proving the callers authorization.
 

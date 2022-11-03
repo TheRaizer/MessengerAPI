@@ -6,7 +6,7 @@ from _submodules.messenger_utils.messenger_schemas.schema import database_sessio
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, SECRET_KEY, TokenData, get_password_hash, verify_password
 from messenger.helpers.auth import oauth2_scheme
-from messenger.helpers.db import filter_first
+from messenger.helpers.db import get_record, get_record_with_not_found_raise
 
 async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> UserSchema:
     """Retrieves a user's data from the database using a given JWT token.
@@ -39,15 +39,12 @@ async def get_current_user(db: Session = Depends(database_session), token: str =
     except JWTError:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
     
-    user = filter_first(db, UserSchema, email=token_data.email)
-    
-    if user is None:
-        raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
+    user = get_record_with_not_found_raise(db, UserSchema, "user credentials are invalid", UserSchema.email == token_data.email)
     
     return user
 
 
-async def get_current_active_user(current_user: UserSchema = Depends(get_current_user)):
+async def get_current_active_user(current_user: UserSchema = Depends(get_current_user)) -> UserSchema:
     """Retrieves the currently active user using a given JWT token.
     Add as a dependency for routes that require authenticated users.
 
@@ -72,7 +69,7 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
         Union[UserSchema, bool]: if the user does not exist or the password is not correct, return False.
         Otherwise return the database user.
     """
-    user = filter_first(db, UserSchema, email=email)
+    user = get_record(db, UserSchema, UserSchema.email==email)
     
     if not user:
         return False
