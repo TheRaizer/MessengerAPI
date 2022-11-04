@@ -10,6 +10,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import Use
 from messenger.helpers.db import get_record, get_record_with_not_found_raise
 from sqlalchemy.orm import Session
 
+
 def raise_if_blocked(friendship: FriendshipSchema) -> None:
     latest_status = get_latest_friendship_status(friendship)
     
@@ -38,6 +39,7 @@ def retrieve_friendship_bidirectional_query(db: Session, user_a: UserSchema, use
                 FriendshipSchema,
                 or_(*[a, b]),
             )
+    
     return friendship
 
 
@@ -45,7 +47,12 @@ def get_latest_friendship_status(friendship: FriendshipSchema) -> FriendshipStat
     return max(friendship.statuses, key=attrgetter('specified_date_time'))
 
 
-def add_new_friendship_status_as_addressee(db: Session, requester_username: str, current_user: UserSchema, new_status_code_id: Literal["A", "D"]) -> None:
+
+def add_new_friendship_status_as_addressee(
+    db: Session, 
+    requester_username: str,
+    current_user: UserSchema, 
+    new_status_code_id: Literal["A", "D"]) -> None:
     """Allows the current signed in user to either accept or decline a friendship request.
 
     Args:
@@ -96,13 +103,13 @@ def block_user(db: Session, user_to_block_username: str, current_user: UserSchem
     
     # attempt to fetch a friendship record with the current user as either the requester or addressee
     friendship = retrieve_friendship_bidirectional_query(db, user_to_block, current_user)
-    
-    raise_if_blocked(friendship)
-    
+
     # if no friendship record appears, create a new one
     if(friendship is None):
         friendship = FriendshipSchema(requester_id=current_user.user_id, addressee_id=user_to_block.user_id, created_date_time=datetime.now())
         db.add(friendship)
+    else:
+        raise_if_blocked(friendship)
     
     # create a new friendship status based on a friendship record with a status code of 'B' == 'Blocked'
     new_status = FriendshipStatusSchema(

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Union
+from typing import Optional, Union
 from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -21,9 +21,9 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    user_id: Union[str, None] = None
-    username: Union[str, None] = None
-    email: Union[str, None] = None
+    user_id: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Union
+from typing import Optional
 from pydantic import BaseModel
 
 class UserBaseModel(BaseModel):
     email: str
-    first_name: Union[str , None] = None
-    last_name: Union[str , None] = None
-    birthdate: Union[datetime , None] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birthdate: Optional[datetime] = None
 
 class UserCreateModel(UserBaseModel):
     password: str

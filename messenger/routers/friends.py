@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from operator import or_
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import FriendshipSchema
@@ -6,7 +7,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_sche
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from datetime import datetime
 from messenger.helpers.db import get_record_with_not_found_raise
-from messenger.helpers.friends import add_new_friendship_status_as_addressee, block_user
+from messenger.helpers.friends import add_new_friendship_status_as_addressee, block_user, get_latest_friendship_status, retrieve_friendship_bidirectional_query
 
 from messenger.helpers.users import get_current_active_user
 from messenger.models.friendship_model import FriendshipModel
@@ -31,6 +32,16 @@ def get_friendships(current_user: UserSchema = Depends(get_current_active_user))
     return {"sent": current_user.friend_requests_sent, "recieved": current_user.friend_requests_recieved}
 
 
+@router.get("/requests/accepted", status_code=status.HTTP_200_OK)
+def get_accepted_friendships(current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
+    # TODO: get all users from friendships where the addressee or requester is the current user and whose latest friendship status is accepted
+    db.query(FriendshipSchema).select_from(
+        FriendshipSchema
+        ).where(
+            or_(FriendshipSchema.addressee_id == current_user.user_id, FriendshipSchema.requester_id == current_user.user_id)
+            )
+
+
 @router.post("/requests/send-request", response_model=FriendshipModel, status_code=status.HTTP_201_CREATED)
 def send_friendship_request(username: str, current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
     """Sends a friend request from the current signed-in user to the user with a given username.
@@ -45,10 +56,30 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
     Returns:
         FriendshipModel: the friendship that was created and inserted into the database.
     """
-    # TODO: shouldnt be able to send a friendship request to a user that has already sent one to you.
-    
     addressee = get_record_with_not_found_raise(db, UserSchema, "no such addressee exists", UserSchema.username == username)
-    friendship = FriendshipSchema(requester_id=current_user.user_id, addressee_id=addressee.user_id, created_date_time=datetime.now())
+        
+    friendship = retrieve_friendship_bidirectional_query(db, current_user, addressee)
+
+    
+    if(friendship is not None):
+        latest_status = get_latest_friendship_status(friendship)
+        
+        already_requested_friendship = friendship.requester_id == current_user.user_id and latest_status.status_code_id == "R"
+
+        if(already_requested_friendship):
+            # you cannot resend a friend request
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="you cannot send another friendship request",
+            )
+        elif(latest_status.status_code_id != "R"):
+            # you cannot send a friend request if the friendship is blocked, declined, or are already this persons friend
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="you cannot send a friendship request",
+            )
+    
+    new_friendship = FriendshipSchema(requester_id=current_user.user_id, addressee_id=addressee.user_id, created_date_time=datetime.now())
     
     new_status = FriendshipStatusSchema(
         requester_id=current_user.user_id,
@@ -57,12 +88,12 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
         status_code_id="R",
         specifier_id=current_user.user_id)
     
+    db.add(new_friendship)
     db.add(new_status)
-    db.add(friendship)
     db.commit()
-    db.refresh(friendship)
+    db.refresh(new_friendship)
     
-    friendship_model = FriendshipModel(**(friendship.__dict__))
+    friendship_model = FriendshipModel(**new_friendship.__dict__)
     
     return friendship_model
 
@@ -82,7 +113,7 @@ def accept_friendship_request(requester_username: str, current_user: UserSchema 
 
 
 @router.post("/requests/decline", status_code=status.HTTP_201_CREATED)
-def accept_friendship_request(requester_username: str, current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
+def decline_friendship_request(requester_username: str, current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
     """Declines a friend request from a given username.
 
     Args:
@@ -96,7 +127,7 @@ def accept_friendship_request(requester_username: str, current_user: UserSchema 
 
 
 @router.post("/requests/block", status_code=status.HTTP_201_CREATED)
-def accept_friendship_request(user_to_block_username: str, current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
+def block_friendship_request(user_to_block_username: str, current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
     """Accepts a friend request from a given username.
 
     Args:

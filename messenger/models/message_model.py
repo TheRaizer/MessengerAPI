@@ -1,19 +1,21 @@
 from datetime import datetime
-from typing import Union
+from typing import Optional
 from pydantic import BaseModel
 
 class CreateMessageModel(BaseModel):
     content: str
-    group_chat_id: Union[int, None]
+    group_chat_id: Optional[int]
     
 
-class MessageModel(CreateMessageModel):
+class BaseMessageModel(CreateMessageModel):
+    created_date_time: datetime
+    last_edited_date_time: Optional[datetime]
+    seen: bool
+
+class MessageModel(BaseMessageModel):
     message_id: int
     sender_id: int
     reciever_id: int
-    created_date_time: datetime
-    last_edited_date_time: datetime
-    seen: bool
     
     class Config:
         orm_mode = True

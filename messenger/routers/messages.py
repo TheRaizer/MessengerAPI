@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_schema import GroupChatMemberSchema
@@ -8,7 +9,7 @@ from messenger.helpers.db import get_record_with_not_found_raise
 from messenger.helpers.friends import get_latest_friendship_status, retrieve_friendship_bidirectional_query
 from messenger.helpers.users import get_current_active_user
 from sqlalchemy.orm import Session
-from messenger.models.message_model import CreateMessageModel
+from messenger.models.message_model import BaseMessageModel, CreateMessageModel
 
 
 router = APIRouter(
@@ -18,12 +19,13 @@ router = APIRouter(
 )
 
 
-@router.get('/')
-def get_messages():
-    return
+@router.get('/', response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK)
+def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
+    message_models = list(map(lambda message_schema: BaseMessageModel(**message_schema.__dict__), current_user.messages_recieved))
+    return message_models
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=BaseMessageModel, status_code=status.HTTP_201_CREATED)
 def send_message(addressee_username: str, body: CreateMessageModel, current_user: UserSchema = Depends(get_current_active_user), db: Session = Depends(database_session)):
     must_be_their_friend_detail = "you cannot message this person if you are not their friend"
     """Sends a message from the currently signed in user to either another user, or a group chat.
@@ -53,10 +55,9 @@ def send_message(addressee_username: str, body: CreateMessageModel, current_user
     else:
         addressee = get_record_with_not_found_raise(db, UserSchema, "addressee with the given username does not exist", UserSchema.username == addressee_username)
         friendship = retrieve_friendship_bidirectional_query(db, current_user, addressee)
-        latest_status = get_latest_friendship_status(friendship)
 
         # friendship must be accepted
-        if(not friendship or latest_status.status_code_id != 'A'):
+        if(friendship is None or get_latest_friendship_status(friendship).status_code_id != 'A'):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=must_be_their_friend_detail,
@@ -74,4 +75,6 @@ def send_message(addressee_username: str, body: CreateMessageModel, current_user
     db.commit()
     db.refresh(message)
     
-    return message
+    message_model = BaseMessageModel(**message.__dict__)
+    
+    return message_model
