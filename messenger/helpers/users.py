@@ -1,12 +1,15 @@
 from typing import Union
+from argon2 import exceptions
 from fastapi import Depends
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, SECRET_KEY, TokenData, get_password_hash, verify_password
+from messenger.environment_variables import JWT_SECRET
+from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, TokenData
 from messenger.helpers.auth import oauth2_scheme
 from messenger.helpers.db import get_record, get_record_with_not_found_raise
+from .auth import password_hasher
 
 async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> UserSchema:
     """Retrieves a user's data from the database using a given JWT token.
@@ -29,7 +32,7 @@ async def get_current_user(db: Session = Depends(database_session), token: str =
         UserSchema: The users data from the database.
     """
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
         
         
         if payload.get('email') is None:
@@ -73,8 +76,23 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
     
     if not user:
         return False
-    if not verify_password(password, user.password_hash):
+    
+    try:
+        password_hasher.verify(user.password_hash, password)
+    except exceptions.VerifyMismatchError:
+        # If verification fails because *hash* is not valid for *password*.
         return False
+    except exceptions.VerificationError:
+        # If there is another reason that verification failed
+        return False
+    except exceptions.InvalidHash:
+        # If the hash is so unbelievably invalid it cannot be passed to argon2
+        return False
+    
+    # if user's password needs a rehash do it here
+    if(password_hasher.check_needs_rehash(user.password_hash)):
+        user.password_hash = password_hasher.hash(password)
+        db.refresh(user)
     
     return user
 
@@ -93,7 +111,7 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     # TODO: create helper function to ensure password is valid
     # TODO: Create helper function to ensure username is valid
     # TODO: create helper function to ensure email is valid
-    password_hash = get_password_hash(password)
+    password_hash = password_hasher.hash(password)
     user = UserSchema(username=username, password_hash=password_hash, email=email)
     
     # TODO: seperate this logic into its own function

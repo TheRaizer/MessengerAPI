@@ -1,4 +1,4 @@
-from typing import Union, TypeVar
+from typing import List, Optional, Union, TypeVar
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import NoResultFound
@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import MultipleResultsFound
 
 T = TypeVar('T')
 
-def get_record(db: Session, Schema: T, *criterion) -> Union[T, None]:
+def get_record(db: Session, Schema: T, *criterion) -> Optional[T]:
     """Retrieves a single record from a database that matches a set of filters.
     If multiple are found we throw an HTTP 500 internal server error.
     If no result is found return None.
@@ -23,7 +23,7 @@ def get_record(db: Session, Schema: T, *criterion) -> Union[T, None]:
         Base: returns a database record.
     """    
     try:
-        db_record: Union[T, None] = db.query(Schema).filter(*criterion).one()
+        db_record: Optional[T] = db.query(Schema).filter(*criterion).one()
     except MultipleResultsFound:
         raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -34,7 +34,7 @@ def get_record(db: Session, Schema: T, *criterion) -> Union[T, None]:
     
     return db_record
 
-def get_records(db: Session, Schema: T, *criterion)-> Union[list[T], None]:
+def get_records(db: Session, Schema: T, *criterion)-> Optional[List[T]]:
     """Retrieve a list of records from a database.
 
     Args:
@@ -42,9 +42,10 @@ def get_records(db: Session, Schema: T, *criterion)-> Union[list[T], None]:
         Schema (T): the schema type to retrieve.
 
     Returns:
-        Union[list[T], None]: a list of the given schema type records or None if no records were found.
+        Optional[List[T]]: a list of the given schema type records or None if no records were found.
     """
-    db_records: Union[T, None] = db.query(Schema).filter(*criterion)
+    db_records: List[T] = list(db.query(Schema).filter(*criterion))
+    
     
     if(len(db_records) == 0):
         return None

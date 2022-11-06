@@ -106,3 +106,7 @@ RDS_PASSWORD=The password you assigned to your user that can access the local da
 RDS_USER=The name of the user that can access the local database
 RDS_PORT="3306"
 RDS_DB_NAME="test"
+
+**Running pytest**
+_Run with the command:_
+python -m pytest -s

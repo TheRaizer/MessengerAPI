@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker, Session
+from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_code_schema import FriendshipStatusCodeSchema
 from messenger.fastApi import app
 from fastapi.testclient import TestClient
 from _submodules.messenger_utils.messenger_schemas.schema import Base, database_session
@@ -16,7 +17,7 @@ Base.metadata.create_all(bind=engine)
 def session():
     connection = engine.connect()
     transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
+    session: Session = TestingSessionLocal(bind=connection)
 
     # Begin a nested transaction (using SAVEPOINT).
     nested = connection.begin_nested()
@@ -28,7 +29,7 @@ def session():
         nonlocal nested
         if not nested.is_active:
             nested = connection.begin_nested()
-
+    
     yield session
 
     # Rollback the overall transaction, restoring the state before the test ran.

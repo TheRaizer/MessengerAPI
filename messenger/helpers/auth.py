@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import jwt
-from passlib.context import CryptContext
+from argon2 import PasswordHasher
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, status
 
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from messenger.environment_variables import JWT_SECRET
 
-
-SECRET_KEY = "ba69af06511d1881bd552bbe131e5452c98df8ee97dc2a893215f8a2e3d44e4a"
 ALGORITHM = "HS256"
 LOGIN_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/sign-in")
@@ -25,40 +24,13 @@ class TokenData(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_hasher = PasswordHasher()
 
 UNAUTHORIZED_CREDENTIALS_EXCEPTION = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
     detail="Could not validate credentials",
     headers={"WWW-Authenticate": "Bearer"},
 )
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifies whether a hashed password's original value is equal to a given plain text password.
-
-    Args:
-        plain_password (str): a plain text password.
-        hashed_password (str): a hashed password.
-
-    Returns:
-        bool: whether a hashed password's original value is equal to a given plain text password.
-    """
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    """A password must be stored as a hash in the database. This function hashes a password
-    using bcrypt which will produce a CHAR(60) data type to be stored in the database.
-
-    Args:
-        password (str): the password to hash.
-
-    Returns:
-        str: the hashed password.
-    """
-    return pwd_context.hash(password)
-
 
 def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None) -> str:
     """Creates a JWT access token that can expire.
@@ -79,7 +51,7 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
         expire = datetime.utcnow() + timedelta(minutes=15)
         
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
     
     return encoded_jwt
 
