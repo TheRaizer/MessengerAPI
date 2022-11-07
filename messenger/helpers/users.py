@@ -1,6 +1,6 @@
 from typing import Union
 from argon2 import exceptions
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
@@ -9,7 +9,7 @@ from messenger.environment_variables import JWT_SECRET
 from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, TokenData
 from messenger.helpers.auth import oauth2_scheme
 from messenger.helpers.db import get_record, get_record_with_not_found_raise
-from .auth import password_hasher
+from .auth import is_email_valid, is_password_valid, is_username_valid, password_hasher
 
 async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> UserSchema:
     """Retrieves a user's data from the database using a given JWT token.
@@ -108,13 +108,16 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     Returns:
         UserSchema: the user that was created in the database.
     """
-    # TODO: create helper function to ensure password is valid
-    # TODO: Create helper function to ensure username is valid
-    # TODO: create helper function to ensure email is valid
+    if(not is_password_valid(password)):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid password")
+    if(not is_username_valid(db, username)):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid username")
+    if(not is_email_valid(db, email)):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email")
+    
     password_hash = password_hasher.hash(password)
     user = UserSchema(username=username, password_hash=password_hash, email=email)
     
-    # TODO: seperate this logic into its own function
     db.add(user)
     db.commit()
     db.refresh(user)

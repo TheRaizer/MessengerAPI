@@ -22,6 +22,7 @@ def get_test_records() -> tuple[list[UserSchema], list[FriendshipStatusCodeSchem
     
     return test_users, test_friendship_status_codes
 
+
 def test_get_record(session: Session, get_test_records: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
     (test_users, test_friendship_status_codes) = get_test_records
     
@@ -38,8 +39,7 @@ def test_get_record(session: Session, get_test_records: tuple[list[UserSchema], 
         session.refresh(test_user)
         retrieved_user = get_record(session, UserSchema, UserSchema.username==test_user.username)
         
-        assert retrieved_user.user_id == test_user.user_id
-        assert retrieved_user.username == test_user.username
+        assert retrieved_user == test_user
         
     
     # no friendship status code has been added to db yet so should be None
@@ -54,8 +54,7 @@ def test_get_record(session: Session, get_test_records: tuple[list[UserSchema], 
     for test_status_code in test_friendship_status_codes:
         retrieved_status_code = get_record(session, FriendshipStatusCodeSchema, FriendshipStatusCodeSchema.status_code_id==test_status_code.status_code_id)
         
-        assert retrieved_status_code.status_code_id == test_status_code.status_code_id
-        assert retrieved_status_code.name == test_status_code.name
+        assert retrieved_status_code == test_status_code
 
     # should raise exception if multiple records were queried
     with pytest.raises(HTTPException):
@@ -64,7 +63,7 @@ def test_get_record(session: Session, get_test_records: tuple[list[UserSchema], 
     # should return none if no record is found
     retrieved_user = get_record(session, UserSchema, UserSchema.username=="non-existent-user")
     assert retrieved_user is None
-    
+
 
 def test_get_records(session: Session, get_test_records: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
     (test_users, _) = get_test_records
@@ -86,8 +85,7 @@ def test_get_records(session: Session, get_test_records: tuple[list[UserSchema],
     for test_user, retrieved_record in zip(test_users, retrieved_users):
         session.refresh(test_user)
         
-        assert retrieved_record.user_id == test_user.user_id
-        assert retrieved_record.username == test_user.username
+        assert retrieved_record == test_user
     
     # should return none if it cannot find a user
     retrieved_users = get_records(session, UserSchema, UserSchema.email=="non-existent-email")
@@ -111,8 +109,7 @@ def test_get_record_with_not_found_raise(session: Session, get_test_records: tup
         session.refresh(test_user)
         retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username==test_user.username)
         
-        assert retrieved_user.user_id == test_user.user_id
-        assert retrieved_user.username == test_user.username
+        assert retrieved_user == test_user
         
     
     # no friendship status code has been added to db yet so should raise exception on fetch
@@ -121,7 +118,7 @@ def test_get_record_with_not_found_raise(session: Session, get_test_records: tup
             session, 
             FriendshipStatusCodeSchema,
             "some detail", 
-            FriendshipStatusCodeSchema.status_code_id==test_friendship_status_codes[0].status_code_id
+            FriendshipStatusCodeSchema.status_code_id == test_friendship_status_codes[0].status_code_id
         )
     
     # add test friendship status codes to db
@@ -134,11 +131,10 @@ def test_get_record_with_not_found_raise(session: Session, get_test_records: tup
             session, 
             FriendshipStatusCodeSchema, 
             "some detail", 
-            FriendshipStatusCodeSchema.status_code_id==test_status_code.status_code_id
+            FriendshipStatusCodeSchema.status_code_id == test_status_code.status_code_id
         )
         
-        assert retrieved_status_code.status_code_id == test_status_code.status_code_id
-        assert retrieved_status_code.name == test_status_code.name
+        assert retrieved_status_code == test_status_code
 
     # should raise exception if multiple records were queried
     with pytest.raises(HTTPException):

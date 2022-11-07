@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, TypeVar
+from typing import List, Optional, TypeVar
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import NoResultFound

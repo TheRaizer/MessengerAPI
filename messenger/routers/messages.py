@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_schema import GroupChatMemberSchema
@@ -21,7 +22,18 @@ router = APIRouter(
 
 @router.get('/', response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK)
 def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
-    message_models = list(map(lambda message_schema: BaseMessageModel(**message_schema.__dict__), current_user.messages_recieved))
+    message_models = list(
+            map(
+                lambda message_schema: 
+                    BaseMessageModel(
+                        content=message_schema.content, 
+                        group_chat_id=message_schema.group_chat_id,
+                        created_date_time=message_schema.created_date_time,
+                        last_edited_date_time=message_schema.last_edited_date_time,
+                        seen=message_schema.seen
+                    ), 
+            current_user.messages_recieved)
+        )
     return message_models
 
 
@@ -53,7 +65,7 @@ def send_message(addressee_username: str, body: CreateMessageModel, current_user
                 GroupChatMemberSchema.member_id == current_user.user_id
             )
     else:
-        addressee = get_record_with_not_found_raise(db, UserSchema, "addressee with the given username does not exist", UserSchema.username == addressee_username)
+        addressee = get_record_with_not_found_raise(db, UserSchema, "addressee with the given username does not exist", UserSchema.username == clean(addressee_username))
         friendship = retrieve_friendship_bidirectional_query(db, current_user, addressee)
 
         # friendship must be accepted
@@ -75,6 +87,12 @@ def send_message(addressee_username: str, body: CreateMessageModel, current_user
     db.commit()
     db.refresh(message)
     
-    message_model = BaseMessageModel(**message.__dict__)
+    message_model = BaseMessageModel(
+            content=message.content,
+            group_chat_id=message.group_chat_id, 
+            created_date_time=message.created_date_time,
+            last_edited_date_time=message.last_edited_date_time,
+            seen=message.seen
+        )
     
     return message_model

@@ -1,4 +1,5 @@
 from operator import or_
+from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
@@ -8,7 +9,6 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import Use
 from datetime import datetime
 from messenger.helpers.db import get_record_with_not_found_raise
 from messenger.helpers.friends import add_new_friendship_status_as_addressee, block_user, get_latest_friendship_status, retrieve_friendship_bidirectional_query
-
 from messenger.helpers.users import get_current_active_user
 from messenger.models.friendship_model import FriendshipModel
 
@@ -56,7 +56,7 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
     Returns:
         FriendshipModel: the friendship that was created and inserted into the database.
     """
-    addressee = get_record_with_not_found_raise(db, UserSchema, "no such addressee exists", UserSchema.username == username)
+    addressee = get_record_with_not_found_raise(db, UserSchema, "no such addressee exists", UserSchema.username == clean(username))
         
     friendship = retrieve_friendship_bidirectional_query(db, current_user, addressee)
 
@@ -93,7 +93,11 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
     db.commit()
     db.refresh(new_friendship)
     
-    friendship_model = FriendshipModel(**new_friendship.__dict__)
+    friendship_model = FriendshipModel(
+            requester_id=new_friendship.requester_id,
+            addressee_id=new_friendship.addressee_id,
+            created_date_time=new_friendship.created_date_time
+        )
     
     return friendship_model
 
@@ -109,7 +113,7 @@ def accept_friendship_request(requester_username: str, current_user: UserSchema 
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
     """
-    add_new_friendship_status_as_addressee(db, requester_username, current_user, "A")
+    add_new_friendship_status_as_addressee(db, clean(requester_username), current_user, "A")
 
 
 @router.post("/requests/decline", status_code=status.HTTP_201_CREATED)
@@ -123,7 +127,7 @@ def decline_friendship_request(requester_username: str, current_user: UserSchema
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
     """
-    add_new_friendship_status_as_addressee(db, requester_username, current_user, "D")
+    add_new_friendship_status_as_addressee(db, clean(requester_username), current_user, "D")
 
 
 @router.post("/requests/block", status_code=status.HTTP_201_CREATED)
@@ -137,4 +141,4 @@ def block_friendship_request(user_to_block_username: str, current_user: UserSche
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
     """
-    block_user(db, user_to_block_username, current_user)
+    block_user(db, clean(user_to_block_username), current_user)

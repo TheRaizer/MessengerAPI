@@ -6,6 +6,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import Use
 from messenger.helpers.auth import UNAUTHORIZED_CREDENTIALS_EXCEPTION, Token, create_login_token
 from messenger.helpers.db import get_record
 from messenger.helpers.users import authenticate_user, create_user
+from bleach import clean
 
 
 router = APIRouter(
@@ -31,7 +32,7 @@ def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(
     Returns:
         Token: the access token and token type
     """
-    user = get_record(db, UserSchema, UserSchema.email==form_data.username)
+    user = get_record(db, UserSchema, UserSchema.email==clean(form_data.username))
     
     if(user):
         raise HTTPException(
@@ -40,7 +41,7 @@ def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(
         )
     
     # form_data.username represents the user's email
-    user = create_user(db, password=form_data.password, email=form_data.username, username=username)
+    user = create_user(db, password=clean(form_data.password), email=clean(form_data.username), username=clean(username))
     
     access_token = create_login_token(user)
     
@@ -65,7 +66,7 @@ def sign_in(form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session 
     """
     
     # form_data.username represents the user's email
-    user = authenticate_user(db, password=form_data.password, email=form_data.username)
+    user = authenticate_user(db, password=clean(form_data.password), email=clean(form_data.username))
     
     if not user:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
