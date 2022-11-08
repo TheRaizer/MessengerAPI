@@ -15,6 +15,12 @@ Base.metadata.create_all(bind=engine)
 
 @pytest.fixture()
 def session():
+    """This function returns a database session where no actual transactions are commited to the test database.
+    This ensures that no tables actually need to be created. SQLAlchemy handles all table relationships, etc. 
+
+    Yields:
+        Session: the database session to test with
+    """
     connection = engine.connect()
     transaction = connection.begin()
     session: Session = TestingSessionLocal(bind=connection)
