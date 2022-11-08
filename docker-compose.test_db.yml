@@ -3,8 +3,7 @@ version: '3.4'
 # launch mysql database for testing
 services:
   mysql:
-    # same version as the AWS production
-    image: mysql:8.0.28
+    image: mysql:8.0
     ports:
       - 3307:3306
     environment:
