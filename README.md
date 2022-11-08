@@ -64,50 +64,16 @@ We could then setup nginx as a TLS Termination Proxy
 
 ## Testing
 
-We use a local MySQL database during testing.
+Tests will be run using a test database running in a docker container. It will utilize pytest.
 
-This database must be setup before hand using the following instructions.
+The test database is launched inside a docker container using the start_test_db.sh script.
+The docker container will open port 3307 and link it to port 3306 in the docker container.
+Port 3306 in the docker container matches the port of the MySQL server.
 
-The idea behind setting up MySQL server on OS. Is to install the MySQL community server.
-Then install MySQL client, which may or may not be included with the MySQL community server.
-Create root account.
-Create database called "test".
-
-**Windows:**
-Install the MySQL Community Server from the following link (no need for the debug binaries and test suite version)
-
-https://dev.mysql.com/downloads/
-
-This installation also installs the MySQL command line client.
-
-When all is done and configured, you can setup a test database through the MySQL command line client.
-
-You should be able to access the mysql command line client by searching for it in the start menu.
-
-If the MySQL server ever stops, then search "services" in the start menu, and find MySQL. Double click it, and select start.
-
-**MAC:**
-brew install mysql
-brew services start mysql
-mysqladmin -u root password 'secretpaSSw0rd'
-
-open mysql client with:
-mysql -u root -p
-
-then enter the password you used for root user.
-
-_Within the sql client command line run:_
-create database test
-
-**test env**
-add a file called .test.env with the following variables:
-RDS_ENDPOINT="localhost"
-RDS_PASSWORD=The password you assigned to your user that can access the local database
-RDS_USER=The name of the user that can access the local database
-RDS_PORT="3306"
-RDS_DB_NAME="test"
-JWT_SECRET="secret"
-
-**Running pytest**
+**Running tests**
 _Run with the command:_
+Run bash script:
+start_test_db.sh
+
+Run pytests:
 python -m pytest -s

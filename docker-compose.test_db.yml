@@ -1,0 +1,15 @@
+version: '3.4'
+
+# launch mysql database for testing
+services:
+  mysql:
+    # same version as the AWS production
+    image: mysql:8.0.28
+    ports:
+      - 3307:3306
+    environment:
+      # values should match the .test.env
+      MYSQL_ROOT_PASSWORD: 'secret'
+      MYSQL_DATABASE: 'test'
+      MYSQL_USER: 'username'
+      MYSQL_PASSWORD: 'secret'

@@ -18,7 +18,9 @@ coverage.xml
 .mypy_cache
 .pytest_cache
 .hypothesis
-.git
+.github
 *Dockerfile*
 *docker-compose*
 README.md
+run_locally.sh
+run_test.sh
