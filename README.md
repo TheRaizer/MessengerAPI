@@ -84,6 +84,8 @@ When all is done and configured, you can setup a test database through the MySQL
 
 You should be able to access the mysql command line client by searching for it in the start menu.
 
+If the MySQL server ever stops, then search "services" in the start menu, and find MySQL. Double click it, and select start.
+
 **MAC:**
 brew install mysql
 brew services start mysql
