@@ -70,12 +70,14 @@ The test database is launched inside a docker container using the start_test_db.
 The docker container will open port 3307 and link it to port 3306 in the docker container.
 Port 3306 in the docker container matches the port of the MySQL server.
 
-This test database should be hosted on an EC2 instance so that we do not need to wait for it to boot up everytime.
-And it will work with CI/CD.
+There will also be a test database hosted on an EC2 instance using a docker image.
+This will be used for testing during CI/CD.
 
 No actual tables have to be created on the database as during testing, no actual records are added.
 This is done through transaction nesting and save pointing.
 The concept of tables, and their relationships are handled within SQLAlchemy transactions. Thus the tests still hold.
+
+https://docs.sqlalchemy.org/en/14/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
 
 **Running tests**
 _Run bash script:_

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Coroutine, Union
 from argon2 import exceptions
 from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
@@ -11,7 +11,7 @@ from messenger.helpers.auth import oauth2_scheme
 from messenger.helpers.db import get_record, get_record_with_not_found_raise
 from .auth import is_email_valid, is_password_valid, is_username_valid, password_hasher
 
-async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> UserSchema:
+async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> Coroutine[Any, Any, UserSchema]:
     """Retrieves a user's data from the database using a given JWT token.
 
         IF
@@ -95,6 +95,7 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
         db.refresh(user)
     
     return user
+
 
 def create_user(db: Session, password: str, email: str, username: str) -> UserSchema:
     """Creates a user in the database.

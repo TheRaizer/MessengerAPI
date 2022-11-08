@@ -2,7 +2,7 @@ from fastapi import HTTPException
 import pytest
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from messenger.helpers.users import create_user, get_current_user
+from messenger.helpers.users import create_user
 
 valid_usernames = ["hi_iamusername", "some_other_username", "bob231", "hellothere2"]
 invalid_usernames = ["_invalid", "bob__23", "tim#2", "a", "this_username_is_way_too_long_to_be_acceptable"]
@@ -52,7 +52,3 @@ def test_create_user_adds_user_to_db(session: Session):
         expected_user = session.query(UserSchema).filter(UserSchema.user_id == created_user.user_id).one()
         
         assert expected_user == created_user
-
-# def test_get_current_user(session: Session):
-#     session.add()
-#     get_current_user(session, )
