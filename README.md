@@ -22,12 +22,12 @@ In the task definition we fetch secrets from AWS parameter store or AWS secrets 
 ## Setting up submodules
 
 _install utils submodule from private git repos:_
-"git submodule add https://github.com/TheRaizer/Messenger-Utils \_submodules/messenger_utils"
+git submodule add https://github.com/TheRaizer/Messenger-Utils \_submodules/messenger_utils
 
 _update sub module by running the following commands:_
 
-"git pull --recurse-submodules"
-"git submodule update --remote --recursive"
+git pull --recurse-submodules
+git submodule update --remote --recursive
 
 ## Running in Locally
 
@@ -68,6 +68,11 @@ We use a local MySQL database during testing.
 
 This database must be setup before hand using the following instructions.
 
+The idea behind setting up MySQL server on OS. Is to install the MySQL community server.
+Then install MySQL client, which may or may not be included with the MySQL community server.
+Create root account.
+Create database called "test".
+
 **Windows:**
 Install the MySQL Community Server from the following link (no need for the debug binaries and test suite version)
 
@@ -80,24 +85,17 @@ When all is done and configured, you can setup a test database through the MySQL
 You should be able to access the mysql command line client by searching for it in the start menu.
 
 **MAC:**
-"brew install mysql-client"
+brew install mysql
+brew services start mysql
+mysqladmin -u root password 'secretpaSSw0rd'
 
-_add the mysql-client binary directory to your PATH:_
-"echo 'export PATH="/usr/local/opt/mysql-client/bin:$PATH"' >> ~/.bash_profile"
+open mysql client with:
+mysql -u root -p
 
-_reload bash profile:_
-"source ~/.bash_profile"
-
-**Linux:**
-"sudo apt install mysql-client"
-
-**After each specific setup**
-In linux and mac options you will need to create a user.
-You can do this in the sql client with standard user creation queries.
-Then once you run the create database command below, make sure to give the user you created, admin privilages for that database.
+then enter the password you used for root user.
 
 _Within the sql client command line run:_
-"mysql create database test"
+create database test
 
 **test env**
 add a file called .test.env with the following variables:
@@ -106,6 +104,7 @@ RDS_PASSWORD=The password you assigned to your user that can access the local da
 RDS_USER=The name of the user that can access the local database
 RDS_PORT="3306"
 RDS_DB_NAME="test"
+JWT_SECRET="secret"
 
 **Running pytest**
 _Run with the command:_
