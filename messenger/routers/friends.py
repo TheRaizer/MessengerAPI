@@ -7,8 +7,9 @@ from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema impo
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import FriendshipStatusSchema
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from datetime import datetime
+from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.db import get_record_with_not_found_raise
-from messenger.helpers.friends import add_new_friendship_status_as_addressee, block_user, get_latest_friendship_status, retrieve_friendship_bidirectional_query
+from messenger.helpers.friends import address_friendship_request, block_user, get_latest_friendship_status, retrieve_friendship_bidirectional_query
 from messenger.helpers.users import get_current_active_user
 from messenger.models.friendship_model import FriendshipModel
 
@@ -64,7 +65,7 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
     if(friendship is not None):
         latest_status = get_latest_friendship_status(friendship)
         
-        already_requested_friendship = friendship.requester_id == current_user.user_id and latest_status.status_code_id == "R"
+        already_requested_friendship = friendship.requester_id == current_user.user_id and latest_status.status_code_id == FriendshipStatusCode.REQUESTED.value
 
         if(already_requested_friendship):
             # you cannot resend a friend request
@@ -72,7 +73,7 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="you cannot send another friendship request",
             )
-        elif(latest_status.status_code_id != "R"):
+        elif(latest_status.status_code_id != FriendshipStatusCode.REQUESTED.value):
             # you cannot send a friend request if the friendship is blocked, declined, or are already this persons friend
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,7 +86,7 @@ def send_friendship_request(username: str, current_user: UserSchema = Depends(ge
         requester_id=current_user.user_id,
         addressee_id=addressee.user_id,
         specified_date_time=datetime.now(),
-        status_code_id="R",
+        status_code_id=FriendshipStatusCode.REQUESTED.value,
         specifier_id=current_user.user_id)
     
     db.add(new_friendship)
@@ -113,7 +114,7 @@ def accept_friendship_request(requester_username: str, current_user: UserSchema 
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
     """
-    add_new_friendship_status_as_addressee(db, clean(requester_username), current_user, "A")
+    address_friendship_request(db, clean(requester_username), current_user, FriendshipStatusCode.ACCEPTED.value)
 
 
 @router.post("/requests/decline", status_code=status.HTTP_201_CREATED)
@@ -127,7 +128,7 @@ def decline_friendship_request(requester_username: str, current_user: UserSchema
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
     """
-    add_new_friendship_status_as_addressee(db, clean(requester_username), current_user, "D")
+    address_friendship_request(db, clean(requester_username), current_user, FriendshipStatusCode.DECLINED.value)
 
 
 @router.post("/requests/block", status_code=status.HTTP_201_CREATED)

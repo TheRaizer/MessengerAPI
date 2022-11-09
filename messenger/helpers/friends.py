@@ -7,6 +7,7 @@ from sqlalchemy import and_, or_
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import FriendshipSchema
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import FriendshipStatusSchema
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.db import get_record, get_record_with_not_found_raise
 from sqlalchemy.orm import Session
 
@@ -14,7 +15,7 @@ from sqlalchemy.orm import Session
 def raise_if_blocked(friendship: FriendshipSchema) -> None:
     latest_status = get_latest_friendship_status(friendship)
     
-    if(latest_status.status_code_id == "B"):
+    if(latest_status.status_code_id == FriendshipStatusCode.BLOCKED.value):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="friendship is blocked",
@@ -47,19 +48,18 @@ def get_latest_friendship_status(friendship: FriendshipSchema) -> FriendshipStat
     return max(friendship.statuses, key=attrgetter('specified_date_time'))
 
 
-
-def add_new_friendship_status_as_addressee(
+def address_friendship_request(
     db: Session, 
     requester_username: str,
     current_user: UserSchema, 
-    new_status_code_id: Literal["A", "D"]) -> None:
+    new_status_code_id: Literal[FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED]) -> FriendshipStatusSchema:
     """Allows the current signed in user to either accept or decline a friendship request.
 
     Args:
         db (Session): the database session that the new status will be added too.
         requester_username (str): the username of the friendship requester
         current_user (UserSchema): the currently signed in user
-        new_status_code_id (Literal["A", "D"]): the new status code id either "A" == "Accepted" or "D" == "Declined"
+        new_status_code_id (Literal[FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED]): the new status code id either "A" == "Accepted" or "D" == "Declined"
     """
     requester = get_record_with_not_found_raise(db, UserSchema, "no such friend requester exists", UserSchema.username == requester_username)
     
@@ -74,21 +74,24 @@ def add_new_friendship_status_as_addressee(
     
     latest_status = get_latest_friendship_status(friendship)
     
-    if(latest_status.status_code_id == "A"):
+    if(latest_status.status_code_id == FriendshipStatusCode.ACCEPTED.value or latest_status.status_code_id == FriendshipStatusCode.DECLINED.value):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="friend request already accepted",
+            detail="friend request already addressed",
         )
     
     new_status = FriendshipStatusSchema(
         requester_id=requester.user_id,
         addressee_id=current_user.user_id,
         specified_date_time=datetime.now(),
-        status_code_id=new_status_code_id,
+        status_code_id=new_status_code_id.value,
         specifier_id=current_user.user_id)
     
     db.add(new_status)
     db.commit()
+    db.refresh(new_status)
+    
+    return new_status
     
 def block_user(db: Session, user_to_block_username: str, current_user: UserSchema) -> None:
     """Blocks a user. This command can come from either the requester, or addressee of a friendship. Additionally it can be
@@ -116,7 +119,7 @@ def block_user(db: Session, user_to_block_username: str, current_user: UserSchem
         requester_id=friendship.requester_id,
         addressee_id=friendship.addressee_id,
         specified_date_time=datetime.now(),
-        status_code_id="B",
+        status_code_id=FriendshipStatusCode.BLOCKED.value,
         specifier_id=current_user.user_id)
     
     db.add(new_status)

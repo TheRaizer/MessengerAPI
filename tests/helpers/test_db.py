@@ -32,52 +32,6 @@ def get_test_records_parameterized():
     return zip(test_users, test_friendship_status_codes)
 
 
-@pytest.mark.parametrize("test_user,test_friendship_status_code", get_test_records_parameterized())
-def test_get_record(session: Session, test_user: UserSchema, test_friendship_status_code: FriendshipStatusCodeSchema):
-    # nothing has been added to db yet so should be None
-    retrieved_user = get_record(session, UserSchema, UserSchema.username==test_user.username)
-    assert retrieved_user is None
-    
-    # add test users to database
-    session.add(test_user)
-    session.commit()
-    session.refresh(test_user)
-    
-    # should be able to get records of all test users now that they have been added to db
-    retrieved_user = get_record(session, UserSchema, UserSchema.username==test_user.username)
-    
-    assert retrieved_user == test_user
-        
-    
-    # no friendship status code has been added to db yet so should be None
-    retrieved_status_code = get_record(session, FriendshipStatusCodeSchema, FriendshipStatusCodeSchema.status_code_id==test_friendship_status_code.status_code_id)
-    assert retrieved_status_code is None
-    
-    # add test friendship status codes to db
-    session.add(test_friendship_status_code)
-    session.commit()
-    session.refresh(test_friendship_status_code)
-    
-    # should be able to get records of all test friendship status codes now that they have been added to db
-    retrieved_status_code = get_record(session, FriendshipStatusCodeSchema, FriendshipStatusCodeSchema.status_code_id==test_friendship_status_code.status_code_id)
-    
-    assert retrieved_status_code == test_friendship_status_code
-    
-    # should return none if no record is found
-    retrieved_user = get_record(session, UserSchema, UserSchema.username=="non-existent-user")
-    assert retrieved_user is None
-
-
-def test_get_record_raises_on_multiple(session: Session, get_test_records_fixture: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
-    (test_users, _) = get_test_records_fixture
-
-    session.add_all(test_users)
-    session.commit()
-    
-    with pytest.raises(HTTPException):
-        get_record(session, UserSchema, UserSchema.password_hash==test_password_hash)
-
-
 def test_get_records(session: Session, get_test_records_fixture: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
     (test_users, _) = get_test_records_fixture
     
@@ -105,58 +59,106 @@ def test_get_records(session: Session, get_test_records_fixture: tuple[list[User
     assert retrieved_users is None
 
 
-@pytest.mark.parametrize("test_user,test_friendship_status_code", get_test_records_parameterized())
-def test_get_record_with_not_found_raise(session: Session, test_user: UserSchema, test_friendship_status_code: FriendshipStatusCodeSchema):    
-    # nothing has been added to db yet so should raise exception when fetching record
-    with pytest.raises(HTTPException):
-        retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username==test_user.username)
-
-    
-    # add test users to database
-    session.add(test_user)
-    session.commit()
-    session.refresh(test_user)
-    
-    # should be able to get records of all test users now that they have been added to db
-    retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username==test_user.username)
-    
-    assert retrieved_user == test_user
+class TestGetRecord:
+    @pytest.mark.parametrize("test_user,test_friendship_status_code", get_test_records_parameterized())
+    def test_it_retrieves_successfully(self, session: Session, test_user: UserSchema, test_friendship_status_code: FriendshipStatusCodeSchema):
+        # nothing has been added to db yet so should be None
+        retrieved_user = get_record(session, UserSchema, UserSchema.username==test_user.username)
+        assert retrieved_user is None
         
-    
-    # no friendship status code has been added to db yet so should raise exception on fetch
-    with pytest.raises(HTTPException):
+        # add test users to database
+        session.add(test_user)
+        session.commit()
+        session.refresh(test_user)
+        
+        # should be able to get records of all test users now that they have been added to db
+        retrieved_user = get_record(session, UserSchema, UserSchema.username==test_user.username)
+        
+        assert retrieved_user == test_user
+        
+        
+        # no friendship status code has been added to db yet so should be None
+        retrieved_status_code = get_record(session, FriendshipStatusCodeSchema, FriendshipStatusCodeSchema.status_code_id==test_friendship_status_code.status_code_id)
+        assert retrieved_status_code is None
+        
+        # add test friendship status codes to db
+        session.add(test_friendship_status_code)
+        session.commit()
+        session.refresh(test_friendship_status_code)
+        
+        # should be able to get records of all test friendship status codes now that they have been added to db
+        retrieved_status_code = get_record(session, FriendshipStatusCodeSchema, FriendshipStatusCodeSchema.status_code_id==test_friendship_status_code.status_code_id)
+        
+        assert retrieved_status_code == test_friendship_status_code
+        
+        # should return none if no record is found
+        retrieved_user = get_record(session, UserSchema, UserSchema.username=="non-existent-user")
+        assert retrieved_user is None
+
+
+    def test_it_raises_on_multiple_found(self, session: Session, get_test_records_fixture: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
+        (test_users, _) = get_test_records_fixture
+
+        session.add_all(test_users)
+        session.commit()
+        
+        with pytest.raises(HTTPException):
+            get_record(session, UserSchema, UserSchema.password_hash==test_password_hash)
+
+
+class TestGetRecordWithNotFoundRaise:
+    @pytest.mark.parametrize("test_user,test_friendship_status_code", get_test_records_parameterized())
+    def test_it_retrieves_successfully(self, session: Session, test_user: UserSchema, test_friendship_status_code: FriendshipStatusCodeSchema):    
+        # nothing has been added to db yet so should raise exception when fetching record
+        with pytest.raises(HTTPException):
+            retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username==test_user.username)
+
+        
+        # add test users to database
+        session.add(test_user)
+        session.commit()
+        session.refresh(test_user)
+        
+        # should be able to get records of all test users now that they have been added to db
+        retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username==test_user.username)
+        
+        assert retrieved_user == test_user
+        
+        
+        # no friendship status code has been added to db yet so should raise exception on fetch
+        with pytest.raises(HTTPException):
+            retrieved_status_code = get_record_with_not_found_raise(
+                session, 
+                FriendshipStatusCodeSchema,
+                "some detail", 
+                FriendshipStatusCodeSchema.status_code_id == test_friendship_status_code.status_code_id
+            )
+        
+        # add test friendship status codes to db
+        session.add(test_friendship_status_code)
+        session.commit()
+        session.refresh(test_friendship_status_code)
+        
+        # should be able to get records of all test friendship status codes now that they have been added to db
         retrieved_status_code = get_record_with_not_found_raise(
             session, 
-            FriendshipStatusCodeSchema,
+            FriendshipStatusCodeSchema, 
             "some detail", 
             FriendshipStatusCodeSchema.status_code_id == test_friendship_status_code.status_code_id
         )
-    
-    # add test friendship status codes to db
-    session.add(test_friendship_status_code)
-    session.commit()
-    session.refresh(test_friendship_status_code)
-    
-    # should be able to get records of all test friendship status codes now that they have been added to db
-    retrieved_status_code = get_record_with_not_found_raise(
-        session, 
-        FriendshipStatusCodeSchema, 
-        "some detail", 
-        FriendshipStatusCodeSchema.status_code_id == test_friendship_status_code.status_code_id
-    )
-    
-    assert retrieved_status_code == test_friendship_status_code
-    
-    # should raise exception if no record is found
-    with pytest.raises(HTTPException):
-        retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username=="non-existent-user")
+        
+        assert retrieved_status_code == test_friendship_status_code
+        
+        # should raise exception if no record is found
+        with pytest.raises(HTTPException):
+            retrieved_user = get_record_with_not_found_raise(session, UserSchema, "some detail", UserSchema.username=="non-existent-user")
 
 
-def test_get_record_with_not_found_raise_raises_on_multiple(session: Session, get_test_records_fixture: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
-    (test_users, _) = get_test_records_fixture
+    def test_it_raises_on_multiple_found(self, session: Session, get_test_records_fixture: tuple[list[UserSchema], list[FriendshipStatusCodeSchema]]):
+        (test_users, _) = get_test_records_fixture
 
-    session.add_all(test_users)
-    session.commit()
-    
-    with pytest.raises(HTTPException):
-        get_record_with_not_found_raise(session, UserSchema, UserSchema.password_hash==test_password_hash)
+        session.add_all(test_users)
+        session.commit()
+        
+        with pytest.raises(HTTPException):
+            get_record_with_not_found_raise(session, UserSchema, UserSchema.password_hash==test_password_hash)

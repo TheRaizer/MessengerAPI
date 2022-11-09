@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker, Session
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_code_schema import FriendshipStatusCodeSchema
+from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.fastApi import app
 from fastapi.testclient import TestClient
 from _submodules.messenger_utils.messenger_schemas.schema import Base, database_session
@@ -51,3 +52,16 @@ def client(session):
     app.dependency_overrides[database_session] = override_database_session
     yield TestClient(app)
     del app.dependency_overrides[database_session]
+
+
+def add_initial_friendship_status_codes(session: Session):
+    """Test helper function that adds all the expected status codes to the session that are existent in prod and dev.
+
+    Args:
+        session (Session): the session that will be used during testing
+    """
+    for status_code in FriendshipStatusCode:
+        friendship_status_code = FriendshipStatusCodeSchema(status_code_id=status_code.value, name=status_code.name)
+        session.add(friendship_status_code)
+    
+    session.commit()

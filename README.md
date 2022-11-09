@@ -79,6 +79,8 @@ The concept of tables, and their relationships are handled within SQLAlchemy tra
 
 https://docs.sqlalchemy.org/en/14/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
 
+SQLAlchemy Schema that are initialized then used across all tests must be recreated for each tests. Thus we place their initialization in fixtures.
+
 **Running tests**
 _Run bash script:_
 start_test_db.sh
