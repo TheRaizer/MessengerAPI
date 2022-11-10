@@ -89,7 +89,7 @@ def test_raise_if_blocked(get_records: tuple[Session, UserSchema, UserSchema, Fr
         raise_if_blocked(friendship)
 
 
-class TestAddNewFriendshipStatusAsAddress:
+class TestAddressFriendshipRequest:
     @freeze_time(ONE_DAY_AFTER)
     def test_it_adds_new_accepted_status(self, session: Session, get_records: tuple[Session, UserSchema, UserSchema, FriendshipSchema, FriendshipStatusSchema]):
         (session, requester, addressee, _, _) = get_records

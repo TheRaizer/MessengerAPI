@@ -1,8 +1,7 @@
 from typing import List, Optional, TypeVar
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 T = TypeVar('T')
 
