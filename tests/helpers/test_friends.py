@@ -75,11 +75,11 @@ def test_raise_if_blocked(get_records: tuple[Session, UserSchema, UserSchema, Fr
     raise_if_blocked(friendship)
     
     status = FriendshipStatusSchema(
-    requester_id=requester.user_id,
-    addressee_id=addressee.user_id,
-    specified_date_time=datetime.now(),
-    status_code_id=FriendshipStatusCode.BLOCKED.value,
-    specifier_id=addressee.user_id)
+        requester_id=requester.user_id,
+        addressee_id=addressee.user_id,
+        specified_date_time=datetime.now(),
+        status_code_id=FriendshipStatusCode.BLOCKED.value,
+        specifier_id=addressee.user_id)
     
     session.add(status)
     session.commit()
