@@ -1,16 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from fastapi import HTTPException
 from freezegun import freeze_time
 
 import pytest
-from _submodules.messenger_utils.messenger_schemas.schema import friendship_status_code_schema
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import FriendshipSchema
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import FriendshipStatusSchema
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from sqlalchemy.orm import Session
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
-from messenger.helpers.friends import address_friendship_request, get_latest_friendship_status
+from messenger.helpers.friends import address_friendship_request, get_latest_friendship_status, raise_if_blocked
 from tests.conftest import add_initial_friendship_status_codes
 
 # the date that the initial records will be added at
@@ -67,6 +66,28 @@ def test_get_latest_friendship_status(get_records: tuple[Session, UserSchema, Us
     latest_status = get_latest_friendship_status(friendship)
     
     assert latest_status == status
+
+
+def test_raise_if_blocked(get_records: tuple[Session, UserSchema, UserSchema, FriendshipSchema, FriendshipStatusSchema]):
+    (session, requester, addressee, friendship, status) = get_records
+    
+    # should run without raising since friendship is initialized with requested status
+    raise_if_blocked(friendship)
+    
+    status = FriendshipStatusSchema(
+    requester_id=requester.user_id,
+    addressee_id=addressee.user_id,
+    specified_date_time=datetime.now(),
+    status_code_id=FriendshipStatusCode.BLOCKED.value,
+    specifier_id=addressee.user_id)
+    
+    session.add(status)
+    session.commit()
+    
+    # should raise now that the friendship has a new status with a blocked status code
+    with pytest.raises(HTTPException):
+        raise_if_blocked(friendship)
+
 
 class TestAddNewFriendshipStatusAsAddress:
     @freeze_time(ONE_DAY_AFTER)

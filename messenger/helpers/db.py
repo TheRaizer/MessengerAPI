@@ -34,7 +34,7 @@ def get_record(db: Session, Schema: T, *criterion) -> Optional[T]:
     
     return db_record
 
-def get_records(db: Session, Schema: T, *criterion)-> Optional[List[T]]:
+def get_records(db: Session, Schema: T, *criterion) -> Optional[List[T]]:
     """Retrieve a list of records from a database.
 
     Args:
