@@ -67,7 +67,7 @@ def test_get_latest_friendship_status(get_records: tuple[Session, UserSchema, Us
     
     assert latest_status == status
 
-
+@freeze_time(ONE_DAY_AFTER)
 def test_raise_if_blocked(get_records: tuple[Session, UserSchema, UserSchema, FriendshipSchema, FriendshipStatusSchema]):
     (session, requester, addressee, friendship, status) = get_records
     
