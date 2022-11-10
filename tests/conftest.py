@@ -1,5 +1,4 @@
 import pytest
-from sqlalchemy import create_engine
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker, Session
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_code_schema import FriendshipStatusCodeSchema

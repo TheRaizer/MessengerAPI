@@ -10,7 +10,6 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import \
 from messenger.helpers.db import (get_record, get_record_with_not_found_raise,
                                   get_records)
 
-test_password_hash="some-hash"
 
 test_params = [
         (UserSchema, UserSchema.username == 'username'), 
@@ -25,7 +24,7 @@ class TestGetRecords:
         record = get_records(session_mock, UserSchema, UserSchema.user_id > 5)
         assert record is None
 
-    @pytest.mark.parametrize("Schema,criterion", test_params)
+    @pytest.mark.parametrize("Schema, criterion", test_params)
     def test_retrieves_records_successfully(self, mocker: MockerFixture, Schema, criterion):
         session_mock = mocker.MagicMock()
         
@@ -48,11 +47,11 @@ class TestGetRecords:
         assert retrieved_records == expected_return
 
 class TestGetRecord:
-    @pytest.mark.parametrize("Schema,criterion", test_params)
+    @pytest.mark.parametrize("Schema, criterion", test_params)
     def test_retrieves_successfully(self, mocker: MockerFixture, Schema, criterion):
         session_mock = mocker.MagicMock()
         
-        expected_user = UserSchema(user_id=1, username="user_3", password_hash=test_password_hash, email="email_3")
+        expected_user = UserSchema(user_id=1, username="user_3", password_hash='hash', email="email_3")
         session_mock.query.return_value.filter.return_value.one.return_value = expected_user
         
         record = get_record(session_mock, Schema, criterion)
@@ -82,11 +81,11 @@ class TestGetRecord:
 
 
 class TestGetRecordWithNotFoundRaise:
-    @pytest.mark.parametrize("Schema,criterion", test_params)
+    @pytest.mark.parametrize("Schema, criterion", test_params)
     def test_retrieves_successfully(self, mocker: MockerFixture, Schema, criterion):
         session_mock = mocker.MagicMock()
         
-        expected_user = UserSchema(user_id=1, username="user_3", password_hash=test_password_hash, email="email_3")
+        expected_user = UserSchema(user_id=1, username="user_3", password_hash='password-hash', email="email_3")
         session_mock.query.return_value.filter.return_value.one.return_value = expected_user
         
         # should be able to get records of all test users now that they have been added to db
