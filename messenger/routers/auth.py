@@ -3,20 +3,28 @@ from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from messenger.helpers.auth import UNAUTHORIZED_CREDENTIALS_EXCEPTION, Token, create_login_token
-from messenger.helpers.db import get_record
-from messenger.helpers.users import authenticate_user, create_user
+from messenger.helpers.auth import (
+    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
+    Token,
+    create_login_token,
+)
+from messenger.helpers.users import UserHandler, authenticate_user, create_user
 from bleach import clean
 
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"],
-    responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}}
+    responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
+
 @router.post("/sign-up", response_model=Token, status_code=status.HTTP_201_CREATED)
-def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
+def sign_up(
+    username: str,
+    form_data: OAuth2PasswordRequestFormStrict = Depends(),
+    db: Session = Depends(database_session),
+):
     """Signs the user up, adding the required user data into the database and producing a JWT access token which
     the user can use to prove that they're authorized.
 
@@ -32,24 +40,34 @@ def sign_up(username: str, form_data: OAuth2PasswordRequestFormStrict = Depends(
     Returns:
         Token: the access token and token type
     """
-    user = get_record(db, UserSchema, UserSchema.email==clean(form_data.username))
-    
-    if(user):
+    user_handler = UserHandler(db)
+
+    user = user_handler.get_user(UserSchema.email == clean(form_data.username))
+
+    if user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Account exists",
         )
-    
+
     # form_data.username represents the user's email
-    user = create_user(db, password=clean(form_data.password), email=clean(form_data.username), username=clean(username))
-    
+    user = create_user(
+        db,
+        password=clean(form_data.password),
+        email=clean(form_data.username),
+        username=clean(username),
+    )
+
     access_token = create_login_token(user)
-    
+
     return Token(access_token=access_token, token_type="bearer")
 
 
 @router.post("/sign-in", response_model=Token, status_code=status.HTTP_201_CREATED)
-def sign_in(form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session = Depends(database_session)):
+def sign_in(
+    form_data: OAuth2PasswordRequestFormStrict = Depends(),
+    db: Session = Depends(database_session),
+):
     """Signs the user in using email and password authentication. Produces a JWT token proving the callers authorization.
 
     Args:
@@ -64,15 +82,15 @@ def sign_in(form_data: OAuth2PasswordRequestFormStrict = Depends(), db: Session 
     Returns:
         Token: the access token and token type
     """
-    
+
     # form_data.username represents the user's email
-    user = authenticate_user(db, password=clean(form_data.password), email=clean(form_data.username))
-    
+    user = authenticate_user(
+        db, password=clean(form_data.password), email=clean(form_data.username)
+    )
+
     if not user:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
-    
-    access_token = create_login_token(user)
-    
-    
-    return Token(access_token=access_token, token_type="bearer")
 
+    access_token = create_login_token(user)
+
+    return Token(access_token=access_token, token_type="bearer")

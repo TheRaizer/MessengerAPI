@@ -6,12 +6,19 @@ from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.environment_variables import JWT_SECRET
-from messenger.helpers.auth import ALGORITHM, UNAUTHORIZED_CREDENTIALS_EXCEPTION, TokenData
+from messenger.helpers.auth import (
+    ALGORITHM,
+    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
+    TokenData,
+)
 from messenger.helpers.auth import oauth2_scheme
-from messenger.helpers.db import get_record, get_record_with_not_found_raise
+from messenger.helpers.user_handler import UserHandler
 from .auth import is_email_valid, is_password_valid, is_username_valid, password_hasher
 
-async def get_current_user(db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)) -> UserSchema:
+
+async def get_current_user(
+    db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)
+) -> UserSchema:
     """Retrieves a user's data from the database using a given JWT token.
 
         IF
@@ -33,21 +40,28 @@ async def get_current_user(db: Session = Depends(database_session), token: str =
     """
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
-        
-        
-        if payload.get('email') is None:
+
+        if payload.get("email") is None:
             raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
         token_data = TokenData(**payload)
-        
+
     except JWTError:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
-    
-    user = get_record_with_not_found_raise(db, UserSchema, "user credentials are invalid", UserSchema.email == token_data.email)
-    
-    return user
+
+    user_handler = UserHandler(db)
+    try:
+        user = user_handler.get_user(
+            UserSchema.email == token_data.email,
+        )
+
+        return user
+    except HTTPException:
+        raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
 
-async def get_current_active_user(current_user: UserSchema = Depends(get_current_user)) -> UserSchema:
+async def get_current_active_user(
+    current_user: UserSchema = Depends(get_current_user),
+) -> UserSchema:
     """Retrieves the currently active user using a given JWT token.
     Add as a dependency for routes that require authenticated users.
 
@@ -60,7 +74,9 @@ async def get_current_active_user(current_user: UserSchema = Depends(get_current
     return current_user
 
 
-def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchema, bool]:
+def authenticate_user(
+    db: Session, password: str, email: str
+) -> Union[UserSchema, bool]:
     """Authenticates a user using an email address and password.
 
     Args:
@@ -72,11 +88,14 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
         Union[UserSchema, bool]: if the user does not exist or the password is not correct, return False.
         Otherwise return the database user.
     """
-    user = get_record(db, UserSchema, UserSchema.email==email)
-    
+
+    user_handler = UserHandler(db)
+
+    user = user_handler.get_user(UserSchema.email == email)
+
     if not user:
         return False
-    
+
     try:
         password_hasher.verify(user.password_hash, password)
     except exceptions.VerifyMismatchError:
@@ -88,12 +107,12 @@ def authenticate_user(db: Session, password: str, email: str) -> Union[UserSchem
     except exceptions.InvalidHash:
         # If the hash is so unbelievably invalid it cannot be passed to argon2
         return False
-    
+
     # if user's password needs a rehash do it here
-    if(password_hasher.check_needs_rehash(user.password_hash)):
+    if password_hasher.check_needs_rehash(user.password_hash):
         user.password_hash = password_hasher.hash(password)
         db.refresh(user)
-    
+
     return user
 
 
@@ -109,19 +128,24 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     Returns:
         UserSchema: the user that was created in the database.
     """
-    if(not is_password_valid(password)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid password")
-    if(not is_username_valid(db, username)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid username")
-    if(not is_email_valid(db, email)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email")
-    
+    if not is_password_valid(password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid password"
+        )
+    if not is_username_valid(db, username):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid username"
+        )
+    if not is_email_valid(db, email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email"
+        )
+
     password_hash = password_hasher.hash(password)
     user = UserSchema(username=username, password_hash=password_hash, email=email)
-    
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    
-    return user
 
+    return user

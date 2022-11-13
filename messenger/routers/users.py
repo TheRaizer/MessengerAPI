@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from messenger.helpers.db import DatabaseHandler
 
 from messenger.models.user_model import UserModel
 from messenger.helpers.users import get_current_active_user
@@ -24,11 +25,11 @@ def get_current_user(current_user: UserSchema = Depends(get_current_active_user)
     """
     user: UserModel = UserModel(
         email=current_user.email,
-            first_name=current_user.first_name,
-            last_name=current_user.last_name,
-            birthdate=current_user.birthdate,
-            user_id = current_user.user_id,
-            username=current_user.username
-        )
-    
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        birthdate=current_user.birthdate,
+        user_id=current_user.user_id,
+        username=current_user.username,
+    )
+
     return user

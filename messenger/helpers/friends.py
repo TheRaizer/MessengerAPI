@@ -1,128 +1,158 @@
 from datetime import datetime
 from operator import attrgetter
-from typing import Literal, Type, Union
+from typing import Literal, Optional, Type, Union
 from fastapi import HTTPException, status
 
 from sqlalchemy import and_, or_
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import FriendshipSchema
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import FriendshipStatusSchema
+from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
+    FriendshipSchema,
+)
+from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
+    FriendshipStatusSchema,
+)
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.helpers.db import get_record, get_record_with_not_found_raise
+from messenger.helpers.db import DatabaseHandler
 from sqlalchemy.orm import Session
 
+from messenger.helpers.user_handler import UserHandler
 
-def raise_if_blocked(friendship: FriendshipSchema) -> None:
-    latest_status = get_latest_friendship_status(friendship)
-    
-    if(latest_status.status_code_id == FriendshipStatusCode.BLOCKED.value):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="friendship is blocked",
+
+class FriendshipHandler(DatabaseHandler):
+    """Contains basic functionality that is often used to read/write to a friendship record."""
+
+    def __init__(self, db: Session, friendship: Optional[FriendshipSchema] = None):
+        """Initializes an instance of a FriendshipService
+
+        Args:
+            db (Session): the database session to use.
+            friendship (Optional[FriendshipSchema]): the friendship record that will be used during any of the service methods.
+        """
+        super().__init__(db)
+        self.friendship = friendship
+
+    def get_latest_friendship_status(self) -> Optional[FriendshipStatusSchema]:
+        if self.friendship is None or len(self.friendship.statuses) == 0:
+            return None
+
+        return max(self.friendship.statuses, key=attrgetter("specified_date_time"))
+
+    def raise_if_blocked(self) -> None:
+        latest_status = self.get_latest_friendship_status()
+
+        if (
+            latest_status is not None
+            and latest_status.status_code_id == FriendshipStatusCode.BLOCKED.value
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="friendship is blocked",
+            )
+
+    def add_new_status(
+        self,
+        requester_id: str,
+        addressee_id: str,
+        specifier_id: str,
+        new_status_code_id: FriendshipStatusCode,
+    ):
+        new_status = FriendshipStatusSchema(
+            requester_id=requester_id,
+            addressee_id=addressee_id,
+            specified_date_time=datetime.now(),
+            status_code_id=new_status_code_id.value,
+            specifier_id=specifier_id,
         )
 
-def retrieve_friendship_bidirectional_query(db: Session, user_a: UserSchema, user_b: UserSchema) -> Union[Type[FriendshipSchema], None]:
-    """Retrieves a friendship where either user_a is the requester and user_b is the addressee or vice-versa.
+        self._db.add(new_status)
 
-    Args:
-        db (Session): the database session to retreive the friendship from
-        user_a (UserSchema): a user participating in the friendship
-        user_b (UserSchema): a user participating in the friendship
+        return new_status
 
-    Returns:
-        Union[Type[FriendshipSchema], None]: the friendship record or None if no friendship was found.
-    """
-    a = and_(FriendshipSchema.requester_id == user_a.user_id, FriendshipSchema.addressee_id == user_b.user_id).self_group()
-    b = and_(FriendshipSchema.requester_id == user_b.user_id, FriendshipSchema.addressee_id == user_a.user_id).self_group()
-    
-    friendship = get_record(
-                db,
-                FriendshipSchema,
-                or_(*[a, b]),
-            )
-    
-    return friendship
+    def get_friendship_bidirectional_query(
+        self, user_a: UserSchema, user_b: UserSchema
+    ) -> Union[Type[FriendshipSchema], None]:
+        """Retrieves a friendship where either user_a is the requester and user_b is the addressee or vice-versa. Stores
+        the result in self.friendship and returns it.
 
+        Args:
+            user_a (UserSchema): a user participating in the friendship
+            user_b (UserSchema): a user participating in the friendship
 
-def get_latest_friendship_status(friendship: FriendshipSchema) -> FriendshipStatusSchema:
-    return max(friendship.statuses, key=attrgetter('specified_date_time'))
+        Returns:
+            Union[Type[FriendshipSchema], None]: the friendship record or None if no friendship was found.
+        """
+        a = and_(
+            FriendshipSchema.requester_id == user_a.user_id,
+            FriendshipSchema.addressee_id == user_b.user_id,
+        ).self_group()
+        b = and_(
+            FriendshipSchema.requester_id == user_b.user_id,
+            FriendshipSchema.addressee_id == user_a.user_id,
+        ).self_group()
+
+        self.friendship = self._get_record_with_not_found_raise(
+            self._db,
+            FriendshipSchema,
+            or_(*[a, b]),
+        )
+
+        return self.friendship
 
 
 def address_friendship_request(
-    db: Session, 
-    requester_username: str,
-    current_user: UserSchema, 
-    new_status_code_id: Literal[FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED]) -> FriendshipStatusSchema:
-    """Allows the current signed in user to either accept or decline a friendship request.
+    friendship_handler: FriendshipHandler,
+    new_status_code_id: Literal[
+        FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED
+    ],
+) -> FriendshipStatusSchema:
+    """Addresses a friendship request by either accepting or declining it.
 
     Args:
-        db (Session): the database session that the new status will be added too.
-        requester_username (str): the username of the friendship requester
-        current_user (UserSchema): the currently signed in user
-        new_status_code_id (Literal[FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED]): the new status code id either "A" == "Accepted" or "D" == "Declined"
+        friendship_service (FriendshipService): the friendship service that will be used to add the new status.
+        new_status_code_id (Literal[FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED]): either accept or decline
+
+    Raises:
+        HTTPException: If the friendship was already addressed,
+        or the friendship is blocked
+
+    Returns:
+        FriendshipStatusSchema: the new status that was created.
     """
-    requester = get_record_with_not_found_raise(db, UserSchema, "no such friend requester exists", UserSchema.username == requester_username)
-    
-    # a friendship must exist
-    friendship = get_record_with_not_found_raise(
-        db,
-        FriendshipSchema,
-        "no such friend request exists",
-        and_(FriendshipSchema.requester_id == requester.user_id, FriendshipSchema.addressee_id == current_user.user_id))
-    
-    raise_if_blocked(friendship)
-    
-    latest_status = get_latest_friendship_status(friendship)
-    
-    if(latest_status.status_code_id == FriendshipStatusCode.ACCEPTED.value or latest_status.status_code_id == FriendshipStatusCode.DECLINED.value):
+    friendship_handler.raise_if_blocked()
+    latest_status = friendship_handler.get_latest_friendship_status()
+
+    if latest_status is not None and (
+        latest_status.status_code_id == FriendshipStatusCode.ACCEPTED.value
+        or latest_status.status_code_id == FriendshipStatusCode.DECLINED.value
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="friend request already addressed",
         )
-    
-    new_status = FriendshipStatusSchema(
-        requester_id=requester.user_id,
-        addressee_id=current_user.user_id,
-        specified_date_time=datetime.now(),
-        status_code_id=new_status_code_id.value,
-        specifier_id=current_user.user_id)
-    
-    db.add(new_status)
-    db.commit()
-    db.refresh(new_status)
-    
-    return new_status
-    
-def block_user(db: Session, user_to_block_username: str, current_user: UserSchema) -> None:
-    """Blocks a user. This command can come from either the requester, or addressee of a friendship. Additionally it can be
-    called even when a friendship between the two users does not exist.
 
-    Args:
-        db (Session): the db session where a new friendship might be created, and a new status with the blocked status code will be created.
-        user_to_block_username (str): the username of the user to block.
-        current_user (UserSchema): the current signed in user who will be blocking someone.
-    """
-    user_to_block = get_record_with_not_found_raise(db, UserSchema, "no such user to block exists", UserSchema.username == user_to_block_username)
-    
-    # attempt to fetch a friendship record with the current user as either the requester or addressee
-    friendship = retrieve_friendship_bidirectional_query(db, user_to_block, current_user)
+    return friendship_handler.add_new_status(
+        friendship_handler.friendship.requester_id,
+        friendship_handler.friendship.requester_id,
+        friendship_handler.friendship.addressee_id,
+        new_status_code_id,
+    )
 
-    # if no friendship record appears, create a new one
-    if(friendship is None):
-        friendship = FriendshipSchema(requester_id=current_user.user_id, addressee_id=user_to_block.user_id, created_date_time=datetime.now())
-        db.add(friendship)
-    else:
-        raise_if_blocked(friendship)
-    
-    # create a new friendship status based on a friendship record with a status code of 'B' == 'Blocked'
-    new_status = FriendshipStatusSchema(
-        requester_id=friendship.requester_id,
-        addressee_id=friendship.addressee_id,
-        specified_date_time=datetime.now(),
-        status_code_id=FriendshipStatusCode.BLOCKED.value,
-        specifier_id=current_user.user_id)
-    
-    db.add(new_status)
-    db.commit()
-    
-#TODO: unblocking. Which can only occur if the current signed in user who wishes to unblock, is the specifier of the blocking status.
+
+def address_friendship_request_as_route(
+    db: Session,
+    current_user: UserSchema,
+    requester_username: str,
+    new_status_code_id: Literal[
+        FriendshipStatusCode.ACCEPTED, FriendshipStatusCode.DECLINED
+    ],
+):
+    addressee_handler = UserHandler(db)
+    addressee_handler.get_user(UserSchema.username == requester_username)
+
+    friendship_handler = FriendshipHandler(db)
+
+    friendship_handler.get_friendship_bidirectional_query(
+        addressee_handler.user, current_user
+    )
+
+    address_friendship_request(friendship_handler, new_status_code_id)
