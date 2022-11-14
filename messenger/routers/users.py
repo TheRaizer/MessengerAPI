@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, status
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from messenger.helpers.db import DatabaseHandler
 
 from messenger.models.user_model import UserModel
 from messenger.helpers.users import get_current_active_user

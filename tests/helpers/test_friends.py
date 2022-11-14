@@ -18,48 +18,7 @@ from messenger.helpers.friends import FriendshipHandler, address_friendship_requ
 from tests.conftest import add_initial_friendship_status_codes
 
 # the date that the initial records will be added at
-INITIAL_RECORDS_DATE = "2022-11-06"
 FROZEN_DATE = "2022-11-07"
-
-
-@pytest.fixture
-@freeze_time(INITIAL_RECORDS_DATE)
-def get_records(
-    session: Session,
-) -> tuple[Session, UserSchema, UserSchema, FriendshipSchema, FriendshipStatusSchema]:
-    add_initial_friendship_status_codes(session)
-
-    requester = UserSchema(
-        username="user_1", password_hash="pass-hash", email="email_1"
-    )
-    addressee = UserSchema(
-        username="user_2", password_hash="pass-hash", email="email_2"
-    )
-
-    session.add(requester)
-    session.add(addressee)
-
-    session.commit()
-
-    friendship = FriendshipSchema(
-        requester_id=requester.user_id,
-        addressee_id=addressee.user_id,
-        created_date_time=datetime.now(),
-    )
-    status = FriendshipStatusSchema(
-        requester_id=requester.user_id,
-        addressee_id=addressee.user_id,
-        specified_date_time=datetime.now(),
-        status_code_id=FriendshipStatusCode.REQUESTED.value,
-        specifier_id=requester.user_id,
-    )
-
-    session.add(friendship)
-    session.add(status)
-
-    session.commit()
-
-    return (session, requester, addressee, friendship, status)
 
 
 @freeze_time(FROZEN_DATE)
@@ -75,6 +34,9 @@ def test_get_latest_friendship_status(
     )
 
     friendship_handler = FriendshipHandler(mocker.MagicMock(), FriendshipSchema())
+
+    assert friendship_handler.friendship is not None
+
     friendship_handler.friendship.statuses = [status]
 
     latest_status = friendship_handler.get_latest_friendship_status()
@@ -120,6 +82,8 @@ def test_raise_if_blocked(mocker: MockerFixture):
         status_code_id=FriendshipStatusCode.BLOCKED.value,
         specifier_id=2,
     )
+
+    assert friendship_handler.friendship is not None
 
     friendship_handler.friendship.statuses.append(status)
 
@@ -199,6 +163,7 @@ class TestAddressFriendshipRequest:
                 friendship_handler, FriendshipStatusCode.DECLINED
             )
 
+        assert friendship_handler.friendship is not None
         friendship_handler.friendship.statuses = [
             FriendshipStatusSchema(
                 requester_id=1,

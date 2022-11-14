@@ -80,21 +80,22 @@ def send_friendship_request(
         FriendshipModel: the friendship that was created and inserted into the database.
     """
     addressee_handler = UserHandler(db)
-    addressee_handler.get_user(
+    addressee = addressee_handler.get_user(
         UserSchema.username == clean(username),
     )
 
     friendship_handler = FriendshipHandler(db)
 
     friendship = friendship_handler.get_friendship_bidirectional_query(
-        current_user, addressee_handler.user
+        current_user, addressee
     )
 
     if friendship is not None:
         latest_status = friendship_handler.get_latest_friendship_status()
 
         already_requested_friendship = (
-            friendship.requester_id == current_user.user_id
+            latest_status is not None
+            and friendship.requester_id == current_user.user_id
             and latest_status.status_code_id == FriendshipStatusCode.REQUESTED.value
         )
 
@@ -104,7 +105,10 @@ def send_friendship_request(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="you cannot send another friendship request",
             )
-        elif latest_status.status_code_id != FriendshipStatusCode.REQUESTED.value:
+        elif (
+            latest_status is not None
+            and latest_status.status_code_id != FriendshipStatusCode.REQUESTED.value
+        ):
             # you cannot send a friend request if the friendship is blocked, declined, or are already this persons friend
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -113,13 +117,13 @@ def send_friendship_request(
 
     new_friendship = FriendshipSchema(
         requester_id=current_user.user_id,
-        addressee_id=addressee_handler.user.user_id,
+        addressee_id=addressee.user_id,
         created_date_time=datetime.now(),
     )
 
     new_status = FriendshipStatusSchema(
         requester_id=current_user.user_id,
-        addressee_id=addressee_handler.user.user_id,
+        addressee_id=addressee.user_id,
         specified_date_time=datetime.now(),
         status_code_id=FriendshipStatusCode.REQUESTED.value,
         specifier_id=current_user.user_id,
@@ -199,18 +203,20 @@ def block_friendship_request(
     friendship_handler = FriendshipHandler(db)
     user_to_block_handler = UserHandler(db)
 
-    user_to_block_handler.get_user(UserSchema.username == clean(user_to_block_username))
+    user_to_block = user_to_block_handler.get_user(
+        UserSchema.username == clean(user_to_block_username)
+    )
 
     # attempt to fetch a friendship record with the current user as either the requester or addressee
     friendship = friendship_handler.get_friendship_bidirectional_query(
-        user_to_block_handler.user, current_user
+        user_to_block, current_user
     )
 
     # if no friendship record appears, create a new one
     if friendship is None:
         friendship = FriendshipSchema(
             requester_id=current_user.user_id,
-            addressee_id=user_to_block_handler.user.user_id,
+            addressee_id=user_to_block.user_id,
             created_date_time=datetime.now(),
         )
         db.add(friendship)

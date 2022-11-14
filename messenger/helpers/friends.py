@@ -1,6 +1,6 @@
 from datetime import datetime
 from operator import attrgetter
-from typing import Literal, Optional, Type, Union
+from typing import Literal, Optional, Union
 from fastapi import HTTPException, status
 
 from sqlalchemy import and_, or_
@@ -70,7 +70,7 @@ class FriendshipHandler(DatabaseHandler):
 
     def get_friendship_bidirectional_query(
         self, user_a: UserSchema, user_b: UserSchema
-    ) -> Union[Type[FriendshipSchema], None]:
+    ) -> Union[FriendshipSchema, None]:
         """Retrieves a friendship where either user_a is the requester and user_b is the addressee or vice-versa. Stores
         the result in self.friendship and returns it.
 
@@ -91,7 +91,6 @@ class FriendshipHandler(DatabaseHandler):
         ).self_group()
 
         self.friendship = self._get_record_with_not_found_raise(
-            self._db,
             FriendshipSchema,
             or_(*[a, b]),
         )
@@ -147,12 +146,10 @@ def address_friendship_request_as_route(
     ],
 ):
     addressee_handler = UserHandler(db)
-    addressee_handler.get_user(UserSchema.username == requester_username)
+    addressee = addressee_handler.get_user(UserSchema.username == requester_username)
 
     friendship_handler = FriendshipHandler(db)
 
-    friendship_handler.get_friendship_bidirectional_query(
-        addressee_handler.user, current_user
-    )
+    friendship_handler.get_friendship_bidirectional_query(addressee, current_user)
 
     address_friendship_request(friendship_handler, new_status_code_id)

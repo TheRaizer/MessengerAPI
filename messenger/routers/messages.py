@@ -1,18 +1,13 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import List
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
-from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_schema import (
-    GroupChatMemberSchema,
-)
-from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
-    MessageSchema,
-)
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.helpers.db import DatabaseHandler
 from messenger.helpers.friends import FriendshipHandler
+from messenger.helpers.group_chat import GroupChatHandler
+from messenger.helpers.message import MessageHandler
+from messenger.helpers.user_handler import UserHandler
 from messenger.helpers.users import get_current_active_user
 from sqlalchemy.orm import Session
 from messenger.models.message_model import BaseMessageModel, CreateMessageModel
@@ -66,50 +61,42 @@ def send_message(
     Returns:
         OKModel: whether the message was successfully sent
     """
-
-    database_handler = DatabaseHandler(db)
-    addressee: Optional[UserSchema] = None
+    addressee_handler = UserHandler(db)
+    addressee = None
 
     if body.group_chat_id:
-        # ensure that a db record connecting this user and the group chat exists
-        database_handler._get_record_with_not_found_raise(
-            GroupChatMemberSchema,
-            "not a member of this groupchat",
-            GroupChatMemberSchema.group_chat_id == body.group_chat_id,
-            GroupChatMemberSchema.member_id == current_user.user_id,
-        )
+        group_chat_handler = GroupChatHandler(db)
+
+        if not group_chat_handler.is_user_in_group_chat(
+            body.group_chat_id, current_user
+        ):
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "user not found")
     else:
-        addressee = database_handler._get_record_with_not_found_raise(
-            UserSchema,
-            "addressee with the given username does not exist",
+        addressee = addressee_handler.get_user(
             UserSchema.username == clean(addressee_username),
         )
 
-        friendship_service = FriendshipHandler(db)
-        friendship_service.get_friendship_bidirectional_query(current_user, addressee)
+        friendship_handler = FriendshipHandler(db)
+        friendship_handler.get_friendship_bidirectional_query(current_user, addressee)
 
+        latest_status = friendship_handler.get_latest_friendship_status()
         # friendship must be accepted
         if (
-            friendship_service.friendship is None
-            or friendship_service.get_latest_friendship_status().status_code_id
-            != FriendshipStatusCode.ACCEPTED.value
+            latest_status is None
+            or latest_status != FriendshipStatusCode.ACCEPTED.value
         ):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=must_be_their_friend_detail,
             )
 
-    message = MessageSchema(
-        sender_id=current_user.user_id,
-        reciever_id=getattr(addressee, "user_id", None),
-        content=body.content,
-        created_date_time=datetime.now(),
-        group_chat_id=getattr(body, "group_chat_id", None),
+    message_handler = MessageHandler(db)
+    message = message_handler.send_message(
+        current_user.user_id,
+        getattr(addressee, "user_id", None),
+        body.content,
+        getattr(body, "group_chat_id", None),
     )
-
-    db.add(message)
-    db.commit()
-    db.refresh(message)
 
     message_model = BaseMessageModel(
         content=message.content,

@@ -1,11 +1,12 @@
-from typing import List, Optional, TypeVar
+from typing import List, Optional, Type, TypeVar
 
 from fastapi import HTTPException, status
+from sqlalchemy import Table
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import MultipleResultsFound
 
-T = TypeVar("T")
+T = TypeVar("T", bound=Table)
 
 
 class DatabaseHandler:
@@ -39,7 +40,7 @@ class DatabaseHandler:
 
         return db_record
 
-    def _get_records(self, Schema: T, *criterion) -> Optional[List[T]]:
+    def _get_records(self, Schema: Type[T], *criterion) -> Optional[List[T]]:
         """Retrieve a list of records from a database.
 
         Args:
@@ -69,7 +70,7 @@ class DatabaseHandler:
         Returns:
             Base: returns a database record.
         """
-        db_record = self._get_record(self._db, Schema, *criterion)
+        db_record = self._get_record(Schema, *criterion)
 
         if db_record is None:
             raise HTTPException(
