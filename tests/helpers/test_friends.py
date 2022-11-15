@@ -10,12 +10,9 @@ from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema impo
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from sqlalchemy.orm import Session
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
 from messenger.helpers.friends import FriendshipHandler, address_friendship_request
-from tests.conftest import add_initial_friendship_status_codes
 
 # the date that the initial records will be added at
 FROZEN_DATE = "2022-11-07"

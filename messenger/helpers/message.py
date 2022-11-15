@@ -35,7 +35,7 @@ class MessageHandler(DatabaseHandler):
 
     def get_message(self, *criterion):
         self.message = self._get_record_with_not_found_raise(
-            MessageSchema, "no such message exists", criterion
+            MessageSchema, "no such message exists", *criterion
         )
 
         return self.message

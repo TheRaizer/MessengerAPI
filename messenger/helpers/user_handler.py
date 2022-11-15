@@ -11,7 +11,7 @@ class UserHandler(DatabaseHandler):
 
     def get_user(self, *criterion):
         self.user = self._get_record_with_not_found_raise(
-            UserSchema, "no such user exists", criterion
+            UserSchema, "no such user exists", *criterion
         )
 
         return self.user

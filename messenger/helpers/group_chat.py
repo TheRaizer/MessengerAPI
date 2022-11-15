@@ -26,7 +26,7 @@ class GroupChatHandler(DatabaseHandler):
 
     def get_group_chat(self, *criterion):
         self.group_chat = self._get_record_with_not_found_raise(
-            GroupChatSchema, "no such group chat exists", criterion
+            GroupChatSchema, "no such group chat exists", *criterion
         )
 
         return self.group_chat

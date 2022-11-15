@@ -1,4 +1,5 @@
 from operator import or_
+from typing import List
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -27,9 +28,15 @@ router = APIRouter(
 )
 
 
-@router.get("/", status_code=status.HTTP_200_OK)
-def get_friendships(current_user: UserSchema = Depends(get_current_active_user)):
-    """Retrieves a users friendships, both those requested and those recieved.
+@router.get(
+    "/requests/recieved",
+    status_code=status.HTTP_200_OK,
+    response_model=List[FriendshipModel],
+)
+def get_friendship_requests_recieved(
+    current_user: UserSchema = Depends(get_current_active_user),
+):
+    """Retrieves a users friendship requests recieved
 
     Args:
         current_user (UserSchema, optional): the current signed-in user whose data will be retrieved. Defaults to Depends(get_current_active_user).
@@ -37,10 +44,48 @@ def get_friendships(current_user: UserSchema = Depends(get_current_active_user))
     Returns:
         _type_: the friendship requests recieved, and those sent.
     """
-    return {
-        "sent": current_user.friend_requests_sent,
-        "recieved": current_user.friend_requests_recieved,
-    }
+    friendship_requests_recieved_models = list(
+        map(
+            lambda friendship_schema: FriendshipModel(
+                requester_id=friendship_schema.requester_id,
+                addressee_id=friendship_schema.addressee_id,
+                created_date_time=friendship_schema.created_date_time,
+            ),
+            current_user.friend_requests_recieved,
+        )
+    )
+
+    return friendship_requests_recieved_models
+
+
+@router.get(
+    "/requests/sent",
+    status_code=status.HTTP_200_OK,
+    response_model=List[FriendshipModel],
+)
+def get_friendship_requests_sent(
+    current_user: UserSchema = Depends(get_current_active_user),
+):
+    """Retrieves a users friendship requests sent
+
+    Args:
+        current_user (UserSchema, optional): the current signed-in user whose data will be retrieved. Defaults to Depends(get_current_active_user).
+
+    Returns:
+        _type_: the friendship requests recieved, and those sent.
+    """
+    friendship_requests_sent_models = list(
+        map(
+            lambda friendship_schema: FriendshipModel(
+                requester_id=friendship_schema.requester_id,
+                addressee_id=friendship_schema.addressee_id,
+                created_date_time=friendship_schema.created_date_time,
+            ),
+            current_user.friend_requests_sent,
+        )
+    )
+
+    return friendship_requests_sent_models
 
 
 @router.get("/requests/accepted", status_code=status.HTTP_200_OK)
