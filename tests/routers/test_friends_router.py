@@ -1,15 +1,16 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-
 import pytest
-from _submodules.messenger_utils.messenger_schemas.schema import database_session
-from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.fastApi import app
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
+
+from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from messenger.constants.friendship_status_codes import FriendshipStatusCode
+from messenger.fastApi import app
 from messenger.helpers.users import get_current_active_user
 
 friendship_requests_sent = [
@@ -33,19 +34,19 @@ current_active_user = UserSchema(
 )
 
 
-async def override_get_current_active_user():
+def override_get_current_active_user():
     current_active_user.friend_requests_recieved = friendship_requests_recieved
     current_active_user.friend_requests_sent = friendship_requests_sent
 
-    yield current_active_user
+    return current_active_user
 
 
 session_mock = MagicMock()
 
 
-async def override_database_session():
-    yield session_mock
+def override_database_session():
     session_mock.reset_mock()
+    return session_mock
 
 
 client = TestClient(app)
@@ -82,36 +83,126 @@ def test_get_friendship_requests_recieved():
 
 
 @pytest.mark.parametrize("username", ["Some_username12", "_another_user", "hi_im_user"])
-def test_accept_friendship_request(username: str):
-    with patch(
-        "messenger.routers.friends.address_friendship_request_as_route"
-    ) as address_friendship_request_as_route_mock:
-        response = client.post(
-            f"/friends/requests/accept?requester_username={username}"
-        )
+@patch("messenger.routers.friends.address_friendship_request_as_route")
+def test_accept_friendship_request(
+    address_friendship_request_as_route_mock: MagicMock, username: str
+):
+    response = client.post(f"/friends/requests/accept?requester_username={username}")
 
-        assert response.status_code == 201
-        address_friendship_request_as_route_mock.assert_called_once_with(
-            session_mock,
-            current_active_user,
-            username,
-            FriendshipStatusCode.ACCEPTED,
-        )
+    assert response.status_code == 201
+    address_friendship_request_as_route_mock.assert_called_once_with(
+        session_mock,
+        current_active_user,
+        username,
+        FriendshipStatusCode.ACCEPTED,
+    )
 
 
 @pytest.mark.parametrize("username", ["ome_2name12", "pillsubryw22", "testtest_"])
-def test_decline_friendship_request(username):
-    with patch(
-        "messenger.routers.friends.address_friendship_request_as_route"
-    ) as address_friendship_request_as_route_mock:
-        response = client.post(
-            f"/friends/requests/decline?requester_username={username}"
+@patch("messenger.routers.friends.address_friendship_request_as_route")
+def test_decline_friendship_request(
+    address_friendship_request_as_route_mock: MagicMock, username: str
+):
+    response = client.post(f"/friends/requests/decline?requester_username={username}")
+
+    assert response.status_code == 201
+    address_friendship_request_as_route_mock.assert_called_once_with(
+        session_mock,
+        current_active_user,
+        username,
+        FriendshipStatusCode.DECLINED,
+    )
+
+
+class TestBlockFriendship:
+    get_user_to_block = lambda self, username: UserSchema(
+        user_id=1224, username={username}, password_hash="some_hash"
+    )
+
+    @pytest.mark.parametrize("username", ["helloooo_wORLd23", "3322_Wad", "_puT_223D"])
+    @patch("messenger.routers.friends.FriendshipHandler")
+    @patch("messenger.routers.friends.UserHandler")
+    def test_when_friendship_exists(
+        self,
+        UserHandlerMock: MagicMock,
+        FriendshipHandlerMock: MagicMock,
+        username: str,
+    ):
+        user_to_block = self.get_user_to_block(username)
+        friendship_to_block = FriendshipSchema(
+            requester_id=current_active_user.user_id,
+            addressee_id=user_to_block.user_id,
+            created_date_time=datetime.now(),
         )
 
+        UserHandlerMock.return_value.get_user.return_value = user_to_block
+        FriendshipHandlerMock.get_friendship_bidirectional_query.return_value = (
+            friendship_to_block
+        )
+
+        response = client.post(
+            f"friends/requests/block?user_to_block_username={username}"
+        )
+
+        UserHandlerMock.assert_called_once()
         assert response.status_code == 201
-        address_friendship_request_as_route_mock.assert_called_once_with(
-            session_mock,
-            current_active_user,
-            username,
-            FriendshipStatusCode.DECLINED,
+        UserHandlerMock.return_value.get_user.assert_called_once()
+        FriendshipHandlerMock.return_value.get_friendship_bidirectional_query.assert_called_once_with(
+            user_to_block, current_active_user
+        )
+        FriendshipHandlerMock.return_value.add_new_status.assert_called_once_with(
+            FriendshipHandlerMock().friendship.requester_id,
+            FriendshipHandlerMock().friendship.addressee_id,
+            current_active_user.user_id,
+            FriendshipStatusCode.BLOCKED,
+        )
+
+    @freeze_time("2022-11-06")
+    @pytest.mark.parametrize("username", ["helloooo_wORLd23", "3322_Wad", "_puT_223D"])
+    @patch("messenger.routers.friends.FriendshipHandler")
+    @patch("messenger.routers.friends.UserHandler")
+    def test_when_friendship_does_not_exist(
+        self,
+        UserHandlerMock: MagicMock,
+        FriendshipHandlerMock: MagicMock,
+        username: str,
+    ):
+        user_to_block = self.get_user_to_block(username)
+        friendship_to_create = FriendshipSchema(
+            requester_id=current_active_user.user_id,
+            addressee_id=user_to_block.user_id,
+            created_date_time=datetime.now(),
+        )
+
+        UserHandlerMock.return_value.get_user.return_value = user_to_block
+        FriendshipHandlerMock.return_value.get_friendship_bidirectional_query.return_value = (
+            None
+        )
+
+        with patch(
+            "messenger.routers.friends.FriendshipSchema"
+        ) as FriendshipSchemaMock:
+            FriendshipSchemaMock.return_value = friendship_to_create
+            response = client.post(
+                f"friends/requests/block?user_to_block_username={username}"
+            )
+            assert response.status_code == 201
+            FriendshipSchemaMock.assert_called_once_with(
+                requester_id=friendship_to_create.requester_id,
+                addressee_id=friendship_to_create.addressee_id,
+                created_date_time=friendship_to_create.created_date_time,
+            )
+            assert FriendshipHandlerMock.return_value.friendship == friendship_to_create
+            session_mock.add.assert_called_once_with(FriendshipSchemaMock.return_value)
+
+        UserHandlerMock.assert_called_once()
+        UserHandlerMock.return_value.get_user.assert_called_once()
+        FriendshipHandlerMock.return_value.get_friendship_bidirectional_query.assert_called_once_with(
+            user_to_block, current_active_user
+        )
+        FriendshipHandlerMock.return_value.add_new_status.assert_called_once_with(
+            FriendshipHandlerMock().friendship.requester_id,
+            FriendshipHandlerMock().friendship.addressee_id,
+            current_active_user.user_id,
+            FriendshipStatusCode.BLOCKED,
         )
