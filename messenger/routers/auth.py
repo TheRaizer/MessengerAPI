@@ -42,13 +42,15 @@ def sign_up(
     """
     user_handler = UserHandler(db)
 
-    user = user_handler.get_user(UserSchema.email == clean(form_data.username))
-
-    if user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Account exists",
-        )
+    try:
+        user = user_handler.get_user(UserSchema.email == clean(form_data.username))
+        if user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Account exists",
+            )
+    except HTTPException:
+        pass
 
     # form_data.username represents the user's email
     user = create_user(

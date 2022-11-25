@@ -7,13 +7,17 @@ from _submodules.messenger_utils.messenger_schemas.schema import database_sessio
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.environment_variables import JWT_SECRET
 from messenger.helpers.auth import (
-    ALGORITHM,
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
-    TokenData,
 )
 from messenger.helpers.auth import oauth2_scheme
 from messenger.helpers.user_handler import UserHandler
-from .auth import is_email_valid, is_password_valid, is_username_valid, password_hasher
+from .auth import (
+    is_email_valid,
+    is_password_valid,
+    is_username_valid,
+    password_hasher,
+    validate_access_token,
+)
 
 
 async def get_current_user(
@@ -38,20 +42,15 @@ async def get_current_user(
     Returns:
         UserSchema: The users data from the database.
     """
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+    valid_token = validate_access_token(token, JWT_SECRET)
 
-        if payload.get("email") is None:
-            raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
-        token_data = TokenData(**payload)
-
-    except JWTError:
+    if valid_token is None:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
     user_handler = UserHandler(db)
     try:
         user = user_handler.get_user(
-            UserSchema.email == token_data.email,
+            UserSchema.email == valid_token.email,
         )
 
         return user

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional, Union
-from jose import jwt
+from jose import JWTError, jwt
 from argon2 import PasswordHasher
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
@@ -35,6 +35,17 @@ UNAUTHORIZED_CREDENTIALS_EXCEPTION = HTTPException(
     detail="Could not validate credentials",
     headers={"WWW-Authenticate": "Bearer"},
 )
+
+
+def validate_access_token(token: str, secret: str) -> Optional[TokenData]:
+    try:
+        payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
+        token_data = TokenData(**payload)
+
+    except JWTError:
+        return None
+
+    return token_data
 
 
 def create_access_token(
@@ -150,10 +161,11 @@ def is_username_valid(db: Session, username: str) -> bool:
         user_handler = UserHandler(db)
 
         try:
-            user = user_handler.get_user(UserSchema.username == username)
-            return user is None
-        except HTTPException:
+            # if user exists with this username no HTTPException is thrown
+            user_handler.get_user(UserSchema.username == username)
             return False
+        except HTTPException:
+            return True
 
     return False
 
@@ -177,9 +189,9 @@ def is_email_valid(db: Session, email: str) -> bool:
         user_handler = UserHandler(db)
 
         try:
-            user = user_handler.get_user(UserSchema.email == email)
-            return user is None
-        except HTTPException:
+            user_handler.get_user(UserSchema.email == email)
             return False
+        except HTTPException:
+            return True
 
     return False
