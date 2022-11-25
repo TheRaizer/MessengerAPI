@@ -139,10 +139,9 @@ def is_username_valid(db: Session, username: str) -> bool:
     """Verifies whether a username is valid.
 
     Rules for an acceptable username:
-        1. No '_' or '.' at the end
+        1. No '_' or '.' at the end or beginning
         2. Only lowercase, uppercase, digits, '_' and '.' characters are allowed
         3. No '__' or '_.' or '._' or '..' inside
-        4. No '_' or '.' at the beginning
         5. must have a length between 3 and 25 inclusive.
 
     Args:

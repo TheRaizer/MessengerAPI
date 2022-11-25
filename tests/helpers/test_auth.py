@@ -1,4 +1,6 @@
 from typing import Any
+from unittest.mock import MagicMock, patch
+from fastapi import HTTPException, status
 from freezegun import freeze_time
 from datetime import datetime, timedelta
 
@@ -11,8 +13,20 @@ from messenger.helpers.auth import (
     TokenData,
     create_access_token,
     create_login_token,
+    is_email_valid,
+    is_password_valid,
+    is_username_valid,
 )
 from jose import ExpiredSignatureError, JWTError, jwt
+
+from .conftest import (
+    valid_usernames,
+    valid_passwords,
+    valid_emails,
+    invalid_usernames,
+    invalid_passwords,
+    invalid_emails,
+)
 
 test_datas = [
     {"key_1": 1, "key_2": "some-value"},
@@ -111,3 +125,85 @@ def test_create_login_token(test_user_record: UserSchema):
 
     with pytest.raises(JWTError):
         jwt.decode(login_token, JWT_SECRET + "-invalid", algorithms=[ALGORITHM])
+
+
+class TestIsPasswordValid:
+    @pytest.mark.parametrize(
+        "password",
+        valid_passwords,
+    )
+    def test_valid_password(self, password: str):
+        is_valid = is_password_valid(password)
+        assert is_valid is True
+
+    @pytest.mark.parametrize(
+        "password",
+        invalid_passwords,
+    )
+    def test_invalid_password(self, password: str):
+        is_valid = is_password_valid(password)
+        assert is_valid is False
+
+
+class TestIsUsernameValid:
+    @pytest.mark.parametrize(
+        "username",
+        valid_usernames,
+    )
+    @patch("messenger.helpers.auth.UserHandler.get_user")
+    def test_valid_username(self, get_user_mock: MagicMock, username: str):
+        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        is_valid = is_username_valid(MagicMock(), username)
+        assert is_valid is True
+
+    @pytest.mark.parametrize(
+        "username",
+        invalid_usernames,
+    )
+    @patch("messenger.helpers.auth.UserHandler.get_user")
+    def test_invalid_username(self, get_user_mock: MagicMock, username: str):
+        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        is_valid = is_username_valid(MagicMock(), username)
+        assert is_valid is False
+
+    @pytest.mark.parametrize(
+        "username",
+        valid_usernames,
+    )
+    @patch("messenger.helpers.auth.UserHandler.get_user")
+    def test_username_exists(self, get_user_mock: MagicMock, username: str):
+        get_user_mock.return_value = test_user_records[0]
+        is_valid = is_username_valid(MagicMock(), username)
+        assert is_valid is False
+
+
+class TestIsEmailValid:
+    @pytest.mark.parametrize(
+        "email",
+        valid_emails,
+    )
+    @patch("messenger.helpers.auth.UserHandler.get_user")
+    def test_valid_username(self, get_user_mock: MagicMock, email: str):
+        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        is_valid = is_email_valid(MagicMock(), email)
+        assert is_valid is True
+
+    @pytest.mark.parametrize(
+        "email",
+        invalid_emails,
+    )
+    @patch("messenger.helpers.auth.UserHandler.get_user")
+    def test_invalid_username(self, get_user_mock: MagicMock, email: str):
+        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        is_valid = is_email_valid(MagicMock(), email)
+        assert is_valid is False
+
+    @pytest.mark.parametrize(
+        "email",
+        valid_emails,
+    )
+    @patch("messenger.helpers.auth.UserHandler.get_user")
+    def test_username_exists(self, get_user_mock: MagicMock, email: str):
+        get_user_mock.return_value = test_user_records[0]
+        is_valid = is_email_valid(MagicMock(), email)
+        assert is_valid is False

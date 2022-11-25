@@ -1,42 +1,17 @@
 from unittest.mock import MagicMock, patch
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 import pytest
 from pytest_mock import MockerFixture
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.users import create_user
-
-valid_usernames = ["hi_iamusername", "some_other_username", "bob231", "hellothere2"]
-invalid_usernames = [
-    "_invalid",
-    "bob__23",
-    "tim#2",
-    "a",
-    "this_username_is_way_too_long_to_be_acceptable",
-]
-
-valid_passwords = [
-    "AValidPassword23",
-    "AnotherValid23Password",
-    "23Valid**Pass",
-    "//Valid/'Pass2332",
-]
-invalid_passwords = [
-    "Test1ng",
-    "notavalidpassword23",
-    "notAvalidpassword",
-    "23322122awds",
-    "invalidpassword",
-    "23212",
-    "NOTVALID",
-]
-
-valid_emails = [
-    "email@email.com",
-    "something@email.com",
-    "my.ownsite@ourearth.org",
-    "aperson@gmail.com",
-]
-invalid_emails = ["@email.com", "cool.cool", "not an email", "google.email@com"]
+from .conftest import (
+    valid_usernames,
+    valid_passwords,
+    valid_emails,
+    invalid_usernames,
+    invalid_passwords,
+    invalid_emails,
+)
 
 
 class TestCreateUser:
@@ -107,10 +82,15 @@ class TestCreateUser:
             )
 
     @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.users.is_username_valid")
     def test_it_fails_on_existent_email(
-        self, get_user_mock: MagicMock, mocker: MockerFixture
+        self,
+        is_username_valid_mock: MagicMock,
+        get_user_mock: MagicMock,
+        mocker: MockerFixture,
     ):
         session_mock = mocker.MagicMock()
+        is_username_valid_mock.return_value = True
         get_user_mock.return_value = UserSchema(
             username="username", password_hash="hash", email="email"
         )
@@ -133,15 +113,15 @@ class TestCreateUser:
         self,
         password_hasher_mock: MagicMock,
         get_user_mock: MagicMock,
-        mocker: MockerFixture,
         valid_password: str,
         valid_email: str,
         valid_username: str,
+        mocker: MockerFixture,
     ):
         session_mock = mocker.MagicMock()
 
-        # set to none so that no exceptions are raised due to an existent email or username
-        get_user_mock.return_value = None
+        # raises exception so that no existent usernames or emails are found
+        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
         # mock the hasher so no hashing actually occurs
         password_hasher_mock.hash = lambda password: password
