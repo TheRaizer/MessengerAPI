@@ -63,7 +63,7 @@ class TestCreateUser:
         with pytest.raises(HTTPException):
             create_user(session_mock, valid_password, valid_email, invalid_username)
 
-    @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_it_fails_on_existent_username(
         self, get_user_mock: MagicMock, mocker: MockerFixture
     ):
@@ -81,7 +81,7 @@ class TestCreateUser:
                 valid_usernames[0],
             )
 
-    @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
     @patch("messenger.helpers.users.is_username_valid")
     def test_it_fails_on_existent_email(
         self,
@@ -107,12 +107,14 @@ class TestCreateUser:
         "valid_password, valid_email, valid_username",
         zip(valid_passwords, valid_emails, valid_usernames),
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     @patch("messenger.helpers.users.password_hasher")
     def test_it_adds_user_to_db(
         self,
         password_hasher_mock: MagicMock,
-        get_user_mock: MagicMock,
+        username_get_user_mock: MagicMock,
+        email_get_user_mock: MagicMock,
         valid_password: str,
         valid_email: str,
         valid_username: str,
@@ -121,7 +123,12 @@ class TestCreateUser:
         session_mock = mocker.MagicMock()
 
         # raises exception so that no existent usernames or emails are found
-        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        username_get_user_mock.side_effect = HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+        email_get_user_mock.side_effect = HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+        )
 
         # mock the hasher so no hashing actually occurs
         password_hasher_mock.hash = lambda password: password
