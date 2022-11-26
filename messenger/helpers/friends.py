@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from operator import attrgetter
 from typing import Literal, Optional, Union
 from fastapi import HTTPException, status
@@ -16,6 +17,8 @@ from messenger.helpers.db import DatabaseHandler
 from sqlalchemy.orm import Session
 
 from messenger.helpers.user_handler import UserHandler
+
+logger = logging.getLogger(__name__)
 
 
 class FriendshipHandler(DatabaseHandler):
@@ -65,6 +68,13 @@ class FriendshipHandler(DatabaseHandler):
         )
 
         self._db.add(new_status)
+
+        logger.info(
+            "(requester_id: %s, addressee_id: %s, status_code_id: %s) add friendship status to session.",
+            new_status.requester_id,
+            new_status.addressee_id,
+            new_status.status_code_id,
+        )
 
         return new_status
 

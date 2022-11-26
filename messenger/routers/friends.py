@@ -181,14 +181,14 @@ def send_friendship_request(
     try:
         db.add(new_friendship)
         logger.info(
-            "requester: %s, addressee: %s, friendship has been successfully inserted into the friendship table",
+            "(requester: %s, addressee: %s) friendship has been successfully inserted into the friendship table",
             new_friendship.requester_id,
             new_friendship.addressee_id,
         )
 
         db.add(new_status)
         logger.info(
-            "requester: %s, addressee: %s, specified_date_time: %s, status_code_id: %s friendship status has been successfully inserted into the friendship_status table",
+            "(requester: %s, addressee: %s, specified_date_time: %s, status_code_id: %s) friendship status has been successfully inserted into the friendship_status table",
             new_friendship.requester_id,
             new_friendship.addressee_id,
             new_status.specified_date_time,
@@ -290,6 +290,11 @@ def block_friendship_request(
             created_date_time=datetime.now(),
         )
         db.add(friendship)
+        logger.info(
+            "(requester_id: %s, addressee_id: %s) add friendship to session.",
+            friendship.requester_id,
+            friendship.addressee_id,
+        )
 
         friendship_handler.friendship = friendship
     else:
@@ -304,3 +309,9 @@ def block_friendship_request(
     )
 
     db.commit()
+    logger.info(
+        "(requester_id: %s, addressee_id: %s, friendship_status_code_id: %s) add friendship and friendship status to respective tables.",
+        friendship.requester_id,
+        friendship.addressee_id,
+        FriendshipStatusCode.BLOCKED,
+    )
