@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 from argon2 import exceptions
 from fastapi import Depends, HTTPException, status
@@ -17,6 +18,9 @@ from .auth.auth_token import (
     validate_access_token,
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 async def get_current_user(
@@ -154,5 +158,7 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    logger.info(f"{user.user_id} user has been successfully inserted into users table")
 
     return user
