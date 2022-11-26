@@ -5,18 +5,17 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from messenger.constants.auth_details import PasswordErro
 from messenger.environment_variables import JWT_SECRET
-from messenger.helpers.auth import (
-    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
-)
-from messenger.helpers.auth import oauth2_scheme
+from messenger.helpers.auth.is_email_valid import is_email_valid
+from messenger.helpers.auth.is_password_valid import is_password_valid
+from messenger.helpers.auth.is_username_valid import is_username_valid
+from .auth.auth_token import oauth2_scheme
 from messenger.helpers.user_handler import UserHandler
-from .auth import (
-    is_email_valid,
-    is_password_valid,
-    is_username_valid,
+from .auth.auth_token import (
     password_hasher,
     validate_access_token,
+    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
 )
 
 
@@ -127,17 +126,26 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     Returns:
         UserSchema: the user that was created in the database.
     """
+
+    # check if email is valid or exists
+    email_validity_data = is_email_valid(db, email)
+    if not email_validity_data.is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=email_validity_data.detail
+        )
+
+    # check if username is valid or taken
+    username_validity_data = is_username_valid(db, username)
+    if not username_validity_data.is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=username_validity_data.detail,
+        )
+
     if not is_password_valid(password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid password"
-        )
-    if not is_username_valid(db, username):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid username"
-        )
-    if not is_email_valid(db, email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=PasswordErro.INVALID_PASSWORD.value,
         )
 
     password_hash = password_hasher.hash(password)

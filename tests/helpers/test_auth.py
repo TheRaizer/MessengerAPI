@@ -6,18 +6,20 @@ from datetime import datetime, timedelta
 
 import pytest
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from messenger.constants.auth_details import EmailError, UsernameError
 from messenger.environment_variables import JWT_SECRET
-from messenger.helpers.auth import (
+from messenger.helpers.auth.auth_token import (
     ALGORITHM,
     LOGIN_TOKEN_EXPIRE_MINUTES,
     TokenData,
     create_access_token,
     create_login_token,
-    is_email_valid,
-    is_password_valid,
-    is_username_valid,
 )
 from jose import ExpiredSignatureError, JWTError, jwt
+from messenger.helpers.auth.is_email_valid import is_email_valid
+
+from messenger.helpers.auth.is_password_valid import is_password_valid
+from messenger.helpers.auth.is_username_valid import is_username_valid
 
 from .conftest import (
     valid_usernames,
@@ -150,31 +152,37 @@ class TestIsUsernameValid:
         "username",
         valid_usernames,
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_valid_username(self, get_user_mock: MagicMock, username: str):
         get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        is_valid = is_username_valid(MagicMock(), username)
-        assert is_valid is True
+        validity_data = is_username_valid(MagicMock(), username)
+
+        assert validity_data.is_valid is True
+        assert validity_data.detail is None
 
     @pytest.mark.parametrize(
         "username",
         invalid_usernames,
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_invalid_username(self, get_user_mock: MagicMock, username: str):
         get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        is_valid = is_username_valid(MagicMock(), username)
-        assert is_valid is False
+        validity_data = is_username_valid(MagicMock(), username)
+
+        assert validity_data.is_valid is False
+        assert validity_data.detail == UsernameError.INVALID_USERNAME.value
 
     @pytest.mark.parametrize(
         "username",
         valid_usernames,
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
+    @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_username_exists(self, get_user_mock: MagicMock, username: str):
         get_user_mock.return_value = test_user_records[0]
-        is_valid = is_username_valid(MagicMock(), username)
-        assert is_valid is False
+        validity_data = is_username_valid(MagicMock(), username)
+
+        assert validity_data.is_valid is False
+        assert validity_data.detail == UsernameError.USERNAME_TAKEN.value
 
 
 class TestIsEmailValid:
@@ -182,28 +190,34 @@ class TestIsEmailValid:
         "email",
         valid_emails,
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
-    def test_valid_username(self, get_user_mock: MagicMock, email: str):
+    @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
+    def test_valid_email(self, get_user_mock: MagicMock, email: str):
         get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        is_valid = is_email_valid(MagicMock(), email)
-        assert is_valid is True
+        validity_data = is_email_valid(MagicMock(), email)
+
+        assert validity_data.is_valid is True
+        assert validity_data.detail is None
 
     @pytest.mark.parametrize(
         "email",
         invalid_emails,
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
-    def test_invalid_username(self, get_user_mock: MagicMock, email: str):
+    @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
+    def test_invalid_email(self, get_user_mock: MagicMock, email: str):
         get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        is_valid = is_email_valid(MagicMock(), email)
-        assert is_valid is False
+        validity_data = is_email_valid(MagicMock(), email)
+
+        assert validity_data.is_valid is False
+        assert validity_data.detail == EmailError.INVALID_EMAIL.value
 
     @pytest.mark.parametrize(
         "email",
         valid_emails,
     )
-    @patch("messenger.helpers.auth.UserHandler.get_user")
-    def test_username_exists(self, get_user_mock: MagicMock, email: str):
+    @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
+    def test_email_exists(self, get_user_mock: MagicMock, email: str):
         get_user_mock.return_value = test_user_records[0]
-        is_valid = is_email_valid(MagicMock(), email)
-        assert is_valid is False
+        validity_data = is_email_valid(MagicMock(), email)
+
+        assert validity_data.is_valid is False
+        assert validity_data.detail == EmailError.ACCOUNT_EXISTS.value
