@@ -1,3 +1,4 @@
+import logging
 from operator import or_
 from typing import List
 from bleach import clean
@@ -20,6 +21,9 @@ from messenger.helpers.friends import (
 from messenger.helpers.users import get_current_active_user
 from messenger.helpers.user_handler import UserHandler
 from messenger.models.friendship_model import FriendshipModel
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/friends",
@@ -174,10 +178,31 @@ def send_friendship_request(
         specifier_id=current_user.user_id,
     )
 
-    db.add(new_friendship)
-    db.add(new_status)
-    db.commit()
-    db.refresh(new_friendship)
+    try:
+        db.add(new_friendship)
+        logger.info(
+            "(requester: %s, addressee: %s) friendship has been successfully inserted into the friendship table",
+            new_friendship.requester_id,
+            new_friendship.addressee_id,
+        )
+
+        db.add(new_status)
+        logger.info(
+            "(requester: %s, addressee: %s, specified_date_time: %s, status_code_id: %s) friendship status has been successfully inserted into the friendship_status table",
+            new_friendship.requester_id,
+            new_friendship.addressee_id,
+            new_status.specified_date_time,
+            new_status.status_code_id,
+        )
+        db.commit()
+        db.refresh(new_friendship)
+
+    except Exception as e:
+        logger.error(
+            "failed to insert friendship status or friendship into database due to %s",
+            e,
+            exc_info=True,
+        )
 
     friendship_model = FriendshipModel(
         requester_id=new_friendship.requester_id,
@@ -265,6 +290,11 @@ def block_friendship_request(
             created_date_time=datetime.now(),
         )
         db.add(friendship)
+        logger.info(
+            "(requester_id: %s, addressee_id: %s) add friendship to session.",
+            friendship.requester_id,
+            friendship.addressee_id,
+        )
 
         friendship_handler.friendship = friendship
     else:
@@ -279,3 +309,9 @@ def block_friendship_request(
     )
 
     db.commit()
+    logger.info(
+        "(requester_id: %s, addressee_id: %s, friendship_status_code_id: %s) add friendship and friendship status to respective tables.",
+        friendship.requester_id,
+        friendship.addressee_id,
+        FriendshipStatusCode.BLOCKED,
+    )

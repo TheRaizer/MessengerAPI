@@ -2,7 +2,6 @@ import logging
 from typing import Union
 from argon2 import exceptions
 from fastapi import Depends, HTTPException, status
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
@@ -155,10 +154,21 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     password_hash = password_hasher.hash(password)
     user = UserSchema(username=username, password_hash=password_hash, email=email)
 
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-    logger.info(f"{user.user_id} user has been successfully inserted into users table")
+        logger.info(
+            "(user_id: %s) user has been successfully inserted into users table",
+            user.user_id,
+        )
+    except Exception as e:
+        logger.error(
+            "(user_id: %s) user was not inserted into users table due to %s",
+            user.user_id,
+            e,
+            exc_info=True,
+        )
 
     return user
