@@ -1,5 +1,8 @@
 import boto3
 from botocore.exceptions import ClientError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SecretsManager:
@@ -31,9 +34,9 @@ class SecretsManager:
             if stage is not None:
                 kwargs["VersionStage"] = stage
             response = self.secretsmanager_client.get_secret_value(**kwargs)
-            # logger.info("Got value for secret %s.", self.name)
+            logger.info("Got value for secret %s.", secretId)
         except ClientError:
-            # logger.exception("Couldn't get value for secret %s.", self.name)
+            logger.exception("Couldn't get value for secret %s.", secretId)
             raise
         else:
             return response
