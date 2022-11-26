@@ -160,11 +160,12 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
         db.refresh(user)
 
         logger.info(
-            "%s user has been successfully inserted into users table", user.user_id
+            "(user_id: %s) user has been successfully inserted into users table",
+            user.user_id,
         )
     except Exception as e:
         logger.error(
-            "%s user was not inserted into users table due to %s",
+            "(user_id: %s) user was not inserted into users table due to %s",
             user.user_id,
             e,
             exc_info=True,
