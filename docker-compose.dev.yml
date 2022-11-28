@@ -2,5 +2,5 @@ version: '3.4'
 
 services:
   messenger:
-    environment:
-      - PY_ENV=DEVELOPMENT
+    env_file:
+      - .dev.env
