@@ -6,7 +6,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import Use
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.friends.friendship_handler import FriendshipHandler
 from messenger.helpers.group_chat import GroupChatHandler
-from messenger.helpers.message import MessageHandler
+from messenger.messages.message_handler import MessageHandler
 from messenger.helpers.user_handler import UserHandler
 from messenger.helpers.users import get_current_active_user
 from sqlalchemy.orm import Session

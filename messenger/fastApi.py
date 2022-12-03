@@ -1,5 +1,7 @@
 from fastapi import FastAPI
-from .routers import users, auth, messages, group_chat
+
+from .messages import router as messages
+from .routers import users, auth, group_chat
 from .friends import router as friends
 
 app = FastAPI()

@@ -70,6 +70,7 @@ class DatabaseHandler:
         Returns:
             Base: returns a database record.
         """
+
         db_record = self._get_record(Schema, *criterion)
 
         if db_record is None:

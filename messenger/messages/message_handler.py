@@ -1,10 +1,13 @@
 from datetime import datetime
+import logging
 from typing import Optional
 from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
 from messenger.helpers.db import DatabaseHandler
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 
 class MessageHandler(DatabaseHandler):
@@ -30,6 +33,11 @@ class MessageHandler(DatabaseHandler):
         self._db.add(message)
         self._db.commit()
         self._db.refresh(message)
+
+        logger.info(
+            "(message_id: %s) message has been successfully inserted into the message table",
+            message.message_id,
+        )
 
         return message
 
