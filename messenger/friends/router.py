@@ -133,9 +133,12 @@ def send_friendship_request(
 
     friendship_handler = FriendshipHandler(db)
 
-    friendship = friendship_handler.get_friendship_bidirectional_query(
-        current_user, addressee
-    )
+    try:
+        friendship = friendship_handler.get_friendship_bidirectional_query(
+            current_user, addressee
+        )
+    except HTTPException:
+        friendship = None
 
     if friendship is not None:
         latest_status = friendship_handler.get_latest_friendship_status()
@@ -276,9 +279,12 @@ def block_friendship_request(
     )
 
     # attempt to fetch a friendship record with the current user as either the requester or addressee
-    friendship = friendship_handler.get_friendship_bidirectional_query(
-        user_to_block, current_user
-    )
+    try:
+        friendship = friendship_handler.get_friendship_bidirectional_query(
+            user_to_block, current_user
+        )
+    except HTTPException:
+        friendship = None
 
     # if no friendship record appears, create a new one
     if friendship is None:

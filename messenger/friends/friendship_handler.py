@@ -79,7 +79,7 @@ class FriendshipHandler(DatabaseHandler):
 
     def get_friendship_bidirectional_query(
         self, user_a: UserSchema, user_b: UserSchema
-    ) -> Union[FriendshipSchema, None]:
+    ) -> FriendshipSchema:
         """Retrieves a friendship where either user_a is the requester and user_b is the addressee or vice-versa. Stores
         the result in self.friendship and returns it.
 
@@ -101,6 +101,7 @@ class FriendshipHandler(DatabaseHandler):
 
         self.friendship = self._get_record_with_not_found_raise(
             FriendshipSchema,
+            "no friendship was found",
             or_(*[a, b]),
         )
 
