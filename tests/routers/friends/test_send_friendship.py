@@ -23,8 +23,8 @@ class TestSendFriendshipRequest:
     )
 
     @pytest.mark.parametrize("username", usernames)
-    @patch("messenger.routers.friends.FriendshipHandler")
-    @patch("messenger.routers.friends.UserHandler")
+    @patch("messenger.friends.router.FriendshipHandler")
+    @patch("messenger.friends.router.UserHandler")
     def test_when_friendship_already_requested(
         self,
         UserHandlerMock: MagicMock,
@@ -62,8 +62,8 @@ class TestSendFriendshipRequest:
         }
 
     @pytest.mark.parametrize("username", usernames)
-    @patch("messenger.routers.friends.FriendshipHandler")
-    @patch("messenger.routers.friends.UserHandler")
+    @patch("messenger.friends.router.FriendshipHandler")
+    @patch("messenger.friends.router.UserHandler")
     def test_when_friendship_already_addressed(
         self,
         UserHandlerMock: MagicMock,
@@ -86,10 +86,10 @@ class TestSendFriendshipRequest:
 
     @freeze_time("2022-11-06")
     @pytest.mark.parametrize("username", usernames)
-    @patch("messenger.routers.friends.FriendshipHandler")
-    @patch("messenger.routers.friends.UserHandler")
-    @patch("messenger.routers.friends.FriendshipSchema")
-    @patch("messenger.routers.friends.FriendshipStatusSchema")
+    @patch("messenger.friends.router.FriendshipHandler")
+    @patch("messenger.friends.router.UserHandler")
+    @patch("messenger.friends.router.FriendshipSchema")
+    @patch("messenger.friends.router.FriendshipStatusSchema")
     def test_successfully_send_friendship_request(
         self,
         FriendshipStatusSchemaMock: MagicMock,

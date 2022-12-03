@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from _submodules.messenger_utils.messenger_schemas.schema import database_session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.helpers.friends import FriendshipHandler
+from messenger.friends.friendship_handler import FriendshipHandler
 from messenger.helpers.group_chat import GroupChatHandler
 from messenger.helpers.message import MessageHandler
 from messenger.helpers.user_handler import UserHandler

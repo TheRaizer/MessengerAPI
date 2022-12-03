@@ -6,7 +6,7 @@ from .conftest import current_active_user, usernames, session_mock
 
 
 @pytest.mark.parametrize("username", usernames)
-@patch("messenger.routers.friends.address_friendship_request_as_route")
+@patch("messenger.friends.router.address_friendship_request_as_route")
 def test_accept_friendship_request(
     address_friendship_request_as_route_mock: MagicMock,
     username: str,
@@ -24,7 +24,7 @@ def test_accept_friendship_request(
 
 
 @pytest.mark.parametrize("username", usernames)
-@patch("messenger.routers.friends.address_friendship_request_as_route")
+@patch("messenger.friends.router.address_friendship_request_as_route")
 def test_decline_friendship_request(
     address_friendship_request_as_route_mock: MagicMock,
     username: str,

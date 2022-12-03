@@ -14,10 +14,8 @@ from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_sche
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
 from datetime import datetime
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.helpers.friends import (
-    FriendshipHandler,
-    address_friendship_request_as_route,
-)
+from messenger.friends.address_friendship import address_friendship_request_as_route
+from messenger.friends.friendship_handler import FriendshipHandler
 from messenger.helpers.users import get_current_active_user
 from messenger.helpers.user_handler import UserHandler
 from messenger.models.friendship_model import FriendshipModel

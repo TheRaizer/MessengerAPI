@@ -12,7 +12,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_sche
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
-from messenger.helpers.friends import FriendshipHandler, address_friendship_request
+from messenger.friends.friendship_handler import FriendshipHandler, address_friendship_request
 
 # the date that the initial records will be added at
 FROZEN_DATE = "2022-11-07"

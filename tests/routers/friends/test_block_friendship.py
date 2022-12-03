@@ -38,8 +38,8 @@ class TestBlockFriendship:
         )
 
     @pytest.mark.parametrize("username", usernames)
-    @patch("messenger.routers.friends.FriendshipHandler")
-    @patch("messenger.routers.friends.UserHandler")
+    @patch("messenger.friends.router.FriendshipHandler")
+    @patch("messenger.friends.router.UserHandler")
     def test_when_friendship_exists(
         self,
         UserHandlerMock: MagicMock,
@@ -70,8 +70,8 @@ class TestBlockFriendship:
 
     @freeze_time("2022-11-06")
     @pytest.mark.parametrize("username", usernames)
-    @patch("messenger.routers.friends.FriendshipHandler")
-    @patch("messenger.routers.friends.UserHandler")
+    @patch("messenger.friends.router.FriendshipHandler")
+    @patch("messenger.friends.router.UserHandler")
     def test_when_friendship_does_not_exist(
         self,
         UserHandlerMock: MagicMock,
@@ -93,9 +93,7 @@ class TestBlockFriendship:
 
         response: Response
 
-        with patch(
-            "messenger.routers.friends.FriendshipSchema"
-        ) as FriendshipSchemaMock:
+        with patch("messenger.friends.router.FriendshipSchema") as FriendshipSchemaMock:
             FriendshipSchemaMock.return_value = friendship_to_create
             response = client.post(
                 f"friends/requests/block?user_to_block_username={username}"
