@@ -2,7 +2,9 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException, status
 import pytest
 from pytest_mock import MockerFixture
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.helpers.users import create_user
 from .conftest import (
     valid_usernames,
@@ -29,7 +31,9 @@ class TestCreateUser:
         session_mock = mocker.MagicMock()
 
         with pytest.raises(HTTPException) as exc:
-            create_user(session_mock, invalid_password, valid_email, valid_username)
+            create_user(
+                session_mock, invalid_password, valid_email, valid_username
+            )
             assert exc.value.status_code == 400
             assert exc.value.detail == "invalid password"
 
@@ -47,7 +51,9 @@ class TestCreateUser:
         session_mock = mocker.MagicMock()
 
         with pytest.raises(HTTPException) as exc:
-            create_user(session_mock, valid_password, invalid_email, valid_username)
+            create_user(
+                session_mock, valid_password, invalid_email, valid_username
+            )
             assert exc.value.status_code == 400
             assert exc.value.detail == "invalid email"
 
@@ -65,7 +71,9 @@ class TestCreateUser:
         session_mock = mocker.MagicMock()
 
         with pytest.raises(HTTPException) as exc:
-            create_user(session_mock, valid_password, valid_email, invalid_username)
+            create_user(
+                session_mock, valid_password, valid_email, invalid_username
+            )
             assert exc.value.status_code == 400
             assert exc.value.detail == "invalid username"
 

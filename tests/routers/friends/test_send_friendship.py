@@ -43,8 +43,7 @@ class TestSendFriendshipRequest:
             created_date_time=datetime.now(),
         )
 
-        FriendshipHandlerMock.return_value.get_latest_friendship_status.return_value = \
-            FriendshipStatusSchema(
+        FriendshipHandlerMock.return_value.get_latest_friendship_status.return_value = FriendshipStatusSchema(
             requester_id=current_active_user.user_id,
             addressee_id=addressee.user_id,
             specified_date_time=datetime.now(),
