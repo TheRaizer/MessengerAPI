@@ -130,7 +130,9 @@ def test_get_friendship_bidirectional_query(
         (4, 0, 4, FriendshipStatusCode.BLOCKED),
     ],
 )
+@patch("messenger.helpers.friends.FriendshipStatusSchema")
 def test_add_new_status(
+    FriendshipStatusSchemaMock: MagicMock,
     mocker: MockerFixture,
     requester_id: int,
     addressee_id: int,
@@ -140,18 +142,23 @@ def test_add_new_status(
     session_mock = mocker.MagicMock()
     friendship_handler = FriendshipHandler(session_mock)
 
+    kwargs = {
+        "requester_id": requester_id,
+        "addressee_id": addressee_id,
+        "specified_date_time": datetime.now(),
+        "status_code_id": new_status_code_id.value,
+        "specifier_id": specifier_id,
+    }
+
+    expected_friendship_status = FriendshipStatusSchema(**kwargs)
+    FriendshipStatusSchemaMock.return_value = expected_friendship_status
+
     new_status = friendship_handler.add_new_status(
         requester_id, addressee_id, specifier_id, new_status_code_id
     )
 
-    expected_new_status = FriendshipStatusSchema(
-        requester_id=requester_id,
-        addressee_id=addressee_id,
-        specified_date_time=datetime.now(),
-        status_code_id=new_status_code_id.value,
-        specifier_id=specifier_id,
-    )
+    FriendshipStatusSchemaMock.assert_called_once_with(**kwargs)
 
-    session_mock.add.assert_called_once_with(expected_new_status)
+    session_mock.add.assert_called_once_with(expected_friendship_status)
 
-    assert new_status == expected_new_status
+    assert new_status is expected_friendship_status
