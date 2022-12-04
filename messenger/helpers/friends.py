@@ -8,7 +8,6 @@ from operator import (
 from typing import (
     Literal,
     Optional,
-    Union,
 )
 from fastapi import (
     HTTPException,
@@ -104,9 +103,9 @@ class FriendshipHandler(DatabaseHandler):
 
     def add_new_status(
         self,
-        requester_id: str,
-        addressee_id: str,
-        specifier_id: str,
+        requester_id: int,
+        addressee_id: int,
+        specifier_id: int,
         new_status_code_id: FriendshipStatusCode,
     ):
         """Adds a new friendship status to the database.

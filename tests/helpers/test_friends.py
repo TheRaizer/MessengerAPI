@@ -5,7 +5,6 @@ from freezegun import freeze_time
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import and_, or_
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
@@ -62,41 +61,68 @@ def test_get_latest_friendship_status(mocker: MockerFixture):
     assert latest_status == status
 
 
-@freeze_time(FROZEN_DATE)
-@patch(
-    "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
-)
-def test_raise_if_blocked(
-    get_latest_friendship_status_mock: MagicMock, mocker: MockerFixture
-):
-    get_latest_friendship_status_mock.return_value = FriendshipStatusSchema(
-        requester_id=1,
-        addressee_id=2,
-        specified_date_time=datetime.now(),
-        status_code_id=FriendshipStatusCode.REQUESTED.value,
-        specifier_id=1,
+class TestRaiseIfBlocked:
+    @freeze_time(FROZEN_DATE)
+    @patch(
+        "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
     )
+    def test_raise_if_blocked(
+        self,
+        get_latest_friendship_status_mock: MagicMock,
+        mocker: MockerFixture,
+    ):
+        friendship_handler = FriendshipHandler(mocker.MagicMock())
 
-    friendship_handler = FriendshipHandler(mocker.MagicMock())
+        get_latest_friendship_status_mock.return_value = FriendshipStatusSchema(
+            requester_id=1,
+            addressee_id=2,
+            specified_date_time=datetime.now() + timedelta(days=1),
+            status_code_id=FriendshipStatusCode.BLOCKED.value,
+            specifier_id=2,
+        )
 
-    # should run without raising since friendship is initialized with requested status
-    friendship_handler.raise_if_blocked()
+        # should raise now that the friendship has a new status with a blocked status code
+        with pytest.raises(HTTPException) as exc:
+            friendship_handler.raise_if_blocked()
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "friendship is blocked"
 
-    get_latest_friendship_status_mock.return_value = FriendshipStatusSchema(
-        requester_id=1,
-        addressee_id=2,
-        specified_date_time=datetime.now() + timedelta(days=1),
-        status_code_id=FriendshipStatusCode.BLOCKED.value,
-        specifier_id=2,
+    @freeze_time(FROZEN_DATE)
+    @pytest.mark.parametrize(
+        "status_code_id_no_raise",
+        [
+            FriendshipStatusCode.REQUESTED.value,
+            FriendshipStatusCode.ACCEPTED.value,
+            FriendshipStatusCode.DECLINED.value,
+        ],
     )
+    @patch(
+        "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
+    )
+    def test_raise_if_blocked_when_not_blocked(
+        self,
+        get_latest_friendship_status_mock: MagicMock,
+        mocker: MockerFixture,
+        status_code_id_no_raise: str,
+    ):
+        get_latest_friendship_status_mock.return_value = FriendshipStatusSchema(
+            requester_id=1,
+            addressee_id=2,
+            specified_date_time=datetime.now(),
+            status_code_id=status_code_id_no_raise,
+            specifier_id=1,
+        )
 
-    # should raise now that the friendship has a new status with a blocked status code
-    with pytest.raises(HTTPException) as exc:
+        friendship_handler = FriendshipHandler(mocker.MagicMock())
+
+        # should run without raising since friendship is initialized with requested status
         friendship_handler.raise_if_blocked()
-        assert exc.value.status_code == 400
-        assert exc.value.detail == "friendship is blocked"
 
 
+@pytest.mark.parametrize(
+    "user_a_id, user_b_id",
+    [(1, 3), (4, 2), (12, 1223), (0, 93), (98, 4)],
+)
 @patch(
     "messenger.helpers.friends.FriendshipHandler._get_record_with_not_found_raise"
 )
@@ -107,14 +133,18 @@ def test_get_friendship_bidirectional_query(
     and_mock: MagicMock,
     _get_record_with_not_found_raise_mock: MagicMock,
     mocker: MockerFixture,
+    user_a_id: int,
+    user_b_id: int,
 ):
     DETAIL = "friendship was not found"
     friendship_handler = FriendshipHandler(mocker.MagicMock())
 
-    user_a = UserSchema(user_id=1)
-    user_b = UserSchema(user_id=2)
+    user_a = UserSchema(user_id=user_a_id)
+    user_b = UserSchema(user_id=user_b_id)
 
-    friendship = FriendshipSchema(requester_id=1, addressee_id=2)
+    friendship = FriendshipSchema(
+        requester_id=user_a_id, addressee_id=user_b_id
+    )
 
     _get_record_with_not_found_raise_mock.return_value = friendship
 
@@ -144,11 +174,48 @@ def test_get_friendship_bidirectional_query(
         status_code=404, detail=DETAIL
     )
 
-    with (pytest.raises(HTTPException) as exc):
+    with pytest.raises(HTTPException) as exc:
         friendship_handler.get_friendship_bidirectional_query(user_a, user_b)
         assert exc.value.status_code == 404
         assert exc.value.detail == DETAIL
         assert friendship_handler.friendship is None
+
+
+@freeze_time(FROZEN_DATE)
+@pytest.mark.parametrize(
+    "requester_id, addressee_id, specifier_id, new_status_code_id",
+    [
+        (1, 5, 1, FriendshipStatusCode.REQUESTED),
+        (121, 332, 332, FriendshipStatusCode.ACCEPTED),
+        (446, 2213, 446, FriendshipStatusCode.DECLINED),
+        (4, 0, 4, FriendshipStatusCode.BLOCKED),
+    ],
+)
+def test_add_new_status(
+    mocker: MockerFixture,
+    requester_id: int,
+    addressee_id: int,
+    specifier_id: int,
+    new_status_code_id: FriendshipStatusCode,
+):
+    session_mock = mocker.MagicMock()
+    friendship_handler = FriendshipHandler(session_mock)
+
+    new_status = friendship_handler.add_new_status(
+        requester_id, addressee_id, specifier_id, new_status_code_id
+    )
+
+    expected_new_status = FriendshipStatusSchema(
+        requester_id=requester_id,
+        addressee_id=addressee_id,
+        specified_date_time=datetime.now(),
+        status_code_id=new_status_code_id.value,
+        specifier_id=specifier_id,
+    )
+
+    session_mock.add.assert_called_once_with(expected_new_status)
+
+    assert new_status == expected_new_status
 
 
 class TestAddressFriendshipRequest:
