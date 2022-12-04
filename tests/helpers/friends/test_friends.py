@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
-from fastapi import HTTPException
 from freezegun import freeze_time
 
 import pytest
@@ -108,16 +107,6 @@ def test_get_friendship_bidirectional_query(
     _get_record_with_not_found_raise_mock.assert_called_once_with(
         FriendshipSchema, DETAIL, or_mock_return
     )
-
-    _get_record_with_not_found_raise_mock.side_effect = HTTPException(
-        status_code=404, detail=DETAIL
-    )
-
-    with pytest.raises(HTTPException) as exc:
-        friendship_handler.get_friendship_bidirectional_query(user_a, user_b)
-        assert exc.value.status_code == 404
-        assert exc.value.detail == DETAIL
-        assert friendship_handler.friendship is None
 
 
 @freeze_time(FROZEN_DATE)

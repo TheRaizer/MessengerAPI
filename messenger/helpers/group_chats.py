@@ -40,8 +40,8 @@ class GroupChatHandler(DatabaseHandler):
 
         record = self._get_record(
             GroupChatMemberSchema,
-            GroupChatMemberSchema.group_chat_id == group_chat_id,
-            GroupChatMemberSchema.member_id == user.user_id,
+            GroupChatMemberSchema.c.group_chat_id == group_chat_id,
+            GroupChatMemberSchema.c.member_id == user.user_id,
         )
 
         return record is not None
