@@ -10,7 +10,7 @@ from messenger.helpers.db import DatabaseHandler
 
 
 class MessageHandler(DatabaseHandler):
-    """Contains methods that allow manipulation of a user record"""
+    """Contains methods that allow manipulation of messages"""
 
     def __init__(self, db: Session, message: Optional[MessageSchema] = None):
         super().__init__(db)

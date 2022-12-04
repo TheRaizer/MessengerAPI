@@ -15,7 +15,7 @@ from messenger.helpers.db import DatabaseHandler
 
 
 class GroupChatHandler(DatabaseHandler):
-    """Handles manipulation of a groupchat database record"""
+    """Handles manipulation of groupchat database records"""
 
     def __init__(
         self, db: Session, group_chat: Optional[GroupChatSchema] = None

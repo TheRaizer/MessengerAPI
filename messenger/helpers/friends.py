@@ -146,7 +146,8 @@ class FriendshipHandler(DatabaseHandler):
     ) -> FriendshipSchema:
         """Retrieves a friendship where either user_a is the
         requester and user_b is the addressee or vice-versa. Stores
-        the result in self.friendship and returns it.
+        the result in self.friendship and returns it. Throws http 404
+        exception if no friendship is found.
 
         Args:
             user_a (UserSchema): a user participating in the friendship

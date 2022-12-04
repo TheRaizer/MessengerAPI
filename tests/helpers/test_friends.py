@@ -66,7 +66,7 @@ class TestRaiseIfBlocked:
     @patch(
         "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
     )
-    def test_raise_if_blocked(
+    def test_when_friendship_blocked(
         self,
         get_latest_friendship_status_mock: MagicMock,
         mocker: MockerFixture,
@@ -99,7 +99,7 @@ class TestRaiseIfBlocked:
     @patch(
         "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
     )
-    def test_raise_if_blocked_when_not_blocked(
+    def test_when_friendship_not_blocked(
         self,
         get_latest_friendship_status_mock: MagicMock,
         mocker: MockerFixture,
@@ -115,7 +115,7 @@ class TestRaiseIfBlocked:
 
         friendship_handler = FriendshipHandler(mocker.MagicMock())
 
-        # should run without raising since friendship is initialized with requested status
+        # should run without raising since friendship is not blocked in all cases
         friendship_handler.raise_if_blocked()
 
 

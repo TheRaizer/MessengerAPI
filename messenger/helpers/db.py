@@ -35,7 +35,7 @@ class DatabaseHandler:
         Args:
             Schema (Base): the SQLAlchemy schema that relates to the table
                 in the database the row will be retrieved from.
-            kwargs (optional): additional keyword arguments that
+            criterion (optional): additional keyword arguments that
                 will be used as filters in the query.
 
         Raises:
@@ -63,9 +63,11 @@ class DatabaseHandler:
 
         Args:
             Schema (T): the schema type to retrieve.
+            criterion (optional): additional keyword arguments that will
+                be used as filters in the query.
 
         Returns:
-            Optional[List[T]]: a list of the given schema type records 
+            Optional[List[T]]: a list of the given schema type records
             or None if no records were found.
         """
         db_records: List[T] = list(self._db.query(Schema).filter(*criterion))
@@ -83,7 +85,7 @@ class DatabaseHandler:
         Args:
             Schema (Base): the SQLAlchemy schema that relates to the
                 table in the database the row will be retrieved from.
-            kwargs (optional): additional keyword arguments that will
+            criterion (optional): additional keyword arguments that will
                 be used as filters in the query.
 
         Raises:
