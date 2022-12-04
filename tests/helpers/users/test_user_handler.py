@@ -39,4 +39,6 @@ def test_get_user(
     _get_record_with_not_found_raise_mock.assert_called_once_with(
         UserSchema, "no such user exists", criterion
     )
+
+    assert user_handler.user is expected_user
     assert user is expected_user
