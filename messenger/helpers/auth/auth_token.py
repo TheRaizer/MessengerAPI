@@ -1,3 +1,5 @@
+"""Defines functions related to authentication tokens"""
+
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt
@@ -6,7 +8,9 @@ from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, status
 
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.environment_variables import JWT_SECRET
 
 ALGORITHM = "HS256"
@@ -35,6 +39,17 @@ UNAUTHORIZED_CREDENTIALS_EXCEPTION = HTTPException(
 
 
 def validate_access_token(token: str, secret: str) -> Optional[TokenData]:
+    """Validates a given access token and if valid it decodes the token, and
+    returns the decoded data. Otherwise it returns None.
+
+    Args:
+        token (str): the token to validate.
+        secret (str): the secret used to validate the token.
+
+    Returns:
+        Optional[TokenData]: if token was valid, return the decoded data, otherwise
+            return None
+    """
     try:
         payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
         token_data = TokenData(**payload)

@@ -15,7 +15,7 @@ class UserCreateModel(UserBaseModel):
 
 
 class UserModel(UserBaseModel):
-    user_id: str
+    user_id: int
     username: str
 
     class Config:

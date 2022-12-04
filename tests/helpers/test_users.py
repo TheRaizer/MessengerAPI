@@ -28,8 +28,10 @@ class TestCreateUser:
     ):
         session_mock = mocker.MagicMock()
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as exc:
             create_user(session_mock, invalid_password, valid_email, valid_username)
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "invalid password"
 
     @pytest.mark.parametrize(
         "valid_password, invalid_email, valid_username",
@@ -44,8 +46,10 @@ class TestCreateUser:
     ):
         session_mock = mocker.MagicMock()
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as exc:
             create_user(session_mock, valid_password, invalid_email, valid_username)
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "invalid email"
 
     @pytest.mark.parametrize(
         "valid_password, valid_email, invalid_username",
@@ -60,8 +64,10 @@ class TestCreateUser:
     ):
         session_mock = mocker.MagicMock()
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as exc:
             create_user(session_mock, valid_password, valid_email, invalid_username)
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "invalid username"
 
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_it_fails_on_existent_username(
@@ -73,13 +79,15 @@ class TestCreateUser:
             username="username", password_hash="hash", email="email"
         )
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as exc:
             create_user(
                 session_mock,
                 valid_passwords[1],
                 valid_emails[1],
                 valid_usernames[0],
             )
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "username is taken"
 
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
     @patch("messenger.helpers.users.is_username_valid")
@@ -95,13 +103,15 @@ class TestCreateUser:
             username="username", password_hash="hash", email="email"
         )
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as exc:
             create_user(
                 session_mock,
                 valid_passwords[1],
                 valid_emails[0],
                 valid_usernames[1],
             )
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "account already exists"
 
     @pytest.mark.parametrize(
         "valid_password, valid_email, valid_username",

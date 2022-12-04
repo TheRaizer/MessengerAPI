@@ -1,11 +1,13 @@
+from datetime import datetime, timedelta
 from typing import Any
 from unittest.mock import MagicMock, patch
 from fastapi import HTTPException, status
 from freezegun import freeze_time
-from datetime import datetime, timedelta
-
 import pytest
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from jose import ExpiredSignatureError, JWTError, jwt
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.auth_details import EmailError, UsernameError
 from messenger.environment_variables import JWT_SECRET
 from messenger.helpers.auth.auth_token import (
@@ -15,7 +17,6 @@ from messenger.helpers.auth.auth_token import (
     create_access_token,
     create_login_token,
 )
-from jose import ExpiredSignatureError, JWTError, jwt
 from messenger.helpers.auth.is_email_valid import is_email_valid
 
 from messenger.helpers.auth.is_password_valid import is_password_valid
@@ -38,7 +39,11 @@ test_datas = [
         "other_obj": {"test": ["test", "list"]},
     },
 ]
-test_time_deltas = [timedelta(days=1), timedelta(seconds=4), timedelta(minutes=0.8)]
+test_time_deltas = [
+    timedelta(days=1),
+    timedelta(seconds=4),
+    timedelta(minutes=0.8),
+]
 test_user_records = [
     UserSchema(username="user_1", password_hash="hash_1", email="email_1"),
     UserSchema(username="user_2", password_hash="hash_2", email="email_2"),
@@ -60,13 +65,17 @@ class TestCreateAccessToken:
         payload = jwt.decode(access_token, JWT_SECRET, algorithms=[ALGORITHM])
 
         # payload should have an exp property added to the original test_data
-        expected_expire = int((datetime.utcnow() + timedelta(minutes=15)).timestamp())
+        expected_expire = int(
+            (datetime.utcnow() + timedelta(minutes=15)).timestamp()
+        )
         copy_data.update({"exp": expected_expire})
 
         assert payload == copy_data
 
         with pytest.raises(JWTError):
-            jwt.decode(access_token, JWT_SECRET + "-invalid", algorithms=[ALGORITHM])
+            jwt.decode(
+                access_token, JWT_SECRET + "-invalid", algorithms=[ALGORITHM]
+            )
 
     @freeze_time("2022-11-06")
     @pytest.mark.parametrize(
@@ -90,7 +99,9 @@ class TestCreateAccessToken:
         assert payload == copy_data
 
         with pytest.raises(JWTError):
-            jwt.decode(access_token, JWT_SECRET + "-invalid", algorithms=[ALGORITHM])
+            jwt.decode(
+                access_token, JWT_SECRET + "-invalid", algorithms=[ALGORITHM]
+            )
 
     def test_create_access_token_expires(self):
         # set expires delta to a negative value
@@ -109,7 +120,9 @@ def test_create_login_token(test_user_record: UserSchema):
 
     # the expected expiry should use the LOGIN_TOKEN_EXPIRE_MINUTES constant
     expected_expire = int(
-        (datetime.utcnow() + timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)).timestamp()
+        (
+            datetime.utcnow() + timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)
+        ).timestamp()
     )
 
     # here we generate the expected token data
@@ -154,7 +167,9 @@ class TestIsUsernameValid:
     )
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_valid_username(self, get_user_mock: MagicMock, username: str):
-        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        get_user_mock.side_effect = HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+        )
         validity_data = is_username_valid(MagicMock(), username)
 
         assert validity_data.is_valid is True
@@ -166,7 +181,9 @@ class TestIsUsernameValid:
     )
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
     def test_invalid_username(self, get_user_mock: MagicMock, username: str):
-        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        get_user_mock.side_effect = HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+        )
         validity_data = is_username_valid(MagicMock(), username)
 
         assert validity_data.is_valid is False
@@ -192,7 +209,9 @@ class TestIsEmailValid:
     )
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
     def test_valid_email(self, get_user_mock: MagicMock, email: str):
-        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        get_user_mock.side_effect = HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+        )
         validity_data = is_email_valid(MagicMock(), email)
 
         assert validity_data.is_valid is True
@@ -204,7 +223,9 @@ class TestIsEmailValid:
     )
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
     def test_invalid_email(self, get_user_mock: MagicMock, email: str):
-        get_user_mock.side_effect = HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        get_user_mock.side_effect = HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+        )
         validity_data = is_email_valid(MagicMock(), email)
 
         assert validity_data.is_valid is False

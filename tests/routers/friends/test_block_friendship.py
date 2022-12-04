@@ -7,7 +7,9 @@ from fastapi.testclient import TestClient
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from .conftest import current_active_user, usernames, session_mock
 
@@ -105,8 +107,13 @@ class TestBlockFriendship:
                 addressee_id=friendship_to_create.addressee_id,
                 created_date_time=friendship_to_create.created_date_time,
             )
-            assert FriendshipHandlerMock.return_value.friendship == friendship_to_create
-            session_mock.add.assert_called_once_with(FriendshipSchemaMock.return_value)
+            assert (
+                FriendshipHandlerMock.return_value.friendship
+                == friendship_to_create
+            )
+            session_mock.add.assert_called_once_with(
+                FriendshipSchemaMock.return_value
+            )
 
         self.on_success_assertions(
             response, UserHandlerMock, FriendshipHandlerMock, user_to_block

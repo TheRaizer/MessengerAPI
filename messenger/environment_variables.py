@@ -1,3 +1,5 @@
+"""Environment variables loaded from a .env file."""
+
 import os
 
 # TODO: since this secret is rotated, dont get it from env variable.

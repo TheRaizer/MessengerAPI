@@ -53,9 +53,9 @@ def client():
     app.dependency_overrides[get_current_active_user] = override_get_current_active_user
     app.dependency_overrides[database_session] = override_database_session
 
-    client = TestClient(app)
+    test_client = TestClient(app)
 
-    return client
+    return test_client
 
 
 usernames = ["helloooo_wORLd23", "3322_Wad", "_puT_223D"]

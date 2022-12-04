@@ -16,7 +16,9 @@ def test_get_friendship_requests_sent(client: TestClient):
 
     assert len(friendship_requests_sent) == len(arr)
 
-    for res_friendship_dict, friendship_expected in zip(arr, friendship_requests_sent):
+    for res_friendship_dict, friendship_expected in zip(
+        arr, friendship_requests_sent
+    ):
         friendship = FriendshipSchema(**res_friendship_dict)
         assert friendship == friendship_expected
 

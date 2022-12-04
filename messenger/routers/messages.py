@@ -1,15 +1,21 @@
+"""Contains routes for messages."""
+
 from typing import List
 from bleach import clean
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
-from _submodules.messenger_utils.messenger_schemas.schema import database_session
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema import (
+    database_session,
+)
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.friends import FriendshipHandler
 from messenger.helpers.group_chat import GroupChatHandler
 from messenger.helpers.message import MessageHandler
 from messenger.helpers.user_handler import UserHandler
 from messenger.helpers.users import get_current_active_user
-from sqlalchemy.orm import Session
 from messenger.models.message_model import BaseMessageModel, CreateMessageModel
 
 
@@ -20,8 +26,19 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK)
+@router.get(
+    "/", response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK
+)
 def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
+    """Returns all messages this user has recieved.
+
+    Args:
+        current_user (UserSchema, optional): the currently signed in user.
+            Defaults to Depends(get_current_active_user).
+
+    Returns:
+        List[BaseMessageModel]: the messages this user has recieved
+    """
     message_models = list(
         map(
             lambda message_schema: BaseMessageModel(
@@ -37,30 +54,34 @@ def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
     return message_models
 
 
-@router.post("/", response_model=BaseMessageModel, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=BaseMessageModel, status_code=status.HTTP_201_CREATED
+)
 def send_message(
     addressee_username: str,
     body: CreateMessageModel,
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
-    must_be_their_friend_detail = (
-        "you cannot message this person if you are not their friend"
-    )
     """Sends a message from the currently signed in user to either another user, or a group chat.
-    
-    If a group chat id is specified, we will send a message to a group chat, otherwise we will send it to a specified addressee.
+
+    If a group chat id is specified, we will send a message to a group chat, otherwise we will
+    send it to a specified addressee.
 
     Args:
         addressee_username (str): the username of the user to send a message too.
-        current_user (UserSchema, optional): The current user that will represent the sender of the message.
-        Defaults to Depends(get_current_active_user).
+        current_user (UserSchema, optional): The current user that will represent the sender
+            of the message. Defaults to Depends(get_current_active_user).
         db (Session, optional): the database session to data from and post data too.
-        Defaults to Depends(database_session).
+            Defaults to Depends(database_session).
 
     Returns:
         OKModel: whether the message was successfully sent
     """
+    must_be_their_friend_detail = (
+        "you cannot message this person if you are not their friend"
+    )
+
     addressee_handler = UserHandler(db)
     addressee = None
 
@@ -77,7 +98,9 @@ def send_message(
         )
 
         friendship_handler = FriendshipHandler(db)
-        friendship_handler.get_friendship_bidirectional_query(current_user, addressee)
+        friendship_handler.get_friendship_bidirectional_query(
+            current_user, addressee
+        )
 
         latest_status = friendship_handler.get_latest_friendship_status()
         # friendship must be accepted

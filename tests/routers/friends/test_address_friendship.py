@@ -12,7 +12,9 @@ def test_accept_friendship_request(
     username: str,
     client: TestClient,
 ):
-    response = client.post(f"/friends/requests/accept?requester_username={username}")
+    response = client.post(
+        f"/friends/requests/accept?requester_username={username}"
+    )
 
     assert response.status_code == 201
     address_friendship_request_as_route_mock.assert_called_once_with(
@@ -30,7 +32,9 @@ def test_decline_friendship_request(
     username: str,
     client: TestClient,
 ):
-    response = client.post(f"/friends/requests/decline?requester_username={username}")
+    response = client.post(
+        f"/friends/requests/decline?requester_username={username}"
+    )
 
     assert response.status_code == 201
     address_friendship_request_as_route_mock.assert_called_once_with(

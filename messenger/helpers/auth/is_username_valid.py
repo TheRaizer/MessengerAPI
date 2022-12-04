@@ -1,8 +1,12 @@
-from fastapi import HTTPException
+"""Defines function(s) that validate a username"""
+
 import re
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.auth_details import UsernameError
 from messenger.helpers.auth import ValidityData
 from messenger.helpers.user_handler import UserHandler
@@ -51,4 +55,6 @@ def is_username_valid(db: Session, username: str) -> ValidityData:
         except HTTPException:
             return ValidityData(is_valid=True, detail=None)
 
-    return ValidityData(is_valid=False, detail=UsernameError.INVALID_USERNAME.value)
+    return ValidityData(
+        is_valid=False, detail=UsernameError.INVALID_USERNAME.value
+    )
