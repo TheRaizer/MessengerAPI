@@ -12,8 +12,8 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.friends import FriendshipHandler
-from messenger.helpers.group_chat import GroupChatHandler
-from messenger.helpers.message import MessageHandler
+from messenger.helpers.group_chats import GroupChatHandler
+from messenger.helpers.messages import MessageHandler
 from messenger.helpers.user_handler import UserHandler
 from messenger.helpers.users import get_current_active_user
 from messenger.models.message_model import BaseMessageModel, CreateMessageModel
