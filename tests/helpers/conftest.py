@@ -1,3 +1,5 @@
+"""Shared data used during tests"""
+
 valid_passwords = [
     "Password231",
     "aValidpassword2",
@@ -44,4 +46,5 @@ valid_emails = [
     "my.ownsite@ourearth.org",
     "aperson@gmail.com",
 ]
+
 invalid_emails = ["@email.com", "cool.cool", "not an email", "google.email@com"]

@@ -1,18 +1,24 @@
+"""Contains all routes that are friend related."""
+
+from datetime import datetime
 import logging
 from operator import or_
 from typing import List
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema import database_session
+from _submodules.messenger_utils.messenger_schemas.schema import (
+    database_session,
+)
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from datetime import datetime
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.friends import (
     FriendshipHandler,
@@ -43,7 +49,8 @@ def get_friendship_requests_recieved(
     """Retrieves a users friendship requests recieved
 
     Args:
-        current_user (UserSchema, optional): the current signed-in user whose data will be retrieved. Defaults to Depends(get_current_active_user).
+        current_user (UserSchema, optional): the current signed-in user
+            whose data will be retrieved. Defaults to Depends(get_current_active_user).
 
     Returns:
         _type_: the friendship requests recieved, and those sent.
@@ -73,7 +80,8 @@ def get_friendship_requests_sent(
     """Retrieves a users friendship requests sent
 
     Args:
-        current_user (UserSchema, optional): the current signed-in user whose data will be retrieved. Defaults to Depends(get_current_active_user).
+        current_user (UserSchema, optional): the current signed-in user
+            whose data will be retrieved. Defaults to Depends(get_current_active_user).
 
     Returns:
         _type_: the friendship requests recieved, and those sent.
@@ -97,7 +105,18 @@ def get_accepted_friendships(
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
-    # TODO: get all users from friendships where the addressee or requester is the current user and whose latest friendship status is accepted
+    """Produces a list of all friendships that are accepted between
+    the current_user and other users. This gives you the standard
+    "friends list" of the current user.
+
+    Args:
+        current_user (UserSchema, optional): the currently signed in user.
+            Defaults to Depends(get_current_active_user).
+        db (Session, optional): the database session to query from.
+            Defaults to Depends(database_session).
+    """
+    # TODO: get all users from friendships where the addressee or requester
+    # is the current user and whose latest friendship status is accepted
     db.query(FriendshipSchema).select_from(FriendshipSchema).where(
         or_(
             FriendshipSchema.addressee_id == current_user.user_id,
@@ -120,10 +139,12 @@ def send_friendship_request(
 
     Args:
         username (str): the username of the user to send the friend request too.
-        current_user (UserSchema, optional): The current user that will represent the requester of the friend request.
-        Defaults to Depends(get_current_active_user).
-        db (Session, optional): the database session to retrieve the addressee and insert the friendship from/into.
-        Defaults to Depends(database_session).
+        current_user (UserSchema, optional): The current user that
+            will represent the requester of the friend request.
+            Defaults to Depends(get_current_active_user).
+        db (Session, optional): the database session to retrieve the addressee
+            and insert the friendship from/into.
+            Defaults to Depends(database_session).
 
     Returns:
         FriendshipModel: the friendship that was created and inserted into the database.
@@ -145,7 +166,8 @@ def send_friendship_request(
         already_requested_friendship = (
             latest_status is not None
             and friendship.requester_id == current_user.user_id
-            and latest_status.status_code_id == FriendshipStatusCode.REQUESTED.value
+            and latest_status.status_code_id
+            == FriendshipStatusCode.REQUESTED.value
         )
 
         if already_requested_friendship:
@@ -154,11 +176,13 @@ def send_friendship_request(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="you cannot send another friendship request",
             )
-        elif (
+        if (
             latest_status is not None
-            and latest_status.status_code_id != FriendshipStatusCode.REQUESTED.value
+            and latest_status.status_code_id
+            != FriendshipStatusCode.REQUESTED.value
         ):
-            # you cannot send a friend request if the friendship is blocked, declined, or are already this persons friend
+            # you cannot send a friend request if the friendship is blocked,
+            # declined, or are already this persons friend
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="you cannot send a friendship request",
@@ -181,14 +205,16 @@ def send_friendship_request(
     try:
         db.add(new_friendship)
         logger.info(
-            "(requester: %s, addressee: %s) friendship has been successfully inserted into the friendship table",
+            "(requester: %s, addressee: %s) friendship has been\
+                successfully inserted into the friendship table",
             new_friendship.requester_id,
             new_friendship.addressee_id,
         )
 
         db.add(new_status)
         logger.info(
-            "(requester: %s, addressee: %s, specified_date_time: %s, status_code_id: %s) friendship status has been successfully inserted into the friendship_status table",
+            "(requester: %s, addressee: %s, specified_date_time: %s, status_code_id: %s)\
+            friendship status has been successfully inserted into the friendship_status table",
             new_friendship.requester_id,
             new_friendship.addressee_id,
             new_status.specified_date_time,
@@ -197,10 +223,10 @@ def send_friendship_request(
         db.commit()
         db.refresh(new_friendship)
 
-    except Exception as e:
+    except Exception as exc:
         logger.error(
             "failed to insert friendship status or friendship into database due to %s",
-            e,
+            exc,
             exc_info=True,
         )
 
@@ -223,7 +249,8 @@ def accept_friendship_request(
 
     Args:
         requester_username (str): the username of the user whose friend request you want to accept.
-        current_user (UserSchema, optional): The currently signed in user that will be declining the friendship
+        current_user (UserSchema, optional): The currently signed in user that will be declining
+            the friendship
         Defaults to Depends(get_current_active_user).
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
@@ -243,7 +270,8 @@ def decline_friendship_request(
 
     Args:
         requester_username (str): the username of the user whose friend request you want to decline.
-        current_user (UserSchema, optional): The currently signed in user that will be declining the friendship.
+        current_user (UserSchema, optional): The currently signed in user that will be declining
+            the friendship.
         Defaults to Depends(get_current_active_user).
         db (Session, optional): the database session to use for database reads/writes.
         Defaults to Depends(database_session).
@@ -259,15 +287,16 @@ def block_friendship_request(
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
-    """Blocks a user. This command can come from either the requester, or addressee of a friendship. Additionally it can be
-    called even when a friendship between the two users does not initially exist.
+    """Blocks a user. This command can come from either the requester, or addressee
+    of a friendship. Additionally it can be called even when a friendship between
+    the two users does not initially exist.
 
     Args:
         user_to_block_username (str): the username of the user who will be blocked.
-        current_user (UserSchema, optional): The currently signed in user that will be executing the blocking action.
-        Defaults to Depends(get_current_active_user).
+        current_user (UserSchema, optional): The currently signed in user that
+            will be executing the blocking action. Defaults to Depends(get_current_active_user).
         db (Session, optional): the database session to use for database reads/writes.
-        Defaults to Depends(database_session).
+            Defaults to Depends(database_session).
     """
 
     friendship_handler = FriendshipHandler(db)
@@ -277,7 +306,8 @@ def block_friendship_request(
         UserSchema.username == clean(user_to_block_username)
     )
 
-    # attempt to fetch a friendship record with the current user as either the requester or addressee
+    # attempt to fetch a friendship record with the current user as either the
+    # requester or addressee
     friendship = friendship_handler.get_friendship_bidirectional_query(
         user_to_block, current_user
     )
@@ -300,7 +330,8 @@ def block_friendship_request(
     else:
         friendship_handler.raise_if_blocked()
 
-    # create a new friendship status based on a friendship record with a status code of 'B' == 'Blocked'
+    # create a new friendship status based on a friendship record with
+    # a status code of 'B' == 'Blocked'
     friendship_handler.add_new_status(
         friendship_handler.friendship.requester_id,
         friendship_handler.friendship.addressee_id,

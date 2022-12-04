@@ -1,8 +1,12 @@
-from fastapi import HTTPException
+"""Defines function(s) that validate an email"""
+
 import re
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.auth_details import EmailError
 from messenger.helpers.auth import ValidityData
 from messenger.helpers.user_handler import UserHandler
@@ -28,7 +32,9 @@ def is_email_valid(db: Session, email: str) -> ValidityData:
 
         try:
             user_handler.get_user(UserSchema.email == email)
-            return ValidityData(is_valid=False, detail=EmailError.ACCOUNT_EXISTS.value)
+            return ValidityData(
+                is_valid=False, detail=EmailError.ACCOUNT_EXISTS.value
+            )
         except HTTPException:
             return ValidityData(is_valid=True, detail=None)
 

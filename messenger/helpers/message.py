@@ -1,13 +1,17 @@
+"""Defines the MessageHandler class"""
+
 from datetime import datetime
 from typing import Optional
+from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
 from messenger.helpers.db import DatabaseHandler
-from sqlalchemy.orm import Session
 
 
 class MessageHandler(DatabaseHandler):
+    """Contains methods that allow manipulation of a user record"""
+
     def __init__(self, db: Session, message: Optional[MessageSchema] = None):
         super().__init__(db)
         self.message = message
@@ -19,6 +23,18 @@ class MessageHandler(DatabaseHandler):
         content: str,
         group_chat_id: Optional[int],
     ) -> MessageSchema:
+        """Sends a message from one user to another.
+
+        Args:
+            sender_id (Optional[int]): the user_id of the user sending the message.
+            reciever_id (Optional[int]): the user_id of the user recieving this message
+            content (str): the content of the message
+            group_chat_id (Optional[int]): the group chat id that this message may be apart of.
+
+        Returns:
+            MessageSchema: _description_
+        """
+
         message = MessageSchema(
             sender_id=sender_id,
             reciever_id=reciever_id,
@@ -33,7 +49,14 @@ class MessageHandler(DatabaseHandler):
 
         return message
 
-    def get_message(self, *criterion):
+    def get_message(self, *criterion) -> MessageSchema:
+        """Retrieves a message given a set of criterion.
+        If no message is found an exception is raised.
+
+        Returns:
+            MessageSchema: the message that was retrieved.
+        """
+
         self.message = self._get_record_with_not_found_raise(
             MessageSchema, "no such message exists", *criterion
         )

@@ -1,8 +1,12 @@
+"""Contains routes for group chats."""
+
 from fastapi import APIRouter, Depends, status
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 
 from messenger.helpers.users import get_current_active_user
 from messenger.models.group_chat_model import CreateGroupChatModel

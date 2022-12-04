@@ -1,22 +1,29 @@
+"""Contains helper functions related to users."""
+
 import logging
 from typing import Union
 from argon2 import exceptions
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema import database_session
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
-from messenger.constants.auth_details import PasswordErro
+from sqlalchemy.exc import SQLAlchemyError
+from _submodules.messenger_utils.messenger_schemas.schema import (
+    database_session,
+)
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
+from messenger.constants.auth_details import PasswordError
 from messenger.environment_variables import JWT_SECRET
 from messenger.helpers.auth.is_email_valid import is_email_valid
 from messenger.helpers.auth.is_password_valid import is_password_valid
 from messenger.helpers.auth.is_username_valid import is_username_valid
-from .auth.auth_token import oauth2_scheme
 from messenger.helpers.user_handler import UserHandler
 from .auth.auth_token import (
     password_hasher,
     validate_access_token,
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
 )
+from .auth.auth_token import oauth2_scheme
 
 
 logger = logging.getLogger(__name__)
@@ -35,8 +42,10 @@ async def get_current_user(
             throw unauthorized exception.
 
     Args:
-        db (Session, optional): The database session used for querying the user. Defaults to Depends(database_session).
-        token (str, optional): a JWT token that represents the users credentials. Defaults to Depends(oauth2_scheme).
+        db (Session, optional): The database session used for querying the user.
+            Defaults to Depends(database_session).
+        token (str, optional): a JWT token that represents the users credentials.
+            Defaults to Depends(oauth2_scheme).
 
     Raises:
         UNAUTHORIZED_CREDENTIALS_EXCEPTION: An exception that returns a status of unauthorized.
@@ -44,6 +53,7 @@ async def get_current_user(
     Returns:
         UserSchema: The users data from the database.
     """
+
     valid_token = validate_access_token(token, JWT_SECRET)
 
     if valid_token is None:
@@ -56,8 +66,8 @@ async def get_current_user(
         )
 
         return user
-    except HTTPException:
-        raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
+    except HTTPException as exc:
+        raise UNAUTHORIZED_CREDENTIALS_EXCEPTION from exc
 
 
 async def get_current_active_user(
@@ -67,11 +77,13 @@ async def get_current_active_user(
     Add as a dependency for routes that require authenticated users.
 
     Args:
-        current_user (UserSchema, optional): the current user from the database, obtained using a JWT. Defaults to Depends(get_current_user).
+        current_user (UserSchema, optional): the current user from the database,
+        obtained using a JWT. Defaults to Depends(get_current_user).
 
     Returns:
         UserSchema: returns the currently active user.
     """
+
     return current_user
 
 
@@ -86,8 +98,8 @@ def authenticate_user(
         email (str): an email address used to query the user from the database.
 
     Returns:
-        Union[UserSchema, bool]: if the user does not exist or the password is not correct, return False.
-        Otherwise return the database user.
+        Union[UserSchema, bool]: if the user does not exist or the password is not
+        correct, return False. Otherwise return the database user.
     """
 
     user_handler = UserHandler(db)
@@ -117,7 +129,9 @@ def authenticate_user(
     return user
 
 
-def create_user(db: Session, password: str, email: str, username: str) -> UserSchema:
+def create_user(
+    db: Session, password: str, email: str, username: str
+) -> UserSchema:
     """Creates a user in the database.
 
     Args:
@@ -134,7 +148,8 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     email_validity_data = is_email_valid(db, email)
     if not email_validity_data.is_valid:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=email_validity_data.detail
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=email_validity_data.detail,
         )
 
     # check if username is valid or taken
@@ -148,11 +163,13 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
     if not is_password_valid(password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=PasswordErro.INVALID_PASSWORD.value,
+            detail=PasswordError.INVALID_PASSWORD.value,
         )
 
     password_hash = password_hasher.hash(password)
-    user = UserSchema(username=username, password_hash=password_hash, email=email)
+    user = UserSchema(
+        username=username, password_hash=password_hash, email=email
+    )
 
     try:
         db.add(user)
@@ -163,11 +180,11 @@ def create_user(db: Session, password: str, email: str, username: str) -> UserSc
             "(user_id: %s) user has been successfully inserted into users table",
             user.user_id,
         )
-    except Exception as e:
+    except SQLAlchemyError as exc:
         logger.error(
             "(user_id: %s) user was not inserted into users table due to %s",
             user.user_id,
-            e,
+            exc,
             exc_info=True,
         )
 

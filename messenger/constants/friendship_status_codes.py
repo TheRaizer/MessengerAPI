@@ -1,3 +1,5 @@
+"""Defines the enum for the friendship status codes"""
+
 from enum import Enum
 
 

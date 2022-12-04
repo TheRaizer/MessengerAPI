@@ -1,3 +1,5 @@
+"""Defines function(s) that validate a password"""
+
 
 def is_password_valid(password: str) -> bool:
     """Verifies whether a password is valid.
@@ -26,4 +28,3 @@ def is_password_valid(password: str) -> bool:
         return True
 
     return False
-

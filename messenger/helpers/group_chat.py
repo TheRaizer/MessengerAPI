@@ -1,21 +1,43 @@
+"""Defines the GroupChatHandler class"""
+
 from typing import Optional
+from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_schema import (
     GroupChatMemberSchema,
 )
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import UserSchema
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.helpers.db import DatabaseHandler
-from sqlalchemy.orm import Session
 
 
 class GroupChatHandler(DatabaseHandler):
-    def __init__(self, db: Session, group_chat: Optional[GroupChatSchema] = None):
+    """Handles manipulation of a groupchat database record"""
+
+    def __init__(
+        self, db: Session, group_chat: Optional[GroupChatSchema] = None
+    ):
         super().__init__(db)
         self.group_chat = group_chat
 
-    def is_user_in_group_chat(self, group_chat_id: int, user: UserSchema) -> bool:
+    def is_user_in_group_chat(
+        self, group_chat_id: int, user: UserSchema
+    ) -> bool:
+        """Returns whether the user is in a given group chat or not.
+
+        Args:
+            group_chat_id (int): the id of the group chat that we will attempt
+                to find the user in.
+            user (UserSchema): the user that we will attempt to find in a
+                group chat.
+
+        Returns:
+            bool: whether the user is in the group chat
+        """
+
         record = self._get_record(
             GroupChatMemberSchema,
             GroupChatMemberSchema.group_chat_id == group_chat_id,
@@ -24,7 +46,12 @@ class GroupChatHandler(DatabaseHandler):
 
         return record is not None
 
-    def get_group_chat(self, *criterion):
+    def get_group_chat(self, *criterion) -> GroupChatSchema:
+        """Retrieves a group chat. Throws an error if no group chat was found.
+
+        Returns:
+            GroupChatSchema: the group chat that was found.
+        """
         self.group_chat = self._get_record_with_not_found_raise(
             GroupChatSchema, "no such group chat exists", *criterion
         )

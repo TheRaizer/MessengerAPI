@@ -1,15 +1,29 @@
-from typing import List, Optional, Type, TypeVar
+from typing import (
+    List,
+    Optional,
+    Type,
+    TypeVar,
+)
 
-from fastapi import HTTPException, status
+from fastapi import (
+    HTTPException,
+    status,
+)
 from sqlalchemy import Table
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.orm.exc import (
+    NoResultFound,
+)
+from sqlalchemy.exc import (
+    MultipleResultsFound,
+)
 
 T = TypeVar("T", bound=Table)
 
 
 class DatabaseHandler:
+    """Handles basic database functionality."""
+
     def __init__(self, db: Session):
         self._db = db
 
@@ -19,8 +33,10 @@ class DatabaseHandler:
         If no result is found return None.
 
         Args:
-            Schema (Base): the SQLAlchemy schema that relates to the table in the database the row will be retrieved from.
-            kwargs (optional): additional keyword arguments that will be used as filters in the query.
+            Schema (Base): the SQLAlchemy schema that relates to the table
+                in the database the row will be retrieved from.
+            kwargs (optional): additional keyword arguments that
+                will be used as filters in the query.
 
         Raises:
             HTTP_500_INTERNAL_SERVER_ERROR: this is raised when multiple records are returned
@@ -29,12 +45,14 @@ class DatabaseHandler:
             Base: returns a database record.
         """
         try:
-            db_record: Optional[T] = self._db.query(Schema).filter(*criterion).one()
-        except MultipleResultsFound:
+            db_record: Optional[T] = (
+                self._db.query(Schema).filter(*criterion).one()
+            )
+        except MultipleResultsFound as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Multiple records found",
-            )
+            ) from exc
         except NoResultFound:
             return None
 
@@ -47,7 +65,8 @@ class DatabaseHandler:
             Schema (T): the schema type to retrieve.
 
         Returns:
-            Optional[List[T]]: a list of the given schema type records or None if no records were found.
+            Optional[List[T]]: a list of the given schema type records 
+            or None if no records were found.
         """
         db_records: List[T] = list(self._db.query(Schema).filter(*criterion))
 
@@ -56,12 +75,16 @@ class DatabaseHandler:
 
         return db_records
 
-    def _get_record_with_not_found_raise(self, Schema: T, detail: str, *criterion) -> T:
+    def _get_record_with_not_found_raise(
+        self, Schema: T, detail: str, *criterion
+    ) -> T:
         """Retrieves the a single record from a database that matches a set of filters.
 
         Args:
-            Schema (Base): the SQLAlchemy schema that relates to the table in the database the row will be retrieved from.
-            kwargs (optional): additional keyword arguments that will be used as filters in the query.
+            Schema (Base): the SQLAlchemy schema that relates to the
+                table in the database the row will be retrieved from.
+            kwargs (optional): additional keyword arguments that will
+                be used as filters in the query.
 
         Raises:
             HTTP_404_NOT_FOUND: this is raised when no record is found
