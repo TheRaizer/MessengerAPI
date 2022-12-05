@@ -38,12 +38,10 @@ class TestGetCurrentUser:
             user_id="1", username=username, email=email
         )
         UserHandlerMock.return_value.get_user.return_value = expected_user
+        
         user = get_current_user(session_mock, token)
 
         validate_access_token_mock.assert_called_once_with(token, JWT_SECRET)
-        UserHandlerMock.assert_called_once_with(session_mock)
-        UserHandlerMock.return_value.get_user.assert_called_once()
-
         assert user is expected_user
 
     @pytest.mark.parametrize(

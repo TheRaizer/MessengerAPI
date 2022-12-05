@@ -54,6 +54,7 @@ def test_send_message(
         sender_id, reciever_id, content, group_chat_id
     )
 
+    # message record should be created, then added to database, commited, then refreshed.
     MessageSchemaMock.assert_called_once_with(**kwargs)
 
     session_mock.add.assert_called_once_with(expected_message)
@@ -88,6 +89,8 @@ def test_get_message(
     _get_record_with_not_found_raise_mock.return_value = expected_message
     message = message_handler.get_message(criterion)
 
+    # should call _get_record_with_not_found_raise with these parameters in
+    # order to retrieve the correct message record.
     _get_record_with_not_found_raise_mock.assert_called_once_with(
         MessageSchema, "no such message exists", criterion
     )

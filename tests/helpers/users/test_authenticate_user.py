@@ -38,7 +38,7 @@ class TestAuthenticateUser:
 
         authenticated_user = authenticate_user(session_mock, password, email)
 
-        UserHandlerMock.assert_called_once_with(session_mock)
+        # should verify password, check if it needs rehashing, and get the expected user.
         password_hasher_mock.verify.assert_called_once_with(
             password_hash, password
         )
@@ -127,9 +127,10 @@ class TestAuthenticateUser:
 
         authenticated_user = authenticate_user(session_mock, password, email)
 
+        # should rehash the password, add the new hash to the user schema, 
+        # and refresh the user record.
         password_hasher_mock.hash.assert_called_once_with(password)
 
         assert user.password_hash == "new password hash"
         session_mock.refresh.assert_called_once_with(user)
-
         assert user is authenticated_user

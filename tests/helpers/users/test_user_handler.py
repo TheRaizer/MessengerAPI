@@ -36,6 +36,8 @@ def test_get_user(
 
     user = user_handler.get_user(criterion)
 
+    # should call this function with the these parameters to retrieve
+    # the correct user record.
     _get_record_with_not_found_raise_mock.assert_called_once_with(
         UserSchema, "no such user exists", criterion
     )
