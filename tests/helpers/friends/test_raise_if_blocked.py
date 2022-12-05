@@ -16,11 +16,11 @@ from messenger.helpers.friends import (
 from tests.helpers.friends import FROZEN_DATE
 
 
+@patch(
+    "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
+)
 class TestRaiseIfBlocked:
     @freeze_time(FROZEN_DATE)
-    @patch(
-        "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
-    )
     def test_when_friendship_blocked(
         self,
         get_latest_friendship_status_mock: MagicMock,
@@ -50,9 +50,6 @@ class TestRaiseIfBlocked:
             FriendshipStatusCode.ACCEPTED.value,
             FriendshipStatusCode.DECLINED.value,
         ],
-    )
-    @patch(
-        "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
     )
     def test_when_friendship_not_blocked(
         self,
