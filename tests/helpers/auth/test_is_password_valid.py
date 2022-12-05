@@ -1,7 +1,7 @@
 import pytest
 from messenger.helpers.auth.is_password_valid import is_password_valid
 
-from tests.helpers.conftest import (
+from tests.conftest import (
     valid_passwords,
     invalid_passwords,
 )

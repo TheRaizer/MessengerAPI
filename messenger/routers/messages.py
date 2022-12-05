@@ -1,6 +1,6 @@
 """Contains routes for messages."""
 
-from typing import List
+from typing import List, Optional
 from bleach import clean
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -58,7 +58,7 @@ def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
     "/", response_model=BaseMessageModel, status_code=status.HTTP_201_CREATED
 )
 def send_message(
-    addressee_username: str,
+    addressee_username: Optional[str],
     body: CreateMessageModel,
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),

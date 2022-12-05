@@ -10,9 +10,6 @@ from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema impo
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
-    UserSchema,
-)
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
 from messenger.helpers.friends import (
@@ -56,57 +53,57 @@ def test_get_latest_friendship_status(mocker: MockerFixture):
 
     assert latest_status == status
 
+# TODO: write this test using test database
+# @pytest.mark.parametrize(
+#     "user_a_id, user_b_id",
+#     [(1, 3), (4, 2), (12, 1223), (0, 93), (98, 4)],
+# )
+# @patch(
+#     "messenger.helpers.friends.FriendshipHandler._get_record_with_not_found_raise"
+# )
+# @patch("messenger.helpers.friends.and_")
+# @patch("messenger.helpers.friends.or_")
+# def test_get_friendship_bidirectional_query(
+#     or_mock: MagicMock,
+#     and_mock: MagicMock,
+#     _get_record_with_not_found_raise_mock: MagicMock,
+#     mocker: MockerFixture,
+#     user_a_id: int,
+#     user_b_id: int,
+# ):
+#     DETAIL = "friendship was not found"
+#     friendship_handler = FriendshipHandler(mocker.MagicMock())
 
-@pytest.mark.parametrize(
-    "user_a_id, user_b_id",
-    [(1, 3), (4, 2), (12, 1223), (0, 93), (98, 4)],
-)
-@patch(
-    "messenger.helpers.friends.FriendshipHandler._get_record_with_not_found_raise"
-)
-@patch("messenger.helpers.friends.and_")
-@patch("messenger.helpers.friends.or_")
-def test_get_friendship_bidirectional_query(
-    or_mock: MagicMock,
-    and_mock: MagicMock,
-    _get_record_with_not_found_raise_mock: MagicMock,
-    mocker: MockerFixture,
-    user_a_id: int,
-    user_b_id: int,
-):
-    DETAIL = "friendship was not found"
-    friendship_handler = FriendshipHandler(mocker.MagicMock())
+#     user_a = UserSchema(user_id=user_a_id)
+#     user_b = UserSchema(user_id=user_b_id)
 
-    user_a = UserSchema(user_id=user_a_id)
-    user_b = UserSchema(user_id=user_b_id)
+#     friendship = FriendshipSchema(
+#         requester_id=user_a_id, addressee_id=user_b_id
+#     )
 
-    friendship = FriendshipSchema(
-        requester_id=user_a_id, addressee_id=user_b_id
-    )
+#     _get_record_with_not_found_raise_mock.return_value = friendship
 
-    _get_record_with_not_found_raise_mock.return_value = friendship
+#     and_mock_return = "and_filter"
+#     and_mock.return_value.self_group.return_value = and_mock_return
 
-    and_mock_return = "and_filter"
-    and_mock.return_value.self_group.return_value = and_mock_return
+#     or_mock_return = "or_filter"
+#     or_mock.return_value = or_mock_return
 
-    or_mock_return = "or_filter"
-    or_mock.return_value = or_mock_return
+#     friendship_handler.get_friendship_bidirectional_query(user_a, user_b)
 
-    friendship_handler.get_friendship_bidirectional_query(user_a, user_b)
+#     assert friendship_handler.friendship == friendship
+#     assert and_mock.call_count == 2
 
-    assert friendship_handler.friendship == friendship
-    assert and_mock.call_count == 2
+#     or_mock.assert_called_once_with(
+#         *[
+#             and_mock_return,
+#             and_mock_return,
+#         ]
+#     )
 
-    or_mock.assert_called_once_with(
-        *[
-            and_mock_return,
-            and_mock_return,
-        ]
-    )
-
-    _get_record_with_not_found_raise_mock.assert_called_once_with(
-        FriendshipSchema, DETAIL, or_mock_return
-    )
+#     _get_record_with_not_found_raise_mock.assert_called_once_with(
+#         FriendshipSchema, DETAIL, or_mock_return
+#     )
 
 
 @freeze_time(FROZEN_DATE)

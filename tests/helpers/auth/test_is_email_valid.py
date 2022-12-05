@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 import pytest
 from messenger.constants.auth_details import EmailError
 from messenger.helpers.auth.is_email_valid import is_email_valid
-from tests.helpers.conftest import (
+from tests.conftest import (
     valid_emails,
     invalid_emails,
 )

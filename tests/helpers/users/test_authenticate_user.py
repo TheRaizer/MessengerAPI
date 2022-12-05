@@ -7,7 +7,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
 )
 
 from messenger.helpers.users import authenticate_user
-from tests.helpers.conftest import valid_emails, valid_passwords
+from tests.conftest import valid_emails, valid_passwords
 
 
 @patch("messenger.helpers.users.UserHandler")
