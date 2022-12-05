@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 import pytest
 from messenger.constants.auth_details import UsernameError
 from messenger.helpers.auth.is_username_valid import is_username_valid
-from tests.helpers.conftest import (
+from tests.conftest import (
     valid_usernames,
     invalid_usernames,
 )

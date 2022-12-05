@@ -4,36 +4,33 @@ from pytest_mock import MockerFixture
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
-    UserSchema,
-)
 from messenger.helpers.group_chats import GroupChatHandler
 
+# TODO: write this test using test database
+# @patch("messenger.helpers.group_chats.GroupChatHandler._get_record")
+# def test_is_user_in_group_chat(
+#     _get_record_mock: MagicMock, mocker: MockerFixture
+# ):
+#     group_chat_handler = GroupChatHandler(mocker.MagicMock())
 
-@patch("messenger.helpers.group_chats.GroupChatHandler._get_record")
-def test_is_user_in_group_chat(
-    _get_record_mock: MagicMock, mocker: MockerFixture
-):
-    group_chat_handler = GroupChatHandler(mocker.MagicMock())
+#     group_chat = GroupChatSchema(group_chat_id=21)
+#     _get_record_mock.return_value = group_chat
 
-    group_chat = GroupChatSchema(group_chat_id=21)
-    _get_record_mock.return_value = group_chat
+#     is_in_group_chat = group_chat_handler.is_user_in_group_chat(
+#         group_chat.group_chat_id, UserSchema(user_id=1)
+#     )
 
-    is_in_group_chat = group_chat_handler.is_user_in_group_chat(
-        group_chat.group_chat_id, UserSchema(user_id=1)
-    )
+#     _get_record_mock.assert_called_once()
 
-    _get_record_mock.assert_called_once()
+#     assert is_in_group_chat is True
 
-    assert is_in_group_chat is True
+#     _get_record_mock.return_value = None
 
-    _get_record_mock.return_value = None
+#     is_in_group_chat = group_chat_handler.is_user_in_group_chat(
+#         group_chat.group_chat_id, UserSchema(user_id=1)
+#     )
 
-    is_in_group_chat = group_chat_handler.is_user_in_group_chat(
-        group_chat.group_chat_id, UserSchema(user_id=1)
-    )
-
-    assert is_in_group_chat is False
+#     assert is_in_group_chat is False
 
 
 @pytest.mark.parametrize(

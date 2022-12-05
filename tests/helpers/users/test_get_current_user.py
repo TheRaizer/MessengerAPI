@@ -9,7 +9,7 @@ from messenger.environment_variables import JWT_SECRET
 from messenger.helpers.auth.auth_token import TokenData
 
 from messenger.helpers.users import get_current_user
-from tests.helpers.conftest import (
+from tests.conftest import (
     valid_usernames,
     valid_emails,
     valid_passwords,

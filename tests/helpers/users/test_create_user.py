@@ -6,7 +6,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.helpers.users import create_user
-from tests.helpers.conftest import (
+from tests.conftest import (
     valid_usernames,
     valid_passwords,
     valid_emails,
