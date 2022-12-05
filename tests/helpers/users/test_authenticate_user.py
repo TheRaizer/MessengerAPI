@@ -31,9 +31,9 @@ class TestAuthenticateUser:
         password_hash: str,
     ):
         session_mock = mocker.MagicMock()
-        user = UserSchema(password_hash=password_hash)
+        expected_user = UserSchema(password_hash=password_hash)
 
-        UserHandlerMock.return_value.get_user.return_value = user
+        UserHandlerMock.return_value.get_user.return_value = expected_user
         password_hasher_mock.check_needs_rehash.return_value = False
 
         authenticated_user = authenticate_user(session_mock, password, email)
@@ -47,7 +47,7 @@ class TestAuthenticateUser:
         )
         UserHandlerMock.return_value.get_user.assert_called_once()
 
-        assert user is authenticated_user
+        assert expected_user is authenticated_user
 
     @pytest.mark.parametrize(
         "email, password",
@@ -119,18 +119,18 @@ class TestAuthenticateUser:
         password: str,
     ):
         session_mock = mocker.MagicMock()
-        user = UserSchema()
+        expected_user = UserSchema()
 
-        UserHandlerMock.return_value.get_user.return_value = user
+        UserHandlerMock.return_value.get_user.return_value = expected_user
         password_hasher_mock.check_needs_rehash.return_value = True
         password_hasher_mock.hash.return_value = "new password hash"
 
         authenticated_user = authenticate_user(session_mock, password, email)
 
-        # should rehash the password, add the new hash to the user schema, 
+        # should rehash the password, add the new hash to the user schema,
         # and refresh the user record.
         password_hasher_mock.hash.assert_called_once_with(password)
 
-        assert user.password_hash == "new password hash"
-        session_mock.refresh.assert_called_once_with(user)
-        assert user is authenticated_user
+        assert expected_user.password_hash == "new password hash"
+        session_mock.refresh.assert_called_once_with(expected_user)
+        assert expected_user is authenticated_user
