@@ -29,7 +29,7 @@ from .auth.auth_token import oauth2_scheme
 logger = logging.getLogger(__name__)
 
 
-async def get_current_user(
+def get_current_user(
     db: Session = Depends(database_session), token: str = Depends(oauth2_scheme)
 ) -> UserSchema:
     """Retrieves a user's data from the database using a given JWT token.
@@ -70,7 +70,7 @@ async def get_current_user(
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION from exc
 
 
-async def get_current_active_user(
+def get_current_active_user(
     current_user: UserSchema = Depends(get_current_user),
 ) -> UserSchema:
     """Retrieves the currently active user using a given JWT token.
