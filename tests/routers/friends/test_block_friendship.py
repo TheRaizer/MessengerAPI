@@ -11,7 +11,8 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from .conftest import current_active_user, usernames, session_mock
+from tests.routers.friends.conftest import current_active_user
+from tests.conftest import valid_usernames
 
 
 class TestBlockFriendship:
@@ -39,7 +40,7 @@ class TestBlockFriendship:
             FriendshipStatusCode.BLOCKED,
         )
 
-    @pytest.mark.parametrize("username", usernames)
+    @pytest.mark.parametrize("username", valid_usernames)
     @patch("messenger.routers.friends.FriendshipHandler")
     @patch("messenger.routers.friends.UserHandler")
     def test_when_friendship_exists(
@@ -71,7 +72,7 @@ class TestBlockFriendship:
         )
 
     @freeze_time("2022-11-06")
-    @pytest.mark.parametrize("username", usernames)
+    @pytest.mark.parametrize("username", valid_usernames)
     @patch("messenger.routers.friends.FriendshipHandler")
     @patch("messenger.routers.friends.UserHandler")
     def test_when_friendship_does_not_exist(

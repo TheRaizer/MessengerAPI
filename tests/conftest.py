@@ -1,4 +1,14 @@
-"""Shared data used during tests"""
+"""Shared data/functions used during tests"""
+
+import pytest
+from sqlalchemy import event
+from sqlalchemy.orm import Session
+from _submodules.messenger_utils.messenger_schemas.schema import engine
+from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_code_schema import (
+    FriendshipStatusCodeSchema,
+)
+from messenger.constants.friendship_status_codes import FriendshipStatusCode
+from tests import TestingSessionLocal
 
 valid_passwords = [
     "Password231",
@@ -48,3 +58,51 @@ valid_emails = [
 ]
 
 invalid_emails = ["@email.com", "cool.cool", "not an email", "google.email@com"]
+
+
+@pytest.fixture()
+def session():
+    """This function returns a database session where no actual
+    transactions are commited to the test database. This ensures
+    that no tables actually need to be created. SQLAlchemy handles
+    all table relationships, etc.
+
+    Yields:
+        Session: the database session to test with
+    """
+    connection = engine.connect()
+    transaction = connection.begin()
+    db: Session = TestingSessionLocal(bind=connection)
+
+    # Begin a nested transaction (using SAVEPOINT).
+    nested = connection.begin_nested()
+
+    # If the application code calls session.commit, it will end the nested
+    # transaction. Need to start a new one when that happens.
+    @event.listens_for(db, "after_transaction_end")
+    def end_savepoint(session, transaction):
+        nonlocal nested
+        if not nested.is_active:
+            nested = connection.begin_nested()
+
+    yield db
+
+    # Rollback the overall transaction, restoring the state before the test ran.
+    db.close()
+    transaction.rollback()
+    connection.close()
+
+
+def add_initial_friendship_status_codes(session: Session):
+    """Test helper function that adds all the expected status codes
+    to the session that are existent in prod and dev.
+    Args:
+        session (Session): the session that will be used during testing
+    """
+    for status_code in FriendshipStatusCode:
+        friendship_status_code = FriendshipStatusCodeSchema(
+            status_code_id=status_code.value, name=status_code.name
+        )
+        session.add(friendship_status_code)
+
+    session.commit()
