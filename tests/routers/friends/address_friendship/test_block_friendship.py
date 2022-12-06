@@ -42,13 +42,13 @@ class TestBlockFriendship:
     def add_user_to_block(
         self,
         session: Session,
-        current_active_user: UserSchema,
+        blocker_id: int,
         username: str,
         password: str,
         email: str,
     ):
         user_to_block = UserSchema(
-            user_id=current_active_user.user_id + 1,
+            user_id=blocker_id + 1,
             username=username,
             password_hash=password,
             email=email,
@@ -62,7 +62,7 @@ class TestBlockFriendship:
 
     @freeze_time(FROZEN_DATE)
     @pytest.mark.parametrize(
-        "status",
+        "initial_friendship_status",
         friendship_status_codes,
     )
     @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ class TestBlockFriendship:
         username: str,
         email: str,
         password: str,
-        status: FriendshipStatusCode,
+        initial_friendship_status: FriendshipStatusCode,
         session: Session,
         client: Tuple[TestClient, UserSchema],
     ):
@@ -86,12 +86,12 @@ class TestBlockFriendship:
             client,
             session,
             FriendshipStatusCode.BLOCKED,
-            status,
+            initial_friendship_status,
         )
 
     @freeze_time(FROZEN_DATE)
     @pytest.mark.parametrize(
-        "status",
+        "initial_friendship_status",
         friendship_status_codes,
     )
     @pytest.mark.parametrize(
@@ -103,7 +103,7 @@ class TestBlockFriendship:
         username: str,
         email: str,
         password: str,
-        status: FriendshipStatusCode,
+        initial_friendship_status: FriendshipStatusCode,
         client: Tuple[TestClient, UserSchema],
         session: Session,
     ):
@@ -114,7 +114,7 @@ class TestBlockFriendship:
             password,
             client,
             session,
-            status,
+            initial_friendship_status,
         )
 
     @freeze_time(FROZEN_DATE)
@@ -133,7 +133,33 @@ class TestBlockFriendship:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
         user_to_block = self.add_user_to_block(
-            session, current_active_user, username, password, email
+            session, current_active_user.user_id, username, password, email
+        )
+        test_client.post(self.get_url(username))
+
+        # if no friendship was created then this will throw an exception and test will fail
+        session.query(FriendshipSchema).filter(
+            FriendshipSchema.requester_id == current_active_user.user_id,
+            FriendshipSchema.addressee_id == user_to_block.user_id,
+        ).one()
+
+    @freeze_time(FROZEN_DATE)
+    @pytest.mark.parametrize(
+        "username, email, password",
+        zip(valid_usernames, valid_emails, valid_passwords),
+    )
+    def test_when_friendship_does_not_exists_should_add_blocked_status(
+        self,
+        username: str,
+        email: str,
+        password: str,
+        session: Session,
+        client: Tuple[TestClient, UserSchema],
+    ):
+        (test_client, current_active_user) = client
+        add_initial_friendship_status_codes(session)
+        user_to_block = self.add_user_to_block(
+            session, current_active_user.user_id, username, password, email
         )
         test_client.post(self.get_url(username))
 
@@ -177,7 +203,7 @@ class TestBlockFriendship:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
         self.add_user_to_block(
-            session, current_active_user, username, password, email
+            session, current_active_user.user_id, username, password, email
         )
 
         response = test_client.post(self.get_url(username))
@@ -185,14 +211,6 @@ class TestBlockFriendship:
         assert response.status_code == 201
 
     @freeze_time(FROZEN_DATE)
-    @pytest.mark.parametrize(
-        "status",
-        [
-            FriendshipStatusCode.ACCEPTED,
-            FriendshipStatusCode.DECLINED,
-            FriendshipStatusCode.REQUESTED,
-        ],
-    )
     @pytest.mark.parametrize(
         "username, email, password",
         zip(valid_usernames, valid_emails, valid_passwords),
@@ -202,7 +220,6 @@ class TestBlockFriendship:
         username: str,
         email: str,
         password: str,
-        status: FriendshipStatusCode,
         session: Session,
         client: Tuple[TestClient, UserSchema],
     ):
