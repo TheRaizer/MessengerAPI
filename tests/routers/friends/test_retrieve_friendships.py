@@ -42,7 +42,6 @@ def test_get_friendship_requests_sent(client: Tuple[TestClient, UserSchema]):
     current_active_user.friend_requests_sent = expected_friendship_requests_sent
 
     response = test_client.get("/friends/requests/sent")
-    assert response.status_code == 200
 
     friendship_requests_sent = response.json()
 
@@ -94,7 +93,6 @@ def test_get_friendship_requests_recieved(
     )
 
     response = test_client.get("/friends/requests/recieved")
-    assert response.status_code == 200
 
     friendship_requests_recieved = response.json()
 
