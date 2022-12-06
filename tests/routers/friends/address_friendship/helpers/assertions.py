@@ -10,7 +10,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from tests.routers.friends.address_friendship import (
+from tests.routers.friends.address_friendship.helpers.initialize_friendship_request import (
     initialize_friendship_request,
 )
 
@@ -22,7 +22,7 @@ def assert_addressing_adds_new_friendship_status_to_db(
     password: str,
     client: Tuple[TestClient, UserSchema],
     session: Session,
-    expected_status: FriendshipStatusCode,
+    expected_friendship_status_code: FriendshipStatusCode,
 ):
     (test_client, current_active_user) = client
     (friendship, friendship_requester) = initialize_friendship_request(
@@ -37,16 +37,19 @@ def assert_addressing_adds_new_friendship_status_to_db(
 
     session.refresh(friendship)
 
-    added_friendship_status = max(
+    latest_friendship_status = max(
         friendship.statuses,
         key=attrgetter("specified_date_time"),
     )
 
-    assert added_friendship_status.status_code_id == expected_status.value
-    assert added_friendship_status.requester_id == friendship_requester.user_id
-    assert added_friendship_status.addressee_id == current_active_user.user_id
-    assert added_friendship_status.specifier_id == current_active_user.user_id
-    assert added_friendship_status.specified_date_time == datetime.now()
+    assert (
+        latest_friendship_status.status_code_id
+        == expected_friendship_status_code.value
+    )
+    assert latest_friendship_status.requester_id == friendship_requester.user_id
+    assert latest_friendship_status.addressee_id == current_active_user.user_id
+    assert latest_friendship_status.specifier_id == current_active_user.user_id
+    assert latest_friendship_status.specified_date_time == datetime.now()
 
 
 def assert_addressing_produces_201_status_code(

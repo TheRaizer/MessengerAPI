@@ -7,7 +7,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from tests.routers.friends.address_friendship.assertions import (
+from tests.routers.friends.address_friendship.helpers.assertions import (
     assert_addressing_adds_new_friendship_status_to_db,
     assert_addressing_fails_when_friendship_already_addressed,
     assert_addressing_fails_when_friendship_blocked,
@@ -24,6 +24,9 @@ from tests.conftest import (
 
 
 class TestAcceptFriendshipRequest:
+    def get_url(self, username: str):
+        return f"/friends/requests/decline?requester_username={username}"
+
     @freeze_time(FROZEN_DATE)
     @pytest.mark.parametrize(
         "username, email, password",
@@ -38,7 +41,7 @@ class TestAcceptFriendshipRequest:
         session: Session,
     ):
         assert_addressing_adds_new_friendship_status_to_db(
-            f"/friends/requests/decline?requester_username={username}",
+            self.get_url(username),
             username,
             email,
             password,
@@ -61,7 +64,7 @@ class TestAcceptFriendshipRequest:
         session: Session,
     ):
         assert_addressing_produces_201_status_code(
-            f"/friends/requests/decline?requester_username={username}",
+            self.get_url(username),
             username,
             email,
             password,
@@ -79,7 +82,7 @@ class TestAcceptFriendshipRequest:
         client: Tuple[TestClient, UserSchema],
     ):
         assert_addressing_fails_when_user_not_found(
-            f"/friends/requests/decline?requester_username={username}",
+            self.get_url(username),
             client,
         )
 
@@ -96,7 +99,7 @@ class TestAcceptFriendshipRequest:
         session: Session,
     ):
         assert_addressing_fails_when_friendship_not_found(
-            f"/friends/requests/decline?requester_username={username}",
+            self.get_url(username),
             username,
             password,
             email,
@@ -118,7 +121,7 @@ class TestAcceptFriendshipRequest:
         session: Session,
     ):
         assert_addressing_fails_when_friendship_already_addressed(
-            f"/friends/requests/decline?requester_username={username}",
+            self.get_url(username),
             username,
             password,
             email,
@@ -140,7 +143,7 @@ class TestAcceptFriendshipRequest:
         session: Session,
     ):
         assert_addressing_fails_when_friendship_blocked(
-            f"/friends/requests/decline?requester_username={username}",
+            self.get_url(username),
             username,
             password,
             email,
