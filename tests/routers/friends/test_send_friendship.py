@@ -13,7 +13,8 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from .conftest import current_active_user, usernames, session_mock
+from tests.routers.friends.conftest import current_active_user
+from tests.conftest import valid_usernames
 
 
 class TestSendFriendshipRequest:
@@ -24,7 +25,7 @@ class TestSendFriendshipRequest:
         password_hash="some-hash",
     )
 
-    @pytest.mark.parametrize("username", usernames)
+    @pytest.mark.parametrize("username", valid_usernames)
     @patch("messenger.routers.friends.FriendshipHandler")
     @patch("messenger.routers.friends.UserHandler")
     def test_when_friendship_already_requested(
@@ -63,7 +64,7 @@ class TestSendFriendshipRequest:
             "detail": "you cannot send another friendship request",
         }
 
-    @pytest.mark.parametrize("username", usernames)
+    @pytest.mark.parametrize("username", valid_usernames)
     @patch("messenger.routers.friends.FriendshipHandler")
     @patch("messenger.routers.friends.UserHandler")
     def test_when_friendship_already_addressed(
@@ -91,7 +92,7 @@ class TestSendFriendshipRequest:
         }
 
     @freeze_time("2022-11-06")
-    @pytest.mark.parametrize("username", usernames)
+    @pytest.mark.parametrize("username", valid_usernames)
     @patch("messenger.routers.friends.FriendshipHandler")
     @patch("messenger.routers.friends.UserHandler")
     @patch("messenger.routers.friends.FriendshipSchema")

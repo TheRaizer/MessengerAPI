@@ -258,6 +258,7 @@ def accept_friendship_request(
     address_friendship_request_as_route(
         db, current_user, requester_username, FriendshipStatusCode.ACCEPTED
     )
+    db.commit()
 
 
 @router.post("/requests/decline", status_code=status.HTTP_201_CREATED)
@@ -279,6 +280,7 @@ def decline_friendship_request(
     address_friendship_request_as_route(
         db, current_user, requester_username, FriendshipStatusCode.DECLINED
     )
+    db.commit()
 
 
 @router.post("/requests/block", status_code=status.HTTP_201_CREATED)
@@ -340,6 +342,7 @@ def block_friendship_request(
     )
 
     db.commit()
+
     logger.info(
         "(requester_id: %s, addressee_id: %s, friendship_status_code_id: %s) add friendship and friendship status to respective tables.",
         friendship.requester_id,

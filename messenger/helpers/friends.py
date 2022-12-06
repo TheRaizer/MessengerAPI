@@ -216,7 +216,7 @@ def address_friendship_request(
 
     return friendship_handler.add_new_status(
         friendship_handler.friendship.requester_id,
-        friendship_handler.friendship.requester_id,
+        friendship_handler.friendship.addressee_id,
         friendship_handler.friendship.addressee_id,
         new_status_code_id,
     )
