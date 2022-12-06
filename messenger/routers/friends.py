@@ -3,7 +3,7 @@
 from datetime import datetime
 import logging
 from operator import or_
-from typing import List
+from typing import List, Optional
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -308,11 +308,15 @@ def block_friendship_request(
         UserSchema.username == clean(user_to_block_username)
     )
 
+    friendship: Optional[FriendshipSchema] = None
     # attempt to fetch a friendship record with the current user as either the
     # requester or addressee
-    friendship = friendship_handler.get_friendship_bidirectional_query(
-        user_to_block, current_user
-    )
+    try:
+        friendship = friendship_handler.get_friendship_bidirectional_query(
+            user_to_block, current_user
+        )
+    except HTTPException:
+        pass
 
     # if no friendship record appears, create a new one
     if friendship is None:
@@ -344,7 +348,8 @@ def block_friendship_request(
     db.commit()
 
     logger.info(
-        "(requester_id: %s, addressee_id: %s, friendship_status_code_id: %s) add friendship and friendship status to respective tables.",
+        "(requester_id: %s, addressee_id: %s, friendship_status_code_id: %s) add\
+            friendship and friendship status to respective tables.",
         friendship.requester_id,
         friendship.addressee_id,
         FriendshipStatusCode.BLOCKED,

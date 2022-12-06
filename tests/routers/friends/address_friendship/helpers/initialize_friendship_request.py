@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Optional
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
@@ -20,8 +21,14 @@ def initialize_friendship_request(
     username: str,
     email: str,
     password: str,
+    initial_friendship_status_code: Optional[FriendshipStatusCode] = None,
 ):
     add_initial_friendship_status_codes(session)
+    friendship_status_code = (
+        FriendshipStatusCode.REQUESTED
+        if initial_friendship_status_code is None
+        else initial_friendship_status_code
+    )
     friendship_requester = UserSchema(
         user_id=current_active_user.user_id + 1,
         username=username,
@@ -36,7 +43,7 @@ def initialize_friendship_request(
     friendship_status = FriendshipStatusSchema(
         requester_id=friendship_requester.user_id,
         addressee_id=current_active_user.user_id,
-        status_code_id=FriendshipStatusCode.REQUESTED.value,
+        status_code_id=friendship_status_code.value,
         specified_date_time=datetime.now() - timedelta(minutes=13),
         specifier_id=friendship_requester.user_id,
     )

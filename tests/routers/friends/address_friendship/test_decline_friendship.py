@@ -55,7 +55,7 @@ class TestAcceptFriendshipRequest:
         "username, email, password",
         zip(valid_usernames, valid_emails, valid_passwords),
     )
-    def test_response_status_code(
+    def test_response_status_code_is_201(
         self,
         username: str,
         email: str,
@@ -76,7 +76,7 @@ class TestAcceptFriendshipRequest:
         "username",
         valid_usernames,
     )
-    def test_when_no_user_found(
+    def test_when_no_user_found_should_fail(
         self,
         username: str,
         client: Tuple[TestClient, UserSchema],
@@ -90,7 +90,7 @@ class TestAcceptFriendshipRequest:
         "username, email, password",
         zip(valid_usernames, valid_emails, valid_passwords),
     )
-    def test_when_no_friendship_found(
+    def test_when_no_friendship_found_should_fail(
         self,
         username: str,
         password: str,
@@ -112,7 +112,7 @@ class TestAcceptFriendshipRequest:
         "username, email, password",
         zip(valid_usernames, valid_emails, valid_passwords),
     )
-    def test_when_friendship_already_addressed(
+    def test_when_friendship_already_addressed_should_fail(
         self,
         username: str,
         password: str,
@@ -134,7 +134,7 @@ class TestAcceptFriendshipRequest:
         "username, email, password",
         zip(valid_usernames, valid_emails, valid_passwords),
     )
-    def test_when_friendship_blocked(
+    def test_when_friendship_blocked_should_fail(
         self,
         username: str,
         password: str,

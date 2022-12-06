@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from operator import attrgetter
-from typing import Tuple
+from typing import Optional, Tuple
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
@@ -23,6 +23,7 @@ def assert_addressing_adds_new_friendship_status_to_db(
     client: Tuple[TestClient, UserSchema],
     session: Session,
     expected_friendship_status_code: FriendshipStatusCode,
+    initial_friendship_status_code: Optional[FriendshipStatusCode] = None,
 ):
     (test_client, current_active_user) = client
     (friendship, friendship_requester) = initialize_friendship_request(
@@ -31,6 +32,7 @@ def assert_addressing_adds_new_friendship_status_to_db(
         username,
         email,
         password,
+        initial_friendship_status_code,
     )
 
     test_client.post(url)
@@ -59,6 +61,7 @@ def assert_addressing_produces_201_status_code(
     password: str,
     client: Tuple[TestClient, UserSchema],
     session: Session,
+    initial_friendship_status_code: Optional[FriendshipStatusCode] = None,
 ):
     (test_client, current_active_user) = client
 
@@ -68,6 +71,7 @@ def assert_addressing_produces_201_status_code(
         username,
         email,
         password,
+        initial_friendship_status_code,
     )
 
     response = test_client.post(url)
