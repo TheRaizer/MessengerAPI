@@ -10,7 +10,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from tests.routers.friends.address_friendship.helpers.initialize_friendship_request import (
+from tests.routers.friends.helpers.initialize_friendship_request import (
     initialize_friendship_request,
 )
 

@@ -17,7 +17,7 @@ from tests.routers.friends.address_friendship.helpers.assertions import (
     assert_addressing_adds_new_friendship_status_to_db,
     assert_addressing_produces_201_status_code,
 )
-from tests.routers.friends.address_friendship.helpers.initialize_friendship_request import (
+from tests.routers.friends.helpers.initialize_friendship_request import (
     initialize_friendship_request,
 )
 from tests.routers.friends.conftest import FROZEN_DATE
