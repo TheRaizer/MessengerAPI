@@ -156,16 +156,24 @@ def send_friendship_request(
 
     friendship_handler = FriendshipHandler(db)
 
-    friendship = friendship_handler.get_friendship_bidirectional_query(
-        current_user, addressee
-    )
+    friendship: Optional[FriendshipSchema] = None
+
+    try:
+        friendship = friendship_handler.get_friendship_bidirectional_query(
+            current_user, addressee
+        )
+    except HTTPException:
+        pass
 
     if friendship is not None:
         latest_status = friendship_handler.get_latest_friendship_status()
 
         already_requested_friendship = (
             latest_status is not None
-            and friendship.requester_id == current_user.user_id
+            and (
+                friendship.requester_id == current_user.user_id
+                or friendship.addressee_id == current_user.user_id
+            )
             and latest_status.status_code_id
             == FriendshipStatusCode.REQUESTED.value
         )
@@ -174,7 +182,7 @@ def send_friendship_request(
             # you cannot resend a friend request
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="you cannot send another friendship request",
+                detail="a friendship request was already sent",
             )
         if (
             latest_status is not None
