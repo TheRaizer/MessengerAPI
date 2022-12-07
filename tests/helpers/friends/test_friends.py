@@ -93,7 +93,9 @@ def test_get_friendship_bidirectional_query(
     session.add(friendship)
     session.commit()
 
-    friendship_handler.get_friendship_bidirectional_query(user_a, user_b)
+    friendship_handler.get_friendship_bidirectional_query(
+        user_a.user_id, user_b.user_id
+    )
 
     assert friendship_handler.friendship == friendship
 

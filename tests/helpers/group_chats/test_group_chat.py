@@ -44,7 +44,7 @@ class TestIsUserInGroupChat:
         session.commit()
 
         is_in_group_chat = group_chat_handler.is_user_in_group_chat(
-            group_chat.group_chat_id, user
+            group_chat.group_chat_id, user.user_id
         )
 
         assert is_in_group_chat is True
@@ -81,7 +81,7 @@ class TestIsUserInGroupChat:
         session.commit()
 
         is_in_group_chat = group_chat_handler.is_user_in_group_chat(
-            group_chat.group_chat_id, user
+            group_chat.group_chat_id, user.user_id
         )
 
         assert is_in_group_chat is False
