@@ -29,7 +29,7 @@ class GroupChatHandler(DatabaseHandler):
         Args:
             group_chat_id (int): the id of the group chat that we will attempt
                 to find the user in.
-            user (int): the id of the user that we will attempt to find in a
+            user_id (int): the id of the user that we will attempt to find in a
                 group chat.
 
         Returns:

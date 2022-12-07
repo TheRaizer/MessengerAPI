@@ -150,8 +150,8 @@ class FriendshipHandler(DatabaseHandler):
         exception if no friendship is found.
 
         Args:
-            user_a (int): the id of a user participating in the friendship
-            user_b (int): the id of a user participating in the friendship
+            user_id_a (int): the id of a user participating in the friendship
+            user_id_b (int): the id of a user participating in the friendship
 
         Returns:
             Union[Type[FriendshipSchema], None]: the friendship
@@ -236,7 +236,7 @@ def address_friendship_request_as_route(
     Args:
         db (Session): the database session that will be used to add a new
             friendship status to the DB.
-        current_user (UserSchema): the current active user.
+        current_user_id (int): the id of the current active user.
         requester_username (str): the username of the user that requested the
             friendship that the current_user will either accept or decline.
         new_status_code_id (Literal[ FriendshipStatusCode.ACCEPTED,
