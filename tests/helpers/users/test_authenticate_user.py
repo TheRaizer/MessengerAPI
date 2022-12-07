@@ -21,7 +21,7 @@ class TestAuthenticateUser:
             ["1", "2", "3", "5", "6", "7", "8", "02"],
         ),
     )
-    def test_when_successful(
+    def test_correctly_authenticates_user(
         self,
         password_hasher_mock: MagicMock,
         UserHandlerMock: MagicMock,

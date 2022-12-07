@@ -12,7 +12,7 @@ class TestIsPasswordValid:
         "password",
         valid_passwords,
     )
-    def test_valid_password(self, password: str):
+    def test_with_valid_password(self, password: str):
         is_valid = is_password_valid(password)
         assert is_valid is True
 
@@ -20,6 +20,6 @@ class TestIsPasswordValid:
         "password",
         invalid_passwords,
     )
-    def test_invalid_password(self, password: str):
+    def test_with_invalid_password(self, password: str):
         is_valid = is_password_valid(password)
         assert is_valid is False

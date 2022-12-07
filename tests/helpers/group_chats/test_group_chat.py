@@ -1,36 +1,90 @@
 from unittest.mock import MagicMock, patch
 import pytest
+from sqlalchemy.orm import Session
 from pytest_mock import MockerFixture
+from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_schema import (
+    GroupChatMemberSchema,
+)
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.helpers.group_chats import GroupChatHandler
 
-# TODO: write this test using test database
-# @patch("messenger.helpers.group_chats.GroupChatHandler._get_record")
-# def test_is_user_in_group_chat(
-#     _get_record_mock: MagicMock, mocker: MockerFixture
-# ):
-#     group_chat_handler = GroupChatHandler(mocker.MagicMock())
 
-#     group_chat = GroupChatSchema(group_chat_id=21)
-#     _get_record_mock.return_value = group_chat
+@pytest.mark.parametrize(
+    "user_id, group_chat_id",
+    [(1, 3), (4, 2), (12, 1223), (11, 93), (98, 11)],
+)
+class TestIsUserInGroupChat:
+    def test_when_true(
+        self, user_id: int, group_chat_id: int, session: Session
+    ):
+        group_chat_handler = GroupChatHandler(session)
 
-#     is_in_group_chat = group_chat_handler.is_user_in_group_chat(
-#         group_chat.group_chat_id, UserSchema(user_id=1)
-#     )
+        user = UserSchema(
+            user_id=user_id,
+            username="username",
+            email="email",
+            password_hash="password_hash",
+        )
+        group_chat = GroupChatSchema(name="name", group_chat_id=group_chat_id)
 
-#     _get_record_mock.assert_called_once()
+        insert_stmnt = GroupChatMemberSchema.insert().values(
+            group_chat_id=group_chat.group_chat_id, member_id=user.user_id
+        )
 
-#     assert is_in_group_chat is True
+        session.add(user)
+        session.add(group_chat)
+        session.commit()
 
-#     _get_record_mock.return_value = None
+        session.execute(insert_stmnt)
+        session.commit()
 
-#     is_in_group_chat = group_chat_handler.is_user_in_group_chat(
-#         group_chat.group_chat_id, UserSchema(user_id=1)
-#     )
+        is_in_group_chat = group_chat_handler.is_user_in_group_chat(
+            group_chat.group_chat_id, user
+        )
 
-#     assert is_in_group_chat is False
+        assert is_in_group_chat is True
+
+    def test_when_false(
+        self, user_id: int, group_chat_id: int, session: Session
+    ):
+        group_chat_handler = GroupChatHandler(session)
+
+        user = UserSchema(
+            user_id=user_id,
+            username="username",
+            email="email",
+            password_hash="password_hash",
+        )
+        other_user = UserSchema(
+            user_id=user_id + 1,
+            username="other_username",
+            email="other_email",
+            password_hash="password_hash",
+        )
+        group_chat = GroupChatSchema(name="name", group_chat_id=group_chat_id)
+
+        insert_stmnt = GroupChatMemberSchema.insert().values(
+            group_chat_id=group_chat.group_chat_id, member_id=other_user.user_id
+        )
+
+        session.add(user)
+        session.add(other_user)
+        session.add(group_chat)
+        session.commit()
+
+        session.execute(insert_stmnt)
+        session.commit()
+
+        is_in_group_chat = group_chat_handler.is_user_in_group_chat(
+            group_chat.group_chat_id, user
+        )
+
+        assert is_in_group_chat is False
 
 
 @pytest.mark.parametrize(

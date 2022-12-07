@@ -16,11 +16,11 @@ from messenger.helpers.friends import (
 from tests.helpers.friends import FROZEN_DATE
 
 
+@freeze_time(FROZEN_DATE)
 @patch(
     "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
 )
 class TestRaiseIfBlocked:
-    @freeze_time(FROZEN_DATE)
     def test_when_friendship_blocked(
         self,
         get_latest_friendship_status_mock: MagicMock,
@@ -42,7 +42,6 @@ class TestRaiseIfBlocked:
             assert exc.value.status_code == 400
             assert exc.value.detail == "friendship is blocked"
 
-    @freeze_time(FROZEN_DATE)
     @pytest.mark.parametrize(
         "status_code_id_no_raise",
         [
