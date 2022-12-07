@@ -160,7 +160,7 @@ def send_friendship_request(
 
     try:
         friendship = friendship_handler.get_friendship_bidirectional_query(
-            current_user, addressee
+            current_user.user_id, addressee.user_id
         )
     except HTTPException:
         pass
@@ -264,7 +264,10 @@ def accept_friendship_request(
         Defaults to Depends(database_session).
     """
     address_friendship_request_as_route(
-        db, current_user, requester_username, FriendshipStatusCode.ACCEPTED
+        db,
+        current_user.user_id,
+        requester_username,
+        FriendshipStatusCode.ACCEPTED,
     )
     db.commit()
 
@@ -286,7 +289,10 @@ def decline_friendship_request(
         Defaults to Depends(database_session).
     """
     address_friendship_request_as_route(
-        db, current_user, requester_username, FriendshipStatusCode.DECLINED
+        db,
+        current_user.user_id,
+        requester_username,
+        FriendshipStatusCode.DECLINED,
     )
     db.commit()
 
@@ -321,7 +327,7 @@ def block_friendship_request(
     # requester or addressee
     try:
         friendship = friendship_handler.get_friendship_bidirectional_query(
-            user_to_block, current_user
+            user_to_block.user_id, current_user.user_id
         )
     except HTTPException:
         pass

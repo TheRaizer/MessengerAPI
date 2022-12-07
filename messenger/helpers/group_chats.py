@@ -23,15 +23,13 @@ class GroupChatHandler(DatabaseHandler):
         super().__init__(db)
         self.group_chat = group_chat
 
-    def is_user_in_group_chat(
-        self, group_chat_id: int, user: UserSchema
-    ) -> bool:
+    def is_user_in_group_chat(self, group_chat_id: int, user_id: int) -> bool:
         """Returns whether the user is in a given group chat or not.
 
         Args:
             group_chat_id (int): the id of the group chat that we will attempt
                 to find the user in.
-            user (UserSchema): the user that we will attempt to find in a
+            user_id (int): the id of the user that we will attempt to find in a
                 group chat.
 
         Returns:
@@ -41,7 +39,7 @@ class GroupChatHandler(DatabaseHandler):
         record = self._get_record(
             GroupChatMemberSchema,
             GroupChatMemberSchema.c.group_chat_id == group_chat_id,
-            GroupChatMemberSchema.c.member_id == user.user_id,
+            GroupChatMemberSchema.c.member_id == user_id,
         )
 
         return record is not None

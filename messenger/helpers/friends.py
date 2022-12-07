@@ -141,8 +141,8 @@ class FriendshipHandler(DatabaseHandler):
 
     def get_friendship_bidirectional_query(
         self,
-        user_a: UserSchema,
-        user_b: UserSchema,
+        user_id_a: int,
+        user_id_b: int,
     ) -> FriendshipSchema:
         """Retrieves a friendship where either user_a is the
         requester and user_b is the addressee or vice-versa. Stores
@@ -150,20 +150,20 @@ class FriendshipHandler(DatabaseHandler):
         exception if no friendship is found.
 
         Args:
-            user_a (UserSchema): a user participating in the friendship
-            user_b (UserSchema): a user participating in the friendship
+            user_id_a (int): the id of a user participating in the friendship
+            user_id_b (int): the id of a user participating in the friendship
 
         Returns:
             Union[Type[FriendshipSchema], None]: the friendship
                 record or None if no friendship was found.
         """
         filter_a = and_(
-            FriendshipSchema.requester_id == user_a.user_id,
-            FriendshipSchema.addressee_id == user_b.user_id,
+            FriendshipSchema.requester_id == user_id_a,
+            FriendshipSchema.addressee_id == user_id_b,
         ).self_group()
         filter_b = and_(
-            FriendshipSchema.requester_id == user_b.user_id,
-            FriendshipSchema.addressee_id == user_a.user_id,
+            FriendshipSchema.requester_id == user_id_b,
+            FriendshipSchema.addressee_id == user_id_a,
         ).self_group()
 
         self.friendship = self._get_record_with_not_found_raise(
@@ -224,7 +224,7 @@ def address_friendship_request(
 
 def address_friendship_request_as_route(
     db: Session,
-    current_user: UserSchema,
+    current_user_id: int,
     requester_username: str,
     new_status_code_id: Literal[
         FriendshipStatusCode.ACCEPTED,
@@ -236,7 +236,7 @@ def address_friendship_request_as_route(
     Args:
         db (Session): the database session that will be used to add a new
             friendship status to the DB.
-        current_user (UserSchema): the current active user.
+        current_user_id (int): the id of the current active user.
         requester_username (str): the username of the user that requested the
             friendship that the current_user will either accept or decline.
         new_status_code_id (Literal[ FriendshipStatusCode.ACCEPTED,
@@ -250,8 +250,8 @@ def address_friendship_request_as_route(
     friendship_handler = FriendshipHandler(db)
 
     friendship_handler.get_friendship_bidirectional_query(
-        addressee,
-        current_user,
+        addressee.user_id,
+        current_user_id,
     )
 
     address_friendship_request(

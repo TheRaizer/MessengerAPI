@@ -89,7 +89,7 @@ def send_message(
         group_chat_handler = GroupChatHandler(db)
 
         if not group_chat_handler.is_user_in_group_chat(
-            body.group_chat_id, current_user
+            body.group_chat_id, current_user.user_id
         ):
             raise HTTPException(status.HTTP_404_NOT_FOUND, "user not found")
     else:
@@ -99,7 +99,7 @@ def send_message(
 
         friendship_handler = FriendshipHandler(db)
         friendship_handler.get_friendship_bidirectional_query(
-            current_user, addressee
+            current_user.user_id, addressee.user_id
         )
 
         latest_status = friendship_handler.get_latest_friendship_status()
