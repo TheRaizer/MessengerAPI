@@ -16,7 +16,7 @@ class TestIsEmailValid:
         valid_emails,
     )
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
-    def test_valid_email(self, get_user_mock: MagicMock, email: str):
+    def test_with_valid_email(self, get_user_mock: MagicMock, email: str):
         get_user_mock.side_effect = HTTPException(
             status_code=status.HTTP_404_NOT_FOUND
         )
@@ -30,7 +30,7 @@ class TestIsEmailValid:
         invalid_emails,
     )
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
-    def test_invalid_email(self, get_user_mock: MagicMock, email: str):
+    def test_with_invalid_email(self, get_user_mock: MagicMock, email: str):
         get_user_mock.side_effect = HTTPException(
             status_code=status.HTTP_404_NOT_FOUND
         )
@@ -44,7 +44,9 @@ class TestIsEmailValid:
         valid_emails,
     )
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
-    def test_email_exists(self, get_user_mock: MagicMock, email: str):
+    def test_with_email_that_already_exists(
+        self, get_user_mock: MagicMock, email: str
+    ):
         get_user_mock.return_value = test_user_records[0]
         validity_data = is_email_valid(MagicMock(), email)
 

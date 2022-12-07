@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Tuple
+import json
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
-import json
 import pytest
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
@@ -137,7 +137,8 @@ class TestSendFriendship:
             f"/friends/requests/send-request?username={username}"
         )
 
-        # parsing to and from json converts the frozen date time to one that allows correct comparison
+        # parsing to and from json converts the frozen date time
+        # to one that allows correct comparison
         assert response.json() == json.loads(
             FriendshipModel(
                 requester_id=current_active_user.user_id,

@@ -16,7 +16,7 @@ class TestIsUsernameValid:
         valid_usernames,
     )
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
-    def test_valid_username(self, get_user_mock: MagicMock, username: str):
+    def test_with_valid_username(self, get_user_mock: MagicMock, username: str):
         get_user_mock.side_effect = HTTPException(
             status_code=status.HTTP_404_NOT_FOUND
         )
@@ -30,7 +30,9 @@ class TestIsUsernameValid:
         invalid_usernames,
     )
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
-    def test_invalid_username(self, get_user_mock: MagicMock, username: str):
+    def test_with_invalid_username(
+        self, get_user_mock: MagicMock, username: str
+    ):
         get_user_mock.side_effect = HTTPException(
             status_code=status.HTTP_404_NOT_FOUND
         )
@@ -44,7 +46,9 @@ class TestIsUsernameValid:
         valid_usernames,
     )
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
-    def test_username_exists(self, get_user_mock: MagicMock, username: str):
+    def test_when_username_already_exists(
+        self, get_user_mock: MagicMock, username: str
+    ):
         get_user_mock.return_value = test_user_records[0]
         validity_data = is_username_valid(MagicMock(), username)
 
