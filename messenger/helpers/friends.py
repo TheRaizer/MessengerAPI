@@ -139,6 +139,30 @@ class FriendshipHandler(DatabaseHandler):
 
         return new_status
 
+    def get_friendship(
+        self, addressee_id: int, requester_id: int
+    ) -> FriendshipSchema:
+        """Retrieves a friendship using the id of the addressee and requester. Stores
+        the result in self.friendship and returns it. Throws http 404
+        exception if no friendship is found.
+
+        Args:
+            addressee_id (int): the id of the addressee
+            requester_id (int): the id of the requester
+
+        Returns:
+            Union[Type[FriendshipSchema], None]: the friendship
+                record or None if no friendship was found.
+        """
+        self.friendship = self._get_record_with_not_found_raise(
+            FriendshipSchema,
+            "friendship was not found",
+            FriendshipSchema.addressee_id == addressee_id,
+            FriendshipSchema.requester_id == requester_id,
+        )
+
+        return self.friendship
+
     def get_friendship_bidirectional_query(
         self,
         user_id_a: int,
@@ -242,16 +266,16 @@ def address_friendship_request_as_route(
         new_status_code_id (Literal[ FriendshipStatusCode.ACCEPTED,
             FriendshipStatusCode.DECLINED, ]): either accept or decline
     """
-    addressee_handler = UserHandler(db)
-    addressee = addressee_handler.get_user(
+    requester_handler = UserHandler(db)
+    requester = requester_handler.get_user(
         UserSchema.username == requester_username
     )
 
     friendship_handler = FriendshipHandler(db)
 
-    friendship_handler.get_friendship_bidirectional_query(
-        addressee.user_id,
+    friendship_handler.get_friendship(
         current_user_id,
+        requester.user_id,
     )
 
     address_friendship_request(

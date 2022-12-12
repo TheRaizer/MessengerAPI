@@ -18,7 +18,7 @@ from tests.routers.friends.address_friendship.helpers.assertions import (
     assert_addressing_produces_201_status_code,
 )
 from tests.routers.friends.helpers.initialize_friendship_request import (
-    initialize_friendship_request,
+    initialize_friendship_request_addressed_to_current_user,
 )
 from tests.routers.friends.conftest import FROZEN_DATE
 from tests.conftest import (
@@ -224,7 +224,7 @@ class TestBlockFriendship:
         client: Tuple[TestClient, UserSchema],
     ):
         (test_client, current_active_user) = client
-        initialize_friendship_request(
+        initialize_friendship_request_addressed_to_current_user(
             session,
             current_active_user,
             username,

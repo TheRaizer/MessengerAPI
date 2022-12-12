@@ -2,11 +2,10 @@
 
 from datetime import datetime
 import logging
-from operator import or_
 from typing import List, Optional, cast
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import and_, desc
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import (
     database_session,
@@ -263,7 +262,7 @@ def send_friendship_request(
         db.commit()
         db.refresh(new_friendship)
 
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         logger.error(
             "failed to insert friendship status or friendship into database due to %s",
             exc,

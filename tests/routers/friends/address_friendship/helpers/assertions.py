@@ -3,6 +3,9 @@ from operator import attrgetter
 from typing import Optional, Tuple
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
+    FriendshipSchema,
+)
 from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
@@ -10,8 +13,9 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
+from tests.conftest import add_initial_friendship_status_codes
 from tests.routers.friends.helpers.initialize_friendship_request import (
-    initialize_friendship_request,
+    initialize_friendship_request_addressed_to_current_user,
 )
 
 
@@ -26,7 +30,10 @@ def assert_addressing_adds_new_friendship_status_to_db(
     initial_friendship_status_code: Optional[FriendshipStatusCode] = None,
 ):
     (test_client, current_active_user) = client
-    (friendship, friendship_requester) = initialize_friendship_request(
+    (
+        friendship,
+        friendship_requester,
+    ) = initialize_friendship_request_addressed_to_current_user(
         session,
         current_active_user,
         username,
@@ -65,7 +72,7 @@ def assert_addressing_produces_201_status_code(
 ):
     (test_client, current_active_user) = client
 
-    initialize_friendship_request(
+    initialize_friendship_request_addressed_to_current_user(
         session,
         current_active_user,
         username,
@@ -128,7 +135,10 @@ def assert_addressing_fails_when_friendship_already_addressed(
 ):
     (test_client, current_active_user) = client
 
-    (friendship, friendship_requester) = initialize_friendship_request(
+    (
+        friendship,
+        friendship_requester,
+    ) = initialize_friendship_request_addressed_to_current_user(
         session, current_active_user, username, email, password
     )
 
@@ -175,7 +185,10 @@ def assert_addressing_fails_when_friendship_blocked(
 ):
     (test_client, current_active_user) = client
 
-    (friendship, friendship_requester) = initialize_friendship_request(
+    (
+        friendship,
+        friendship_requester,
+    ) = initialize_friendship_request_addressed_to_current_user(
         session, current_active_user, username, email, password
     )
 
@@ -194,3 +207,46 @@ def assert_addressing_fails_when_friendship_blocked(
 
     assert response.status_code == 400
     assert response.json() == {"detail": "friendship is blocked"}
+
+
+def assert_addressing_fails_when_current_user_is_not_addressee(
+    url: str,
+    username: str,
+    password: str,
+    email: str,
+    client: Tuple[TestClient, UserSchema],
+    session: Session,
+):
+    (test_client, current_active_user) = client
+
+    add_initial_friendship_status_codes(session)
+
+    friendship_addressee = UserSchema(
+        user_id=current_active_user.user_id + 1,
+        username=username,
+        password_hash=password,
+        email=email,
+    )
+    # create a friendship where the current user is not the addressee
+    friendship = FriendshipSchema(
+        requester_id=current_active_user.user_id,
+        addressee_id=friendship_addressee.user_id,
+        created_date_time=datetime.now() - timedelta(minutes=13),
+    )
+    friendship_status = FriendshipStatusSchema(
+        requester_id=friendship.requester_id,
+        addressee_id=friendship.addressee_id,
+        status_code_id=FriendshipStatusCode.REQUESTED.value,
+        specified_date_time=datetime.now() - timedelta(minutes=13),
+        specifier_id=friendship.requester_id,
+    )
+
+    session.add(friendship_addressee)
+    session.add(friendship)
+    session.add(friendship_status)
+    session.commit()
+
+    response = test_client.post(url)
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "friendship was not found"}
