@@ -14,6 +14,7 @@ from tests.routers.friends.address_friendship.helpers.assertions import (
     assert_addressing_fails_when_friendship_not_found,
     assert_addressing_fails_when_user_not_found,
     assert_addressing_produces_201_status_code,
+    assert_addressing_fails_when_current_user_is_not_addressee,
 )
 from tests.routers.friends.conftest import FROZEN_DATE
 from tests.conftest import (
@@ -143,6 +144,28 @@ class TestAcceptFriendshipRequest:
         session: Session,
     ):
         assert_addressing_fails_when_friendship_blocked(
+            self.get_url(username),
+            username,
+            password,
+            email,
+            client,
+            session,
+        )
+
+    @freeze_time(FROZEN_DATE)
+    @pytest.mark.parametrize(
+        "username, email, password",
+        zip(valid_usernames, valid_emails, valid_passwords),
+    )
+    def test_when_current_active_user_not_addressee_should_fail(
+        self,
+        username: str,
+        password: str,
+        email: str,
+        client: Tuple[TestClient, UserSchema],
+        session: Session,
+    ):
+        assert_addressing_fails_when_current_user_is_not_addressee(
             self.get_url(username),
             username,
             password,

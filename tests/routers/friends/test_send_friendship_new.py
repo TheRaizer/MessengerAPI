@@ -18,7 +18,7 @@ from tests.conftest import (
 )
 from tests.routers.friends.conftest import FROZEN_DATE
 from tests.routers.friends.helpers.initialize_friendship_request import (
-    initialize_friendship_request,
+    initialize_friendship_request_addressed_to_current_user,
 )
 
 
@@ -160,7 +160,7 @@ class TestSendFriendship:
         session: Session,
     ):
         (test_client, current_active_user) = client
-        initialize_friendship_request(
+        initialize_friendship_request_addressed_to_current_user(
             session, current_active_user, username, email, password
         )
 
@@ -190,7 +190,7 @@ class TestSendFriendship:
         session: Session,
     ):
         (test_client, current_active_user) = client
-        initialize_friendship_request(
+        initialize_friendship_request_addressed_to_current_user(
             session,
             current_active_user,
             username,

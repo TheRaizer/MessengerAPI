@@ -15,7 +15,7 @@ from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from tests.conftest import add_initial_friendship_status_codes
 
 
-def initialize_friendship_request(
+def initialize_friendship_request_addressed_to_current_user(
     session: Session,
     current_active_user: UserSchema,
     username: str,
@@ -41,8 +41,8 @@ def initialize_friendship_request(
         created_date_time=datetime.now() - timedelta(minutes=13),
     )
     friendship_status = FriendshipStatusSchema(
-        requester_id=friendship_requester.user_id,
-        addressee_id=current_active_user.user_id,
+        requester_id=friendship.requester_id,
+        addressee_id=friendship.addressee_id,
         status_code_id=friendship_status_code.value,
         specified_date_time=datetime.now() - timedelta(minutes=13),
         specifier_id=friendship_requester.user_id,
