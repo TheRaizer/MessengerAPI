@@ -3,9 +3,10 @@
 from datetime import datetime
 import logging
 from operator import or_
-from typing import List, Optional
+from typing import List, Optional, cast
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import (
     database_session,
@@ -27,6 +28,7 @@ from messenger.helpers.friends import (
 from messenger.helpers.users import get_current_active_user
 from messenger.helpers.user_handler import UserHandler
 from messenger.models.friendship_model import FriendshipModel
+from messenger.models.requester_addressee import RequesterAddressee
 
 
 logger = logging.getLogger(__name__)
@@ -100,7 +102,11 @@ def get_friendship_requests_sent(
     return friendship_requests_sent_models
 
 
-@router.get("/requests/accepted", status_code=status.HTTP_200_OK)
+@router.get(
+    "/requests/accepted",
+    response_model=List[int],
+    status_code=status.HTTP_200_OK,
+)
 def get_accepted_friendships(
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
@@ -115,14 +121,40 @@ def get_accepted_friendships(
         db (Session, optional): the database session to query from.
             Defaults to Depends(database_session).
     """
-    # TODO: get all users from friendships where the addressee or requester
-    # is the current user and whose latest friendship status is accepted
-    db.query(FriendshipSchema).select_from(FriendshipSchema).where(
-        or_(
-            FriendshipSchema.addressee_id == current_user.user_id,
-            FriendshipSchema.requester_id == current_user.user_id,
-        )
-    )
+
+    # Get all the requester and addressee id's from friendships where the addressee or requester
+    # is the current user and whose latest friendship status code is accepted
+
+    sql_string = """
+        SELECT requester_id, addressee_id FROM (
+            SELECT requester_id, addressee_id, status_code_id as latest_status_code_id
+            FROM friendship_status
+            WHERE friendship_status.specified_date_time
+            IN (
+                SELECT MAX(specified_date_time) FROM friendship_status
+                WHERE (addressee_id=:current_user_id OR requester_id=:current_user_id)
+                GROUP BY requester_id, addressee_id
+            )
+        ) as latest_status
+        WHERE latest_status.latest_status_code_id = "A"
+        """
+    results = db.execute(
+        sql_string,
+        {"current_user_id": current_user.user_id},
+    ).all()
+
+    accepted_friends = []
+
+    for i, result in enumerate(results):
+        result = cast(RequesterAddressee, results[i])
+
+        # add the user_id of the other user in the accepted friendship with the current user
+        if result.requester_id == current_user.user_id:
+            accepted_friends.append(result.addressee_id)
+        else:
+            accepted_friends.append(result.requester_id)
+
+    return accepted_friends
 
 
 @router.post(
