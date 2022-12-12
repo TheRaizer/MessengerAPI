@@ -8,9 +8,6 @@ from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_sche
 from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
-    UserSchema,
-)
 from messenger.helpers.db import DatabaseHandler
 
 

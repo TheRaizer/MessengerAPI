@@ -56,16 +56,10 @@ def get_friendship_requests_recieved(
     Returns:
         _type_: the friendship requests recieved, and those sent.
     """
-    friendship_requests_recieved_models = list(
-        map(
-            lambda friendship_schema: FriendshipModel(
-                requester_id=friendship_schema.requester_id,
-                addressee_id=friendship_schema.addressee_id,
-                created_date_time=friendship_schema.created_date_time,
-            ),
-            current_user.friend_requests_recieved,
-        )
-    )
+    friendship_requests_recieved_models = [
+        FriendshipModel.from_orm(friendship_schema)
+        for friendship_schema in current_user.friend_requests_recieved
+    ]
 
     return friendship_requests_recieved_models
 
@@ -87,16 +81,10 @@ def get_friendship_requests_sent(
     Returns:
         _type_: the friendship requests recieved, and those sent.
     """
-    friendship_requests_sent_models = list(
-        map(
-            lambda friendship_schema: FriendshipModel(
-                requester_id=friendship_schema.requester_id,
-                addressee_id=friendship_schema.addressee_id,
-                created_date_time=friendship_schema.created_date_time,
-            ),
-            current_user.friend_requests_sent,
-        )
-    )
+    friendship_requests_sent_models = [
+        FriendshipModel.from_orm(friendship_schema)
+        for friendship_schema in current_user.friend_requests_sent
+    ]
 
     return friendship_requests_sent_models
 
@@ -269,11 +257,7 @@ def send_friendship_request(
             exc_info=True,
         )
 
-    friendship_model = FriendshipModel(
-        requester_id=new_friendship.requester_id,
-        addressee_id=new_friendship.addressee_id,
-        created_date_time=new_friendship.created_date_time,
-    )
+    friendship_model = FriendshipModel.from_orm(new_friendship)
 
     return friendship_model
 
