@@ -33,9 +33,9 @@ class TestGetAcceptedFriendships:
         [
             (
                 [
-                    (1, FriendshipStatusCode.ACCEPTED),
+                    (2, FriendshipStatusCode.ACCEPTED),
                     (4, FriendshipStatusCode.REQUESTED),
-                    (1, FriendshipStatusCode.BLOCKED),
+                    (2, FriendshipStatusCode.BLOCKED),
                     (42, FriendshipStatusCode.ACCEPTED),
                 ],
                 [42],
@@ -43,11 +43,11 @@ class TestGetAcceptedFriendships:
             (
                 [
                     (22, FriendshipStatusCode.ACCEPTED),
-                    (1, FriendshipStatusCode.ACCEPTED),
+                    (5, FriendshipStatusCode.ACCEPTED),
                     (2, FriendshipStatusCode.DECLINED),
                     (3, FriendshipStatusCode.ACCEPTED),
                 ],
-                [22, 1, 3],
+                [22, 5, 3],
             ),
             (
                 [
@@ -73,33 +73,37 @@ class TestGetAcceptedFriendships:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
+        users_created: List[int] = []
+
         for i, (id, status) in enumerate(friend_data):
-            friend_id = current_active_user.user_id + id
-            friend_user = UserSchema(
-                user_id=friend_id,
-                username="username" + str(i),
-                email="email" + str(i),
-                password_hash="password",
-            )
-            friendship = FriendshipSchema(
-                requester_id=current_active_user.user_id,
-                addressee_id=friend_id,
-                created_date_time=datetime.now() + timedelta(hours=i),
-            )
+            if id not in users_created:
+                users_created.append(id)
+                friend_user = UserSchema(
+                    user_id=id,
+                    username="username" + str(i),
+                    email="email" + str(i),
+                    password_hash="password",
+                )
+                friendship = FriendshipSchema(
+                    requester_id=current_active_user.user_id,
+                    addressee_id=id,
+                    created_date_time=datetime.now() + timedelta(hours=i),
+                )
+                session.add(friendship)
+                session.add(friend_user)
+
             friendship_status = FriendshipStatusSchema(
                 requester_id=current_active_user.user_id,
-                addressee_id=friend_id,
+                addressee_id=id,
                 specified_date_time=datetime.now() + timedelta(hours=i),
                 status_code_id=status.value,
-                specifier_id=friend_id,
+                specifier_id=id,
             )
 
-            session.add(friend_user)
-            session.add(friendship)
             session.add(friendship_status)
 
         session.commit()
 
         response = test_client.get("/friends/requests/accepted")
 
-        assert response.json() == expected_output
+        assert response.json().sort() == expected_output.sort()
