@@ -142,6 +142,18 @@ class FriendshipHandler(DatabaseHandler):
     def get_friendship(
         self, addressee_id: int, requester_id: int
     ) -> FriendshipSchema:
+        """Retrieves a friendship using the id of the addressee and requester. Stores
+        the result in self.friendship and returns it. Throws http 404
+        exception if no friendship is found.
+
+        Args:
+            addressee_id (int): the id of the addressee
+            requester_id (int): the id of the requester
+
+        Returns:
+            Union[Type[FriendshipSchema], None]: the friendship
+                record or None if no friendship was found.
+        """
         self.friendship = self._get_record_with_not_found_raise(
             FriendshipSchema,
             "friendship was not found",

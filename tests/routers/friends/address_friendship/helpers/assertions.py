@@ -220,12 +220,14 @@ def assert_addressing_fails_when_current_user_is_not_addressee(
     (test_client, current_active_user) = client
 
     add_initial_friendship_status_codes(session)
+
     friendship_addressee = UserSchema(
         user_id=current_active_user.user_id + 1,
         username=username,
         password_hash=password,
         email=email,
     )
+    # create a friendship where the current user is not the addressee
     friendship = FriendshipSchema(
         requester_id=current_active_user.user_id,
         addressee_id=friendship_addressee.user_id,
