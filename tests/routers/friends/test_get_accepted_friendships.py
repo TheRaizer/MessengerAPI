@@ -26,9 +26,7 @@ class TestGetAcceptedFriendships:
     ):
         (test_client, _) = client
 
-        response = test_client.get(
-            "/friends/requests/accepted?cursor=next___&limit=2"
-        )
+        response = test_client.get("/friends/requests/accepted?limit=2")
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
@@ -116,9 +114,7 @@ class TestGetAcceptedFriendships:
 
         session.commit()
 
-        response = test_client.get(
-            "/friends/requests/accepted?cursor=next___&limit=4"
-        )
+        response = test_client.get("/friends/requests/accepted?limit=4")
 
         assert len(response.json()["results"]) == len(expected_users)
         assert sorted(

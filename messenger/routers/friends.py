@@ -98,8 +98,8 @@ def get_friendship_requests_sent(
     status_code=status.HTTP_200_OK,
 )
 def get_accepted_friendships(
-    cursor: str,
     limit: int,
+    cursor: Optional[str] = None,
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):

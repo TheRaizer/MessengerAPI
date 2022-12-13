@@ -112,7 +112,7 @@ class DatabaseHandler:
         self,
         table: Type[T],
         unique_column: Column,
-        cursor: str,
+        cursor: Optional[str],
         limit: int,
     ) -> CursorPaginationModel:
         """Paginates a database query using cursors.
@@ -142,10 +142,17 @@ class DatabaseHandler:
             previous cursors, which allow further pagination requests. As well as
             the current results from this pagination.
         """
-        cursor_values = cursor.split("___")
+        if cursor is None:
+            cursor_state = CursorState.NEXT.value
+            column_value = ""
+        else:
+            cursor_values = cursor.split("___")
 
-        cursor_state = cursor_values[0]
-        column_value = cursor_values[1]
+            cursor_state = cursor_values[0]
+            column_value = cursor_values[1]
+
+        prev_page = None
+        next_page = None
 
         if cursor_state == CursorState.NEXT.value:
             pagination_filter = unique_column > column_value
@@ -163,23 +170,54 @@ class DatabaseHandler:
         previous_prefix = CursorState.PREVIOUS.value + "___"
         next_prefix = CursorState.NEXT.value + "___"
 
-        previous_page_value = (
-            ""
-            if len(page_results) == 0
-            else str(dict(page_results[0])[unique_column.key])
-        )
+        """
+        CASES: 
+        1. Cursor state is next and we are at the last page (last page is not first page), (next_page=None, prev_page="prev___...")
+        2. Cursor state is next/prev and we at the last page (last page is first page), (next_page=None, prev_page=None)
+        3. Cursor state is prev/next and we are at a middle page (next_page="next___...", prev_page="prev___...")
+        4. Cursor state is prev/next and we are at first page (next_page="next___...", prev_page=None)
+        
+        you can tell whether you are at the first page or last page using the cursor state combined with whether the
+        len(page_results) is < limit + 1
+        
+        you can tell whether you are at the first page when using a CursorState.NEXT when the cursor == "".
+        you can tell whether you are at the first page when using CursorState.PREVIOUS when len(page_results) < limit
+        """
 
-        prev_page = (
-            previous_prefix
-            if cursor == ""
-            else previous_prefix + previous_page_value
-        )
+        if len(page_results) == 0:
+            return CursorPaginationModel(
+                cursor=CursorModel(prev_page=None, next_page=None),
+                results=page_results,
+            )
 
-        next_page = (
-            next_prefix
-            if len(page_results) < limit + 1
-            else next_prefix + str(dict(page_results[-1])[unique_column.key])
-        )
+        if len(page_results) < limit + 1:
+            # we are either at first or last page or both depending on cursor_state
+
+            if cursor_state == CursorState.PREVIOUS.value:
+                # we are at the first page attempting to move backwards, but there is no more pages in that direction
+                prev_page = None
+
+                if len(page_results) < limit:
+                    # we are on the first and last page
+                    next_page = None
+            elif cursor_state == CursorState.NEXT.value:
+                # we are at last page attempting to move forwards, but there is no more pages in that direction
+                next_page = None
+                if cursor != "":
+                    # last page is not first page
+                    prev_page = previous_prefix + str(
+                        dict(page_results[0])[unique_column.key]
+                    )
+                else:
+                    prev_page = None
+        else:
+            # we are at a middle page, thus a prev_page and next_page must exist
+            prev_page = previous_prefix + str(
+                dict(page_results[0])[unique_column.key]
+            )
+            next_page = next_prefix + str(
+                dict(page_results[-1])[unique_column.key]
+            )
 
         return CursorPaginationModel(
             cursor=CursorModel(prev_page=prev_page, next_page=next_page),
