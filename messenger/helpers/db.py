@@ -9,7 +9,7 @@ from fastapi import (
     HTTPException,
     status,
 )
-from sqlalchemy import Table
+from sqlalchemy import Column, Table
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import (
     NoResultFound,
@@ -17,6 +17,9 @@ from sqlalchemy.orm.exc import (
 from sqlalchemy.exc import (
     MultipleResultsFound,
 )
+from messenger.constants.pagination import CursorState
+
+from messenger.models.pagination_model import CursorModel, CursorPaginationModel
 
 T = TypeVar("T", bound=Table)
 
@@ -104,3 +107,83 @@ class DatabaseHandler:
             )
 
         return db_record
+
+    def cursor_pagination_query(
+        self,
+        table: Type[T],
+        unique_column: Column,
+        cursor: str,
+        limit: int,
+    ) -> CursorPaginationModel:
+        """Paginates a database query using cursors.
+        If the returned model has a next_page value of next___, this means
+        there is no next page to paginate.
+
+        If the returned model has a prev_page value of prev___, this means
+        there is no previous page to paginate.
+
+        Otherwise the client can pass the next_page and previous_page as the cursor,
+        into this method with the same table and unique column, to continue paginating.
+
+        Preconditions:
+            - limit must be > 0
+            - cursor must be prefixed with either next___ or prev___
+            - unique_column must be a column in the given table, whose
+            values are unique to each row.
+
+        Args:
+            table (Type[T]): the table (which can be a subquery) to paginate data from.
+            unique_column (Column): the unique column in the given table.
+            cursor (str): the cursor to tell us where to start page from.
+            limit (int): the number of records to retrieve per page.
+
+        Returns:
+            CursorPaginationModel: the pagination model that contains the next and
+            previous cursors, which allow further pagination requests. As well as
+            the current results from this pagination.
+        """
+        cursor_values = cursor.split("___")
+
+        cursor_state = cursor_values[0]
+        column_value = cursor_values[1]
+
+        if cursor_state == CursorState.NEXT.value:
+            pagination_filter = unique_column > column_value
+        else:
+            pagination_filter = unique_column < column_value
+
+        page_results = (
+            self._db.query(table)
+            .filter(pagination_filter)
+            .order_by(unique_column)
+            .limit(limit + 1)
+            .all()
+        )
+
+        previous_prefix = CursorState.PREVIOUS.value + "___"
+        next_prefix = CursorState.NEXT.value + "___"
+
+        previous_page_value = (
+            ""
+            if len(page_results) == 0
+            else str(dict(page_results[0])[unique_column.key])
+        )
+
+        prev_page = (
+            previous_prefix
+            if cursor == ""
+            else previous_prefix + previous_page_value
+        )
+
+        next_page = (
+            next_prefix
+            if len(page_results) < limit + 1
+            else next_prefix + str(dict(page_results[-1])[unique_column.key])
+        )
+
+        return CursorPaginationModel(
+            cursor=CursorModel(prev_page=prev_page, next_page=next_page),
+            results=page_results
+            if len(page_results) <= limit
+            else page_results[:-1],
+        )

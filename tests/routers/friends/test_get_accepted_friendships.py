@@ -14,6 +14,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
+from messenger.models.user_model import UserModel
 from tests.conftest import add_initial_friendship_status_codes
 from tests.routers.friends.conftest import FROZEN_DATE
 
@@ -25,11 +26,13 @@ class TestGetAcceptedFriendships:
     ):
         (test_client, _) = client
 
-        response = test_client.get("/friends/requests/accepted")
+        response = test_client.get(
+            "/friends/requests/accepted?cursor=next___&limit=2"
+        )
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        "friend_data, expected_output",
+        "friend_data, accepted_friend_ids",
         [
             (
                 [
@@ -66,14 +69,19 @@ class TestGetAcceptedFriendships:
     def test_retrieves_list_of_accepted_friendships(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        expected_output: List[int],
+        accepted_friend_ids: List[int],
         client: Tuple[TestClient, UserSchema],
         session: Session,
     ):
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
+        # keep track of users created so we don't attempt to create
+        # multiple users with the same id.
         users_created: List[int] = []
+
+        # the users we expect to recieve as output from the route.
+        expected_users: List[UserModel] = []
 
         for i, (id, status) in enumerate(friend_data):
             if id not in users_created:
@@ -84,6 +92,10 @@ class TestGetAcceptedFriendships:
                     email="email" + str(i),
                     password_hash="password",
                 )
+
+                if id in accepted_friend_ids:
+                    expected_users.append(UserModel.from_orm(friend_user))
+
                 friendship = FriendshipSchema(
                     requester_id=current_active_user.user_id,
                     addressee_id=id,
@@ -104,6 +116,12 @@ class TestGetAcceptedFriendships:
 
         session.commit()
 
-        response = test_client.get("/friends/requests/accepted")
+        response = test_client.get(
+            "/friends/requests/accepted?cursor=next___&limit=4"
+        )
 
-        assert response.json().sort() == expected_output.sort()
+        assert len(response.json()["results"]) == len(expected_users)
+        assert sorted(
+            response.json()["results"],
+            key=lambda user_model: user_model["user_id"],
+        ) == sorted(expected_users, key=lambda user_model: user_model.user_id)

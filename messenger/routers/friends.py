@@ -4,7 +4,8 @@ from datetime import datetime
 import logging
 from typing import List, Optional, cast
 from bleach import clean
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import Table, and_, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema import (
@@ -20,6 +21,7 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
+from messenger.helpers.db import DatabaseHandler
 from messenger.helpers.friends import (
     FriendshipHandler,
     address_friendship_request_as_route,
@@ -27,7 +29,8 @@ from messenger.helpers.friends import (
 from messenger.helpers.users import get_current_active_user
 from messenger.helpers.user_handler import UserHandler
 from messenger.models.friendship_model import FriendshipModel
-from messenger.models.requester_addressee import RequesterAddressee
+from messenger.models.pagination_model import CursorPaginationModel
+from messenger.models.user_model import UserModel
 
 
 logger = logging.getLogger(__name__)
@@ -91,16 +94,47 @@ def get_friendship_requests_sent(
 
 @router.get(
     "/requests/accepted",
-    response_model=List[int],
+    response_model=CursorPaginationModel,
     status_code=status.HTTP_200_OK,
 )
 def get_accepted_friendships(
+    cursor: str,
+    limit: int,
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
-    """Produces a list of all user_id's with whom the current user has an
+    """Produces a list of all users with whom the current user has an
     accepted friendship with. This gives you the standard "friends list"
     of the current user.
+
+    The ORM queries are based off the following SQL which will get all the usernames
+    of the users that have accepted friendship requests with the current user or have had
+    their friendship request accepted by the current user.
+
+    WITH LatestStatus (requester_id, addressee_id, latest_status_code_id) AS (
+        SELECT requester_id, addressee_id, status_code_id as latest_status_code_id
+        FROM friendship_status
+        WHERE friendship_status.specified_date_time IN
+        (
+                SELECT MAX(specified_date_time) FROM friendship_status
+                        WHERE (addressee_id=18 OR requester_id=18)
+                        GROUP BY requester_id, addressee_id
+        )
+    )
+
+    SELECT username FROM LatestStatus
+    INNER JOIN user ON
+        (
+            LatestStatus.addressee_id=user.user_id
+            AND
+            LatestStatus.addressee_id != :current_user_id
+        )
+        OR
+        (
+            LatestStatus.requester_id=user.user_id
+            AND
+            LatestStatus.requester_id != :current_user_id)
+    WHERE LatestStatus.latest_status_code_id = "A";
 
     Args:
         current_user (UserSchema, optional): the currently signed in user.
@@ -111,37 +145,71 @@ def get_accepted_friendships(
 
     # Get all the requester and addressee id's from friendships where the addressee or requester
     # is the current user and whose latest friendship status code is accepted
+    latest_status_dates = (
+        db.query(func.max(FriendshipStatusSchema.specified_date_time))
+        .filter(
+            or_(
+                FriendshipStatusSchema.addressee_id == current_user.user_id,
+                FriendshipStatusSchema.requester_id == current_user.user_id,
+            ),
+        )
+        .group_by(
+            FriendshipStatusSchema.addressee_id,
+            FriendshipStatusSchema.requester_id,
+        )
+    )
 
-    sql_string = """
-        SELECT requester_id, addressee_id FROM (
-            SELECT requester_id, addressee_id, status_code_id as latest_status_code_id
-            FROM friendship_status
-            WHERE friendship_status.specified_date_time
-            IN (
-                SELECT MAX(specified_date_time) FROM friendship_status
-                WHERE (addressee_id=:current_user_id OR requester_id=:current_user_id)
-                GROUP BY requester_id, addressee_id
-            )
-        ) as latest_status
-        WHERE latest_status.latest_status_code_id = "A"
-        """
-    results = db.execute(
-        sql_string,
-        {"current_user_id": current_user.user_id},
-    ).all()
+    latest_statuses = (
+        db.query(FriendshipStatusSchema)
+        .with_entities(
+            FriendshipStatusSchema.requester_id,
+            FriendshipStatusSchema.addressee_id,
+            FriendshipStatusSchema.status_code_id,
+        )
+        .filter(
+            FriendshipStatusSchema.specified_date_time.in_(latest_status_dates)
+        )
+        .subquery()
+    )
 
-    accepted_friends = []
+    results = (
+        db.query(UserSchema)
+        .select_from(latest_statuses)
+        .with_entities(UserSchema)
+        .join(
+            UserSchema,
+            or_(
+                and_(
+                    UserSchema.user_id == latest_statuses.c.requester_id,
+                    latest_statuses.c.requester_id != current_user.user_id,
+                ),
+                and_(
+                    UserSchema.user_id == latest_statuses.c.addressee_id,
+                    latest_statuses.c.addressee_id != current_user.user_id,
+                ),
+            ),
+        )
+        .filter(
+            latest_statuses.c.status_code_id
+            == FriendshipStatusCode.ACCEPTED.value
+        )
+        .subquery()
+    )
 
-    for i, result in enumerate(results):
-        result = cast(RequesterAddressee, results[i])
+    db_handler = DatabaseHandler(db)
+    cursor_pagination_model = db_handler.cursor_pagination_query(
+        results,
+        results.c.username,
+        cursor,
+        limit,
+    )
 
-        # add the user_id of the other user in the accepted friendship with the current user
-        if result.requester_id == current_user.user_id:
-            accepted_friends.append(result.addressee_id)
-        else:
-            accepted_friends.append(result.requester_id)
+    cursor_pagination_model.results = [
+        UserModel.from_orm(friend_user)
+        for friend_user in cursor_pagination_model.results
+    ]
 
-    return accepted_friends
+    return cursor_pagination_model
 
 
 @router.post(
