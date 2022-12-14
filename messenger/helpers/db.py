@@ -17,9 +17,6 @@ from sqlalchemy.orm.exc import (
 from sqlalchemy.exc import (
     MultipleResultsFound,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
-    UserSchema,
-)
 from messenger.constants.pagination import CursorState
 from messenger.helpers.get_model_dict import get_model_dict
 

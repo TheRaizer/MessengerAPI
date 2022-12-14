@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Type, TypeVar
+from typing import Callable, List, Type, TypeVar
 from sqlalchemy.orm import Session
 from sqlalchemy import Table
 from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
@@ -44,7 +44,7 @@ def get_message_schema_params(message_id: int):
 # be made from one of get_..._params functions.
 # These params are passed too pytest.mark.parametrize.
 next_when_last_page_test_params = (
-    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_prev_cursor",
+    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_prev_cursor, expected_result_ids",
     [
         (
             UserSchema,
@@ -54,6 +54,7 @@ next_when_last_page_test_params = (
             4,
             get_user_schema_params,
             CursorState.PREVIOUS.value + "___" + generate_user_name(3),
+            [3, 4],
         ),
         (
             MessageSchema,
@@ -63,6 +64,7 @@ next_when_last_page_test_params = (
             3,
             get_message_schema_params,
             CursorState.PREVIOUS.value + "___3",
+            [3],
         ),
         (
             UserSchema,
@@ -72,12 +74,13 @@ next_when_last_page_test_params = (
             5,
             get_user_schema_params,
             CursorState.PREVIOUS.value + "___" + generate_email(5),
+            [5, 6],
         ),
     ],
 )
 
 when_first_page_test_params = (
-    "table, unique_column, limit, records_to_create, get_table_params, expected_next_cursor",
+    "table, unique_column, limit, records_to_create, get_table_params, expected_next_cursor, expected_result_ids",
     [
         (
             UserSchema,
@@ -86,6 +89,7 @@ when_first_page_test_params = (
             4,
             get_user_schema_params,
             CursorState.NEXT.value + "___" + generate_user_name(2),
+            [1, 2],
         ),
         (
             MessageSchema,
@@ -94,6 +98,7 @@ when_first_page_test_params = (
             2,
             get_message_schema_params,
             CursorState.NEXT.value + "___1",
+            [1],
         ),
         (
             UserSchema,
@@ -102,13 +107,14 @@ when_first_page_test_params = (
             9,
             get_user_schema_params,
             CursorState.NEXT.value + "___" + generate_email(5),
+            [1, 2, 3, 4, 5],
         ),
     ],
 )
 
 
 when_middle_page_test_params = (
-    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_prev_cursor",
+    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_prev_cursor, expected_result_ids",
     [
         (
             UserSchema,
@@ -119,6 +125,7 @@ when_middle_page_test_params = (
             get_user_schema_params,
             CursorState.NEXT.value + "___" + generate_user_name(8),
             CursorState.PREVIOUS.value + "___" + generate_user_name(6),
+            [6, 7, 8],
         ),
         (
             MessageSchema,
@@ -129,6 +136,7 @@ when_middle_page_test_params = (
             get_message_schema_params,
             CursorState.NEXT.value + "___3",
             CursorState.PREVIOUS.value + "___2",
+            [2, 3],
         ),
         (
             UserSchema,
@@ -139,12 +147,13 @@ when_middle_page_test_params = (
             get_user_schema_params,
             CursorState.NEXT.value + "___" + generate_email(8),
             CursorState.PREVIOUS.value + "___" + generate_email(4),
+            [4, 5, 6, 7, 8],
         ),
     ],
 )
 
 null_cursors_test_params = (
-    "table, unique_column, cursor, limit, records_to_create, get_table_params",
+    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_result_ids",
     [
         (
             UserSchema,
@@ -153,15 +162,16 @@ null_cursors_test_params = (
             2,
             2,
             get_user_schema_params,
+            [1, 2],
         ),
         (
             MessageSchema,
             MessageSchema.message_id,
-            CursorState.PREVIOUS.value
-            + "___2",  # assign cursor state of prev___2 since we will attempt to query all messages with id less than 2, which will return one result
+            CursorState.PREVIOUS.value + "___2",
             3,
             1,
             get_message_schema_params,
+            [1],
         ),
         (
             UserSchema,
@@ -170,6 +180,7 @@ null_cursors_test_params = (
             5,
             4,
             get_user_schema_params,
+            [1, 2, 3, 4],
         ),
     ],
 )
@@ -183,11 +194,19 @@ def add_schemas(
     num_of_schemas: int,
     get_params: Callable[[int], dict],
     session: Session,
-):
+    expected_result_ids: List[int],
+) -> List[T]:
+    expected_results: List[T] = []
     for i in range(1, num_of_schemas + 1):
         kwargs = get_params(i)
 
         schema = table(**kwargs)
+
+        if i in expected_result_ids:
+            expected_results.append(schema)
+
         session.add(schema)
 
     session.commit()
+
+    return expected_results
