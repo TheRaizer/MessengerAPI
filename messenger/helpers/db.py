@@ -18,6 +18,7 @@ from sqlalchemy.exc import (
     MultipleResultsFound,
 )
 from messenger.constants.pagination import CursorState
+from messenger.helpers.get_model_dict import get_model_dict
 
 from messenger.models.pagination_model import CursorModel, CursorPaginationModel
 
@@ -184,6 +185,8 @@ class DatabaseHandler:
         you can tell whether you are at the first page when using CursorState.PREVIOUS when len(page_results) < limit
         """
 
+        print([get_model_dict(page_result) for page_result in page_results])
+
         if len(page_results) == 0:
             return CursorPaginationModel(
                 cursor=CursorModel(prev_page=None, next_page=None),
@@ -203,20 +206,20 @@ class DatabaseHandler:
             elif cursor_state == CursorState.NEXT.value:
                 # we are at last page attempting to move forwards, but there is no more pages in that direction
                 next_page = None
-                if cursor != "":
+                if cursor is not None:
                     # last page is not first page
                     prev_page = previous_prefix + str(
-                        dict(page_results[0])[unique_column.key]
+                        get_model_dict(page_results[0])[unique_column.key]
                     )
                 else:
                     prev_page = None
         else:
             # we are at a middle page, thus a prev_page and next_page must exist
             prev_page = previous_prefix + str(
-                dict(page_results[0])[unique_column.key]
+                get_model_dict(page_results[0])[unique_column.key]
             )
             next_page = next_prefix + str(
-                dict(page_results[-1])[unique_column.key]
+                get_model_dict(page_results[-1])[unique_column.key]
             )
 
         return CursorPaginationModel(
