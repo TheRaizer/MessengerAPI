@@ -17,6 +17,9 @@ from sqlalchemy.orm.exc import (
 from sqlalchemy.exc import (
     MultipleResultsFound,
 )
+from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+    UserSchema,
+)
 from messenger.constants.pagination import CursorState
 from messenger.helpers.get_model_dict import get_model_dict
 
@@ -185,8 +188,6 @@ class DatabaseHandler:
         you can tell whether you are at the first page when using CursorState.PREVIOUS when len(page_results) < limit
         """
 
-        print([get_model_dict(page_result) for page_result in page_results])
-
         if len(page_results) == 0:
             return CursorPaginationModel(
                 cursor=CursorModel(prev_page=None, next_page=None),
@@ -214,17 +215,38 @@ class DatabaseHandler:
                 else:
                     prev_page = None
         else:
-            # we are at a middle page, thus a prev_page and next_page must exist
-            prev_page = previous_prefix + str(
-                get_model_dict(page_results[0])[unique_column.key]
-            )
-            next_page = next_prefix + str(
-                get_model_dict(page_results[-1])[unique_column.key]
-            )
+            # we cannot be at the last page, because the only case where this is true is if cursor state is previous and we are at last page,
+            # however this is impossible since for that to happen the given cursor column value must be a value that does not exist in the database.
+            # Thus we are at a middle page or first page
+            if cursor_state == CursorState.NEXT.value:
+                # if we are at next state then there is an additional element at the end of the array due to limit + 1, which we must ignore
+                next_page = next_prefix + str(
+                    get_model_dict(page_results[:-1][-1])[unique_column.key]
+                )
+                # if we are not first page then set prev_page
+                if cursor is not None:
+                    prev_page = previous_prefix + str(
+                        get_model_dict(page_results[0])[unique_column.key]
+                    )
+            elif cursor_state == CursorState.PREVIOUS.value:
+                # if we are at prev state then there is an additional element at the start of the array due to limit + 1, which we must ignore
+                next_page = next_prefix + str(
+                    get_model_dict(page_results[-1])[unique_column.key]
+                )
+                # we can index at 1 since we know that if limit > 0 and len(page_results) > limit + 1 then len(page_results) > 1
+                prev_page = previous_prefix + str(
+                    get_model_dict(page_results[1])[unique_column.key]
+                )
+
+        returned_results = []
+        if cursor_state == CursorState.NEXT.value:
+            returned_results = page_results[:-1]
+        elif cursor_state == CursorState.PREVIOUS.value:
+            returned_results = page_results[1:]
 
         return CursorPaginationModel(
             cursor=CursorModel(prev_page=prev_page, next_page=next_page),
             results=page_results
             if len(page_results) <= limit
-            else page_results[:-1],
+            else returned_results,
         )
