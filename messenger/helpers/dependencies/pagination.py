@@ -50,6 +50,36 @@ def cursor_parser(
     return cursor_state, column_value
 
 
+def determine_cursor_query_order(
+    unique_column: Column,
+    cursor_state: str,
+):
+    """Change the ORDER BY in query depending on cursor state. (this ensures the limit
+    is enforced on the correct side of the table, either from the start or the end)
+
+    - If we are obtaining previous page, then we want to enforce limit starting
+    at the end of the table.
+
+    - If we are obtaining next page, then we want to enforce limit starting at
+    the start of the table.
+
+    To gain a better understanding try executing the queries in MySQL without
+    clarifying desc or asc. You will notice that the returned columns when filtering
+    with "<" and a set LIMIT will return records starting from the beginning of the
+    queried table.
+
+    Now try setting order by with desc. You will now see that it queries the expected, records
+    albeit in reverse order.
+    """
+    order_by = (
+        unique_column.asc()
+        if cursor_state == CursorState.NEXT.value
+        else unique_column.desc()
+    )
+
+    return order_by
+
+
 def cursor_pagination(
     limit: int,
     parsed_cursor: Tuple[str, str] = Depends(cursor_parser),
@@ -78,10 +108,11 @@ def cursor_pagination(
         unique_column: Column,
     ) -> CursorPaginationModel:
         """Paginates a database query using cursors.
-        If the returned model has a next_page value of None, this means
+
+        - If the returned model has a next_page value of None, this means
         there is no next page to paginate.
 
-        If the returned model has a prev_page value of None, this means
+        - If the returned model has a prev_page value of None, this means
         there is no previous page to paginate.
 
         Otherwise the client can pass the next_page and previous_page as the cursor,
@@ -100,32 +131,11 @@ def cursor_pagination(
             previous cursors, which allow further pagination requests. As well as
             the current results from this pagination.
         """
+
         pagination_filter = get_pagination_filter(
             unique_column, cursor_state, column_value
         )
-
-        """Change the order by depending on cursor state. (this ensures the limit
-        is enforced on the correct side of the table, either from the start or the end)
-
-        - If we are obtaining previous page, then we want to enforce limit starting
-        at the end of the table.
-
-        - If we are obtaining next page, then we want to enforce limit starting at
-        the start of the table.
-
-        To gain a better understanding try executing the queries in MySQL without
-        clarifying desc or asc. You will notice that the returned columns when filtering
-        with "<" and a set LIMIT will return records starting from the beginning of the
-        queried table.
-
-        Now try setting order by with desc. You will now see that it queries the expected, records
-        albeit in reverse order.
-        """
-        order_by = (
-            unique_column.asc()
-            if cursor_state == CursorState.NEXT.value
-            else unique_column.desc()
-        )
+        order_by = determine_cursor_query_order(unique_column, cursor_state)
 
         page_results = (
             db.query(table)
@@ -141,7 +151,8 @@ def cursor_pagination(
                 results=page_results,
             )
 
-        # if its previous, then we ordered by desc, thus we need to reverse the array to get the correct order.
+        # if its previous, then we ordered by desc, thus we need to reverse
+        # the array to get the correct order.
         if cursor_state == CursorState.PREVIOUS.value:
             page_results = page_results[::-1]
 

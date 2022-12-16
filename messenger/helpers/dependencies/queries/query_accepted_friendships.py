@@ -18,7 +18,7 @@ def query_accepted_friendships(
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
-    """Produces a list of all users with whom the current user has an
+    """Produces a subquery table of all users with whom the current user has an
     accepted friendship with. This gives you the standard "friends list"
     of the current user.
 
