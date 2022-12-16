@@ -42,7 +42,6 @@ class TestCursorPaginationQuery:
         self,
         table: Type[T],
         unique_column: Column,
-        parsed_cursor: Tuple[str, str],
         limit: int,
         records_to_create: int,
         get_table_params: Callable[[int], dict],
@@ -57,7 +56,12 @@ class TestCursorPaginationQuery:
             expected_result_ids,
         )
 
-        pagination = cursor_pagination(limit, parsed_cursor, session)
+        # the only case where the client can paginate the first
+        # and last page, is when given a next cursor of None
+        # thus the cursor state is set to next, and value is "".
+        pagination = cursor_pagination(
+            limit, (CursorState.NEXT.value, ""), session
+        )
         pagination_model = pagination(table, unique_column)
 
         assert pagination_model.cursor.prev_page is None
@@ -135,6 +139,7 @@ class TestCursorPaginationQuery:
         self,
         table: Type[T],
         unique_column: Column,
+        parsed_cursor: Tuple[str, str],
         limit: int,
         records_to_create: int,
         get_table_params: Callable[[int], dict],
@@ -150,13 +155,12 @@ class TestCursorPaginationQuery:
             expected_result_ids,
         )
 
-        pagination = cursor_pagination(
-            limit, (CursorState.NEXT.value, ""), session
-        )
+        pagination = cursor_pagination(limit, parsed_cursor, session)
         pagination_model = pagination(table, unique_column)
 
         assert pagination_model.cursor.next_page == expected_next_cursor
         assert pagination_model.cursor.prev_page is None
+
         assert pagination_model.results == expected_results
 
     @pytest.mark.parametrize("limit", [1, 2, 12, 52, 7, 12])

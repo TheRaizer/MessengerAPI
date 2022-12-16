@@ -80,11 +80,12 @@ next_when_last_page_test_params = (
 )
 
 when_first_page_test_params = (
-    "table, unique_column, limit, records_to_create, get_table_params, expected_next_cursor, expected_result_ids",
+    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_result_ids",
     [
         (
             UserSchema,
             UserSchema.username,
+            (CursorState.NEXT.value, ""),
             2,
             4,
             get_user_schema_params,
@@ -94,8 +95,9 @@ when_first_page_test_params = (
         (
             MessageSchema,
             MessageSchema.message_id,
+            (CursorState.PREVIOUS.value, "2"),
             1,
-            2,
+            4,
             get_message_schema_params,
             CursorState.NEXT.value + "___1",
             [1],
@@ -103,6 +105,37 @@ when_first_page_test_params = (
         (
             UserSchema,
             UserSchema.email,
+            (CursorState.NEXT.value, ""),
+            5,
+            9,
+            get_user_schema_params,
+            CursorState.NEXT.value + "___" + generate_email(5),
+            [1, 2, 3, 4, 5],
+        ),
+        (
+            UserSchema,
+            UserSchema.username,
+            (CursorState.NEXT.value, ""),
+            3,
+            3,
+            get_user_schema_params,
+            None,
+            [1, 2, 3],
+        ),
+        (
+            UserSchema,
+            UserSchema.email,
+            (CursorState.PREVIOUS.value, generate_email(4)),
+            5,
+            9,
+            get_user_schema_params,
+            CursorState.NEXT.value + "___" + generate_email(3),
+            [1, 2, 3],
+        ),
+        (
+            UserSchema,
+            UserSchema.email,
+            (CursorState.PREVIOUS.value, generate_email(6)),
             5,
             9,
             get_user_schema_params,
@@ -149,28 +182,48 @@ when_middle_page_test_params = (
             CursorState.PREVIOUS.value + "___" + generate_email(4),
             [4, 5, 6, 7, 8],
         ),
+        (
+            UserSchema,
+            UserSchema.username,
+            (CursorState.PREVIOUS.value, generate_user_name(6)),
+            3,
+            7,
+            get_user_schema_params,
+            CursorState.NEXT.value + "___" + generate_user_name(5),
+            CursorState.PREVIOUS.value + "___" + generate_user_name(3),
+            [3, 4, 5],
+        ),
     ],
 )
 
 null_cursors_test_params = (
-    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_result_ids",
+    "table, unique_column, limit, records_to_create, get_table_params, expected_result_ids",
     [
         (
             UserSchema,
             UserSchema.username,
-            (CursorState.NEXT.value, ""),
             2,
             2,
             get_user_schema_params,
             [1, 2],
         ),
+        # ( #* This is a great example of a situation that cannot occur.
+        # *Since the client would never recieve a cursor state where the cursor value
+        # *of "2" is given, since a column with value "2" is not in the database.
+        #     MessageSchema,
+        #     MessageSchema.message_id,
+        #     (
+        #         CursorState.PREVIOUS.value,
+        #         "2",
+        #     ),
+        #     3,
+        #     1,
+        #     get_message_schema_params,
+        #     [1],
+        # ),
         (
             MessageSchema,
             MessageSchema.message_id,
-            (
-                CursorState.PREVIOUS.value,
-                "2",
-            ),
             3,
             1,
             get_message_schema_params,
@@ -179,7 +232,6 @@ null_cursors_test_params = (
         (
             UserSchema,
             UserSchema.email,
-            (CursorState.NEXT.value, ""),
             5,
             4,
             get_user_schema_params,
