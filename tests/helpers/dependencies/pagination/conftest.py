@@ -44,12 +44,12 @@ def get_message_schema_params(message_id: int):
 # be made from one of get_..._params functions.
 # These params are passed too pytest.mark.parametrize.
 next_when_last_page_test_params = (
-    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_prev_cursor, expected_result_ids",
+    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_prev_cursor, expected_result_ids",
     [
         (
             UserSchema,
             UserSchema.username,
-            CursorState.NEXT.value + "___" + generate_user_name(2),
+            (CursorState.NEXT.value, generate_user_name(2)),
             2,
             4,
             get_user_schema_params,
@@ -59,7 +59,7 @@ next_when_last_page_test_params = (
         (
             MessageSchema,
             MessageSchema.message_id,
-            CursorState.NEXT.value + "___2",
+            (CursorState.NEXT.value, "2"),
             1,
             3,
             get_message_schema_params,
@@ -69,7 +69,7 @@ next_when_last_page_test_params = (
         (
             UserSchema,
             UserSchema.email,
-            CursorState.NEXT.value + "___" + generate_email(4),
+            (CursorState.NEXT.value, generate_email(4)),
             2,
             5,
             get_user_schema_params,
@@ -114,12 +114,12 @@ when_first_page_test_params = (
 
 
 when_middle_page_test_params = (
-    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_prev_cursor, expected_result_ids",
+    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_prev_cursor, expected_result_ids",
     [
         (
             UserSchema,
             UserSchema.username,
-            CursorState.NEXT.value + "___" + generate_user_name(5),
+            (CursorState.NEXT.value, generate_user_name(5)),
             3,
             10,
             get_user_schema_params,
@@ -130,7 +130,7 @@ when_middle_page_test_params = (
         (
             MessageSchema,
             MessageSchema.message_id,
-            CursorState.PREVIOUS.value + "___4",
+            (CursorState.PREVIOUS.value, "4"),
             2,
             5,
             get_message_schema_params,
@@ -141,7 +141,7 @@ when_middle_page_test_params = (
         (
             UserSchema,
             UserSchema.email,
-            CursorState.NEXT.value + "___" + generate_email(3),
+            (CursorState.NEXT.value, generate_email(3)),
             5,
             14,
             get_user_schema_params,
@@ -153,12 +153,12 @@ when_middle_page_test_params = (
 )
 
 null_cursors_test_params = (
-    "table, unique_column, cursor, limit, records_to_create, get_table_params, expected_result_ids",
+    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_result_ids",
     [
         (
             UserSchema,
             UserSchema.username,
-            None,
+            (CursorState.NEXT.value, ""),
             2,
             2,
             get_user_schema_params,
@@ -167,7 +167,10 @@ null_cursors_test_params = (
         (
             MessageSchema,
             MessageSchema.message_id,
-            CursorState.PREVIOUS.value + "___2",
+            (
+                CursorState.PREVIOUS.value,
+                "2",
+            ),
             3,
             1,
             get_message_schema_params,
@@ -176,7 +179,7 @@ null_cursors_test_params = (
         (
             UserSchema,
             UserSchema.email,
-            None,
+            (CursorState.NEXT.value, ""),
             5,
             4,
             get_user_schema_params,

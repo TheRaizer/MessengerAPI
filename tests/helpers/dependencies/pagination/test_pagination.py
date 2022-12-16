@@ -1,12 +1,13 @@
-from typing import List, Optional, Type, Callable, TypeVar
+from typing import List, Optional, Tuple, Type, Callable, TypeVar
 import pytest
 from sqlalchemy import Column, Table
 from sqlalchemy.orm import Session
 from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.helpers.db import DatabaseHandler
-from tests.helpers.db.conftest import (
+from messenger.constants.pagination import CursorState
+from messenger.helpers.dependencies.pagination import cursor_pagination
+from tests.helpers.dependencies.pagination.conftest import (
     null_cursors_test_params,
     next_when_last_page_test_params,
     when_middle_page_test_params,
@@ -41,7 +42,7 @@ class TestCursorPaginationQuery:
         self,
         table: Type[T],
         unique_column: Column,
-        cursor: str,
+        parsed_cursor: Tuple[str, str],
         limit: int,
         records_to_create: int,
         get_table_params: Callable[[int], dict],
@@ -56,10 +57,8 @@ class TestCursorPaginationQuery:
             expected_result_ids,
         )
 
-        db_handler = DatabaseHandler(session)
-        pagination_model = db_handler.cursor_pagination_query(
-            table, unique_column, cursor, limit
-        )
+        pagination = cursor_pagination(limit, parsed_cursor, session)
+        pagination_model = pagination(table, unique_column)
 
         assert pagination_model.cursor.prev_page is None
         assert pagination_model.cursor.next_page is None
@@ -73,7 +72,7 @@ class TestCursorPaginationQuery:
         self,
         table: Type[T],
         unique_column: Column,
-        cursor: str,
+        parsed_cursor: Tuple[str, str],
         limit: int,
         records_to_create: int,
         get_table_params: Callable[[int], dict],
@@ -89,10 +88,8 @@ class TestCursorPaginationQuery:
             expected_result_ids,
         )
 
-        db_handler = DatabaseHandler(session)
-        pagination_model = db_handler.cursor_pagination_query(
-            table, unique_column, cursor, limit
-        )
+        pagination = cursor_pagination(limit, parsed_cursor, session)
+        pagination_model = pagination(table, unique_column)
 
         assert pagination_model.cursor.next_page is None
         assert pagination_model.cursor.prev_page == expected_prev_cursor
@@ -106,7 +103,7 @@ class TestCursorPaginationQuery:
         self,
         table: Type[T],
         unique_column: Column,
-        cursor: str,
+        parsed_cursor: Tuple[str, str],
         limit: int,
         records_to_create: int,
         get_table_params: Callable[[int], dict],
@@ -123,10 +120,8 @@ class TestCursorPaginationQuery:
             expected_result_ids,
         )
 
-        db_handler = DatabaseHandler(session)
-        pagination_model = db_handler.cursor_pagination_query(
-            table, unique_column, cursor, limit
-        )
+        pagination = cursor_pagination(limit, parsed_cursor, session)
+        pagination_model = pagination(table, unique_column)
 
         assert pagination_model.cursor.next_page == expected_next_cursor
         assert pagination_model.cursor.prev_page == expected_prev_cursor
@@ -155,10 +150,10 @@ class TestCursorPaginationQuery:
             expected_result_ids,
         )
 
-        db_handler = DatabaseHandler(session)
-        pagination_model = db_handler.cursor_pagination_query(
-            table, unique_column, None, limit
+        pagination = cursor_pagination(
+            limit, (CursorState.NEXT.value, ""), session
         )
+        pagination_model = pagination(table, unique_column)
 
         assert pagination_model.cursor.next_page == expected_next_cursor
         assert pagination_model.cursor.prev_page is None
@@ -170,10 +165,10 @@ class TestCursorPaginationQuery:
         limit: int,
         session: Session,
     ):
-        db_handler = DatabaseHandler(session)
-        pagination_model = db_handler.cursor_pagination_query(
-            UserSchema, UserSchema.username, None, limit
+        pagination = cursor_pagination(
+            limit, (CursorState.NEXT.value, ""), session
         )
+        pagination_model = pagination(UserSchema, UserSchema.username)
 
         assert pagination_model.cursor.next_page is None
         assert pagination_model.cursor.prev_page is None
