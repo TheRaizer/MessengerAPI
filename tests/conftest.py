@@ -59,6 +59,23 @@ valid_emails = [
 
 invalid_emails = ["@email.com", "cool.cool", "not an email", "google.email@com"]
 
+# functions to assist generation of users for tests
+def generate_username(user_id: int) -> str:
+    return "username" + str(user_id)
+
+
+def generate_email(user_id: int) -> str:
+    return "email" + str(user_id)
+
+
+def get_user_schema_params(user_id: int):
+    return {
+        "user_id": user_id,
+        "email": generate_email(user_id),
+        "username": generate_username(user_id),
+        "password_hash": "password",
+    }
+
 
 @pytest.fixture()
 def session():

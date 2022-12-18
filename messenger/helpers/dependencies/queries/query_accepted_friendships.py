@@ -1,6 +1,6 @@
 from fastapi import Depends
 from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from _submodules.messenger_utils.messenger_schemas.schema import (
     database_session,
 )
@@ -87,10 +87,9 @@ def query_accepted_friendships(
         .subquery()
     )
 
-    results = (
+    accepted_friends_table = (
         db.query(UserSchema)
         .select_from(latest_statuses)
-        .with_entities(UserSchema)
         .join(
             UserSchema,
             or_(
@@ -111,4 +110,8 @@ def query_accepted_friendships(
         .subquery()
     )
 
-    return results
+    # alias the accepted friends table so its queried results are mapped to UserSchema
+    # this essentially casts the generic subquery table to a UserSchema table
+    accepted_friends_table_alias = aliased(UserSchema, accepted_friends_table)
+
+    return accepted_friends_table_alias

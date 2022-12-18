@@ -101,13 +101,18 @@ def get_friendship_requests_sent(
     status_code=status.HTTP_200_OK,
 )
 def get_accepted_friendships(
-    pagination: Callable[[Type[T], Column], CursorPaginationModel] = Depends(
-        cursor_pagination
-    ),
+    pagination: Callable[
+        [
+            Type[T],
+            Column,
+        ],
+        CursorPaginationModel,
+    ] = Depends(cursor_pagination),
     accepted_friendships_table=Depends(query_accepted_friendships),
 ):
     cursor_pagination_model = pagination(
-        accepted_friendships_table, accepted_friendships_table.c.username
+        accepted_friendships_table,
+        accepted_friendships_table.username,
     )
     cursor_pagination_model.results = [
         UserModel.from_orm(friend_user)

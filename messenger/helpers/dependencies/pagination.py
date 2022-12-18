@@ -1,5 +1,6 @@
+import logging
 from typing import Optional, Tuple, Type, TypeVar
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 
 from sqlalchemy import Column, Table
 from sqlalchemy.orm import Session
@@ -17,6 +18,12 @@ from messenger.models.pagination_model import CursorModel, CursorPaginationModel
 
 
 T = TypeVar("T", bound=Table)
+logger = logging.getLogger(__name__)
+
+INVALID_CURSOR_HTTP_EXCEPTION = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail="invalid cursor",
+)
 
 
 def get_pagination_filter(
@@ -27,10 +34,7 @@ def get_pagination_filter(
     elif cursor_state == CursorState.PREVIOUS.value:
         pagination_filter = unique_column < column_value
     else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="invalid cursor format",
-        )
+        raise INVALID_CURSOR_HTTP_EXCEPTION
 
     return pagination_filter
 
@@ -43,6 +47,9 @@ def cursor_parser(
         column_value = ""
     else:
         cursor_values = cursor.split("___")
+
+        if len(cursor_values) != 2:
+            raise INVALID_CURSOR_HTTP_EXCEPTION
 
         cursor_state = cursor_values[0]
         column_value = cursor_values[1]
@@ -81,7 +88,9 @@ def determine_cursor_query_order(
 
 
 def cursor_pagination(
-    limit: int,
+    limit: int = Query(
+        title="The limit on the number of items to paginate", gt=0
+    ),
     parsed_cursor: Tuple[str, str] = Depends(cursor_parser),
     db: Session = Depends(database_session),
 ):

@@ -9,27 +9,15 @@ from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.pagination import CursorState
+from tests.conftest import (
+    generate_email,
+    generate_username,
+    get_user_schema_params,
+)
 
 # * Note that the ORDER BY command which is used in cursor pagination
 # * will not order alphanumeric strings as expected. Mainly when entering
 # * the use of double digits or more.
-
-
-def generate_user_name(user_id: int) -> str:
-    return "username" + str(user_id)
-
-
-def generate_email(user_id: int) -> str:
-    return "email" + str(user_id)
-
-
-def get_user_schema_params(user_id: int):
-    return {
-        "user_id": user_id,
-        "email": generate_email(user_id),
-        "username": generate_user_name(user_id),
-        "password_hash": "password",
-    }
 
 
 def get_message_schema_params(message_id: int):
@@ -49,11 +37,11 @@ next_when_last_page_test_params = (
         (
             UserSchema,
             UserSchema.username,
-            (CursorState.NEXT.value, generate_user_name(2)),
+            (CursorState.NEXT.value, generate_username(2)),
             2,
             4,
             get_user_schema_params,
-            CursorState.PREVIOUS.value + "___" + generate_user_name(3),
+            CursorState.PREVIOUS.value + "___" + generate_username(3),
             [3, 4],
         ),
         (
@@ -89,7 +77,7 @@ when_first_page_test_params = (
             2,
             4,
             get_user_schema_params,
-            CursorState.NEXT.value + "___" + generate_user_name(2),
+            CursorState.NEXT.value + "___" + generate_username(2),
             [1, 2],
         ),
         (
@@ -152,12 +140,12 @@ when_middle_page_test_params = (
         (
             UserSchema,
             UserSchema.username,
-            (CursorState.NEXT.value, generate_user_name(5)),
+            (CursorState.NEXT.value, generate_username(5)),
             3,
             10,
             get_user_schema_params,
-            CursorState.NEXT.value + "___" + generate_user_name(8),
-            CursorState.PREVIOUS.value + "___" + generate_user_name(6),
+            CursorState.NEXT.value + "___" + generate_username(8),
+            CursorState.PREVIOUS.value + "___" + generate_username(6),
             [6, 7, 8],
         ),
         (
@@ -185,12 +173,12 @@ when_middle_page_test_params = (
         (
             UserSchema,
             UserSchema.username,
-            (CursorState.PREVIOUS.value, generate_user_name(6)),
+            (CursorState.PREVIOUS.value, generate_username(6)),
             3,
             7,
             get_user_schema_params,
-            CursorState.NEXT.value + "___" + generate_user_name(5),
-            CursorState.PREVIOUS.value + "___" + generate_user_name(3),
+            CursorState.NEXT.value + "___" + generate_username(5),
+            CursorState.PREVIOUS.value + "___" + generate_username(3),
             [3, 4, 5],
         ),
     ],
@@ -240,6 +228,28 @@ null_cursors_test_params = (
     ],
 )
 
+incorrect_parsed_cursors = [
+    ("awds", ""),
+    ("incorrect", "values"),
+    ("___", "username"),
+    ("", ""),
+]
+
+invalid_cursors = ["incorrect", "not__valid", "hu_oh", "ping pong", ""]
+valid_cursor_params = [
+    (
+        CursorState.NEXT.value + "___username23",
+        (CursorState.NEXT.value, "username23"),
+    ),
+    (
+        CursorState.PREVIOUS.value + "___somecolumnvalue",
+        (CursorState.PREVIOUS.value, "somecolumnvalue"),
+    ),
+    (
+        CursorState.NEXT.value + "___a_valid_value",
+        (CursorState.NEXT.value, "a_valid_value"),
+    ),
+]
 
 T = TypeVar("T", bound=Table)
 

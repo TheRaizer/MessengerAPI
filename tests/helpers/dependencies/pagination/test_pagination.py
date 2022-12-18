@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple, Type, Callable, TypeVar
+from fastapi import HTTPException
 import pytest
 from sqlalchemy import Column, Table
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ from tests.helpers.dependencies.pagination.conftest import (
     next_when_last_page_test_params,
     when_middle_page_test_params,
     when_first_page_test_params,
+    incorrect_parsed_cursors,
     add_schemas,
 )
 
@@ -177,3 +179,19 @@ class TestCursorPaginationQuery:
         assert pagination_model.cursor.next_page is None
         assert pagination_model.cursor.prev_page is None
         assert pagination_model.results == []
+
+    @pytest.mark.parametrize(
+        "incorrect_parsed_cursor", incorrect_parsed_cursors
+    )
+    def test_raises_exception_with_incorrect_cursor_format(
+        self,
+        incorrect_parsed_cursor: Tuple[str, str],
+        session: Session,
+    ):
+        pagination = cursor_pagination(1, incorrect_parsed_cursor, session)
+
+        with pytest.raises(HTTPException) as exc:
+            pagination(UserSchema, UserSchema.username)
+
+            assert exc.value.status_code == 400
+            assert exc.value.detail == "invalid cursor"
