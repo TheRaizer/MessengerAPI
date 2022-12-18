@@ -18,6 +18,7 @@ from sqlalchemy.exc import (
     MultipleResultsFound,
 )
 
+
 T = TypeVar("T", bound=Table)
 
 
