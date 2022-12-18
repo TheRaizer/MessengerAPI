@@ -75,7 +75,7 @@ def determine_cursor_query_order(
     with "<" and a set LIMIT will return records starting from the beginning of the
     queried table.
 
-    Now try setting order by with desc. You will now see that it queries the expected, records
+    Now try setting order by with desc. You will now see that it queries the expected records
     albeit in reverse order.
     """
     order_by = (

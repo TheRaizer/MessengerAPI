@@ -173,6 +173,14 @@ get_last_page_params = (
 )
 
 
+valid_query_params = [
+    ("5", CursorState.NEXT.value + "___2"),
+    ("3", CursorState.PREVIOUS.value + "___4"),
+    ("23", CursorState.NEXT.value + "___username-email23"),
+    ("1", None),
+]
+
+
 def add_friendships(
     friend_data: List[Tuple[int, FriendshipStatusCode]],
     accepted_friend_ids: List[int],

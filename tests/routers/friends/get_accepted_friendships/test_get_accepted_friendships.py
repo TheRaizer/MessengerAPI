@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 import pytest
@@ -14,19 +14,26 @@ from tests.routers.friends.get_accepted_friendships.conftest import (
     get_first_page_params,
     get_middle_page_params,
     get_last_page_params,
+    valid_query_params,
 )
 from tests.helpers.dependencies.pagination.conftest import invalid_cursors
 
 
 @freeze_time(FROZEN_DATE)
 class TestGetAcceptedFriendships:
-    # TODO: add parameters that are valid
+    @pytest.mark.parametrize("limit, cursor", valid_query_params)
     def test_produces_200_when_successful(
-        self, client: Tuple[TestClient, UserSchema]
+        self,
+        limit: str,
+        cursor: Optional[str],
+        client: Tuple[TestClient, UserSchema],
     ):
         (test_client, _) = client
 
-        response = test_client.get("/friends/requests/accepted?limit=2")
+        cursor = "" if cursor is None else f"cursor={cursor}"
+        response = test_client.get(
+            f"/friends/requests/accepted?limit={limit}&{cursor}"
+        )
         assert response.status_code == 200
 
     @pytest.mark.parametrize("invalid_cursor", invalid_cursors)

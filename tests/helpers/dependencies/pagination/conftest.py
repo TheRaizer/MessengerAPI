@@ -31,7 +31,7 @@ def get_message_schema_params(message_id: int):
 # Create parameters under the pretense that the unique column will
 # be made from one of get_..._params functions.
 # These params are passed too pytest.mark.parametrize.
-next_when_last_page_test_params = (
+paginate_next_when_last_page_test_params = (
     "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_prev_cursor, expected_result_ids",
     [
         (

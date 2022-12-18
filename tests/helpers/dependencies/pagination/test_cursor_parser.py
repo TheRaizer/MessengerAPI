@@ -10,14 +10,14 @@ from tests.helpers.dependencies.pagination.conftest import (
 
 
 class TestCursorParser:
-    def test_when_cursor_is_none(self):
+    def test_when_curser_is_none_paginates_first_page(self):
         cursor_state, column_value = cursor_parser()
 
         assert cursor_state == CursorState.NEXT.value
         assert column_value == ""
 
     @pytest.mark.parametrize("invalid_cursor", invalid_cursors)
-    def test_when_cursor_is_invalid(self, invalid_cursor: str):
+    def test_raise_when_cursor_is_invalid(self, invalid_cursor: str):
         with pytest.raises(HTTPException) as exc:
             cursor_parser(invalid_cursor)
             assert exc.value.status_code == 400

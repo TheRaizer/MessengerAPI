@@ -10,7 +10,7 @@ from messenger.constants.pagination import CursorState
 from messenger.helpers.dependencies.pagination import cursor_pagination
 from tests.helpers.dependencies.pagination.conftest import (
     null_cursors_test_params,
-    next_when_last_page_test_params,
+    paginate_next_when_last_page_test_params,
     when_middle_page_test_params,
     when_first_page_test_params,
     incorrect_parsed_cursors,
@@ -21,21 +21,6 @@ T = TypeVar("T", bound=Table)
 
 
 class TestCursorPaginationQuery:
-    """
-    Possible cases:
-        1. Cursor state is next and we are at the last page
-        (last page is not first page), (next_page=None, prev_page="prev___...")
-
-        2. Cursor state is next/prev and we at the last page
-        (last page is first page), (next_page=None, prev_page=None)
-
-        3. Cursor state is prev/next and we are at a middle page
-        (next_page="next___...", prev_page="prev___...")
-
-        4. Cursor state is prev/next and we are at first page
-        (next_page="next___...", prev_page=None)
-    """
-
     @pytest.mark.parametrize(
         null_cursors_test_params[0],
         null_cursors_test_params[1],
@@ -71,10 +56,10 @@ class TestCursorPaginationQuery:
         assert pagination_model.results == expected_results
 
     @pytest.mark.parametrize(
-        next_when_last_page_test_params[0],
-        next_when_last_page_test_params[1],
+        paginate_next_when_last_page_test_params[0],
+        paginate_next_when_last_page_test_params[1],
     )
-    def test_paginating_next_when_last_page_produces_correct_cursors(
+    def test_paginating_next_when_last_page(
         self,
         table: Type[T],
         unique_column: Column,
@@ -105,7 +90,7 @@ class TestCursorPaginationQuery:
         when_middle_page_test_params[0],
         when_middle_page_test_params[1],
     )
-    def test_paginating_next_or_prev_when_middle_page_produces_correct_cursors(
+    def test_paginating_next_or_prev_when_middle_page(
         self,
         table: Type[T],
         unique_column: Column,
@@ -137,7 +122,7 @@ class TestCursorPaginationQuery:
         when_first_page_test_params[0],
         when_first_page_test_params[1],
     )
-    def test_paginating_next_or_prev_when_first_page_produces_correct_cursors(
+    def test_paginating_next_or_prev_when_first_page(
         self,
         table: Type[T],
         unique_column: Column,
