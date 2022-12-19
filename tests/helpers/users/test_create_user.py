@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException, status
 import pytest
 from pytest_mock import MockerFixture
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.helpers.users import create_user

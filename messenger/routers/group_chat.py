@@ -1,10 +1,10 @@
 """Contains routes for group chats."""
 
 from fastapi import APIRouter, Depends, status
-from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
+from messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 

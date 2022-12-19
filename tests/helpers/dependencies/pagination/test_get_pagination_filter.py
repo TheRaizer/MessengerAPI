@@ -1,7 +1,7 @@
 from typing import Tuple
 from fastapi import HTTPException
 import pytest
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.helpers.dependencies.pagination import get_pagination_filter

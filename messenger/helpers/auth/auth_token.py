@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, status
 
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.environment_variables import JWT_SECRET

@@ -6,10 +6,10 @@ from argon2 import exceptions
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from _submodules.messenger_utils.messenger_schemas.schema import (
+from messenger_schemas.schema import (
     database_session,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.auth_details import PasswordError

@@ -4,7 +4,7 @@ import re
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.auth_details import EmailError

@@ -3,7 +3,7 @@ from fastapi import HTTPException
 import pytest
 from sqlalchemy import Column, Table
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.pagination import CursorState

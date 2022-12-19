@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Tuple
 from fastapi.testclient import TestClient
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
+from messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 

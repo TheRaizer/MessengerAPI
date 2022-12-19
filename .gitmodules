@@ -1,4 +1,0 @@
-[submodule "_submodules/messenger_utils"]
-	path = _submodules/messenger_utils
-	url = https://github.com/TheRaizer/Messenger-Utils
-	branch = main

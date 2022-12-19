@@ -3,7 +3,7 @@ from freezegun import freeze_time
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

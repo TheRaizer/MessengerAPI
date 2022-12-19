@@ -19,17 +19,12 @@ This task definition defines a running task in ECS. It allows you to define the 
 
 In the task definition we fetch secrets from AWS parameter store or AWS secrets manager. We also declare that we will run ECS with Fargate.
 
-## Setting up submodules
-
-_install utils submodule from private git repos:_
-git submodule add https://github.com/TheRaizer/Messenger-Utils \_submodules/messenger_utils
-
-_update sub module by running the following commands:_
-
-git pull --recurse-submodules
-git submodule update --remote --recursive
-
 ## Running in Locally
+
+Before running locally ensure that you have a SSH deploy key for the private repos' that are used.
+You will need the SSH key on your local machine to install the private repositories.
+Once you have a SSH key on your local machine, change the key path
+in run_locally.sh to your SSH key path.
 
 Run locally using the command:
 sh run_locally.sh

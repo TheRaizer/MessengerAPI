@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from freezegun import freeze_time
 import pytest
 from pytest_mock import MockerFixture
-from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
+from messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
 

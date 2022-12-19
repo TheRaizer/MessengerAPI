@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Query, status
 
 from sqlalchemy import Column, Table
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema import (
+from messenger_schemas.schema import (
     database_session,
 )
 from messenger.constants.pagination import (

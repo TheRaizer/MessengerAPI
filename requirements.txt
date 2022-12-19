@@ -11,3 +11,4 @@ alembic==1.8.1
 argon2-cffi==21.3.0
 bleach==5.0.1
 boto3==1.26.15
+git+ssh://git@github.com/TheRaizer/Messenger-Utils

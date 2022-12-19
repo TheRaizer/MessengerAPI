@@ -3,7 +3,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 from messenger.helpers.db import DatabaseHandler
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 

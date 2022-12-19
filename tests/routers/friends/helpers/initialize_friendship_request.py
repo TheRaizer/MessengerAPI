@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
+from messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
+from messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
 
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

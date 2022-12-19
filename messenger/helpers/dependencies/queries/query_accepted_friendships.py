@@ -1,13 +1,13 @@
 from fastapi import Depends
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, aliased
-from _submodules.messenger_utils.messenger_schemas.schema import (
+from messenger_schemas.schema import (
     database_session,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
+from messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

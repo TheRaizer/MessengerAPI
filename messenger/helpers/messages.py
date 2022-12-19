@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
+from messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
 from messenger.helpers.db import DatabaseHandler

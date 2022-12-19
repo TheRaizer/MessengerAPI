@@ -2,13 +2,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from sqlalchemy.orm import Session
 from pytest_mock import MockerFixture
-from _submodules.messenger_utils.messenger_schemas.schema.group_chat_member_schema import (
+from messenger_schemas.schema.group_chat_member_schema import (
     GroupChatMemberSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.group_chat_schema import (
+from messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.helpers.group_chats import GroupChatHandler
