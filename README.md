@@ -57,6 +57,12 @@ We can then configure the VM to only allow HTTP requests from certain domains an
 
 We could then setup nginx as a TLS Termination Proxy
 
+Right now we only have a single MySQL database in AWS that is publically accessible to anyone who has credentials.
+This normally would not be the case.
+You would normally have a dev database that is publically accessible to anyone who has credentials.
+Then a production database that has only private subnets.
+But I don't want to spend money to have 2 databases for a personal project.
+
 ## Testing
 
 Tests will be run using a test database running in a docker container. It will utilize pytest.
