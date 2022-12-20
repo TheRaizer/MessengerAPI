@@ -3,8 +3,8 @@
 import pytest
 from sqlalchemy import event
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema import engine
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_code_schema import (
+from messenger_schemas.schema import engine
+from messenger_schemas.schema.friendship_status_code_schema import (
     FriendshipStatusCodeSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

@@ -2,10 +2,10 @@ from datetime import datetime
 from typing import Callable, List, Type, TypeVar
 from sqlalchemy.orm import Session
 from sqlalchemy import Table
-from _submodules.messenger_utils.messenger_schemas.schema.message_schema import (
+from messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.pagination import CursorState

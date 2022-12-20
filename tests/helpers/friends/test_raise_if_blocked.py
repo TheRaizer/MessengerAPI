@@ -5,7 +5,7 @@ from freezegun import freeze_time
 
 import pytest
 from pytest_mock import MockerFixture
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
+from messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

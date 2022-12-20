@@ -2,13 +2,13 @@ from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy.orm import Session
 
-from _submodules.messenger_utils.messenger_schemas.schema import (
+from messenger_schemas.schema import (
     database_session,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.fastApi import app
+from messenger.fastapi import app
 from messenger.helpers.users import get_current_active_user
 
 

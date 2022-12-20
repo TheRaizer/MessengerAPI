@@ -8,16 +8,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import Column, Table
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from _submodules.messenger_utils.messenger_schemas.schema import (
+from messenger_schemas.schema import (
     database_session,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_schema import (
+from messenger_schemas.schema.friendship_schema import (
     FriendshipSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.friendship_status_schema import (
+from messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

@@ -4,10 +4,10 @@ from typing import List, Optional
 from bleach import clean
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
-from _submodules.messenger_utils.messenger_schemas.schema import (
+from messenger_schemas.schema import (
     database_session,
 )
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode

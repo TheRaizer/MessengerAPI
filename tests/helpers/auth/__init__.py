@@ -1,5 +1,5 @@
 from datetime import timedelta
-from _submodules.messenger_utils.messenger_schemas.schema.user_schema import (
+from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 
