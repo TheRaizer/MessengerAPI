@@ -7,7 +7,7 @@ from messenger_schemas.schema import (
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.fastapi import app
+from messenger.fastApi import app
 from messenger.helpers.users import get_current_active_user
 
 

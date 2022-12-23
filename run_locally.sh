@@ -17,7 +17,7 @@ export DOCKER_BUILDKIT=1
 
 # pass the decoded key to docker buildkit which will use ssh forwarding
 # the path stated below should be modified to point towards the ssh deploy key for api-utils repos.
-docker build -t messenger_api --ssh github_ssh_key=c:/Users/Admin/.ssh/id_rsa .
+docker build -t messenger_api --no-cache --ssh github_ssh_key=c:/Users/Admin/.ssh/id_rsa .
 
 docker run -d -p 8000:8000 --env-file=.dev.env -it \
     -e RDS_PASSWORD=${sqlCredsPassword} \
