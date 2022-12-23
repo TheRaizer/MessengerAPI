@@ -24,3 +24,5 @@ coverage.xml
 README.md
 run_locally.sh
 run_test.sh
+tests
+.pylintrc
