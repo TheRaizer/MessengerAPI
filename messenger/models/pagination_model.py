@@ -1,5 +1,6 @@
 from typing import Generic, List, Optional, TypeVar
 from pydantic import BaseModel
+from pydantic.generics import GenericModel
 
 
 class CursorModel(BaseModel):
@@ -10,6 +11,6 @@ class CursorModel(BaseModel):
 T = TypeVar("T")
 
 
-class CursorPaginationModel(BaseModel, Generic[T]):
+class CursorPaginationModel(GenericModel, Generic[T]):
     cursor: CursorModel
     results: List[T]
