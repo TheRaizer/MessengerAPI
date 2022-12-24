@@ -97,7 +97,7 @@ def get_friendship_requests_sent(
 
 @router.get(
     "/requests/accepted",
-    response_model=CursorPaginationModel,
+    response_model=CursorPaginationModel[UserModel],
     status_code=status.HTTP_200_OK,
 )
 def get_accepted_friendships(
