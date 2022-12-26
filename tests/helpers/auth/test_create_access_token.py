@@ -3,7 +3,7 @@ from typing import Any
 from freezegun import freeze_time
 import pytest
 from jose import ExpiredSignatureError, JWTError, jwt
-from messenger.environment_variables import JWT_SECRET
+from messenger.settings import JWT_SECRET
 from messenger.helpers.auth.auth_token import (
     ALGORITHM,
     create_access_token,

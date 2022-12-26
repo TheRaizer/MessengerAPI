@@ -13,7 +13,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.auth_details import PasswordError
-from messenger.environment_variables import JWT_SECRET
+from messenger.settings import JWT_SECRET
 from messenger.helpers.auth.is_email_valid import is_email_valid
 from messenger.helpers.auth.is_password_valid import is_password_valid
 from messenger.helpers.auth.is_username_valid import is_username_valid

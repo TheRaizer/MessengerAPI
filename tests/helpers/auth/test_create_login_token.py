@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.environment_variables import JWT_SECRET
+from messenger.settings import JWT_SECRET
 from messenger.helpers.auth.auth_token import (
     ALGORITHM,
     LOGIN_TOKEN_EXPIRE_MINUTES,

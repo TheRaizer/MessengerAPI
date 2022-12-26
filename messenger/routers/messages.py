@@ -25,7 +25,6 @@ router = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
-
 @router.get(
     "/", response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK
 )

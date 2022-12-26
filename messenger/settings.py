@@ -7,3 +7,8 @@ import os
 # On each request where the secret is used compare it with the last request for the secret.
 # If the secrets differ, auto refresh the users token.
 JWT_SECRET = os.environ["JWT_SECRET"]
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
