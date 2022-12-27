@@ -11,7 +11,7 @@ from fastapi import HTTPException, status
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.environment_variables import JWT_SECRET
+from messenger.settings import JWT_SECRET
 
 ALGORITHM = "HS256"
 LOGIN_TOKEN_EXPIRE_MINUTES = 30
