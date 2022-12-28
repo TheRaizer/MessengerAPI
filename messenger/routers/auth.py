@@ -112,5 +112,7 @@ def sign_in(
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
     access_token = create_login_token(user)
+    # TODO: remove this after debugging
+    print(access_token)
 
     return Token(access_token=access_token, token_type="bearer")

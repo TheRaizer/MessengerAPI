@@ -4,7 +4,12 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from messenger.routers import users, auth, messages, friends, group_chat
 from messenger.settings import origins
-from messenger.sockets.socket import sio_app
+from messenger.sockets import sio_app
+
+# * import events so that they are loaded into the sio_app
+# * import before the sio_app is mounted onto the fast api app
+import messenger.sockets.events
+
 
 app = FastAPI()
 
