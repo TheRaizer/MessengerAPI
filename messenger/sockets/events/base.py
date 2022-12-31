@@ -33,8 +33,8 @@ async def connect(sid, environ):
         environ (_type_): the environment of the socket
     """
 
-    query_params = urllib.parse.parse_qs(environ["QUERY_STRING"])
-    access_token = query_params["access_token"][0]
+    access_token_cookie = environ["HTTP_COOKIE"]
+    access_token = access_token_cookie.split("access_token=")[1]
 
     current_user: Optional[UserSchema] = None
 
@@ -44,7 +44,7 @@ async def connect(sid, environ):
         except HTTPException:
             logger.info("Invalid credentials for socket with sid %s", sid)
             await sio.disconnect(sid)
-
+    
     if current_user is None:
         return
 
