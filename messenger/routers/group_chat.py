@@ -9,7 +9,7 @@ from messenger_schemas.schema.user_schema import (
 )
 
 from messenger.helpers.users import get_current_active_user
-from messenger.models.group_chat_model import CreateGroupChatModel
+from messenger.models.fastapi.group_chat_model import CreateGroupChatModel
 
 router = APIRouter(
     prefix="/group_chats",

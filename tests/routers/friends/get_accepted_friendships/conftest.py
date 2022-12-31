@@ -14,7 +14,7 @@ from messenger_schemas.schema.user_schema import (
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.constants.pagination import CursorState
 
-from messenger.models.user_model import UserModel
+from messenger.models.fastapi.user_model import UserModel
 from tests.conftest import generate_username, get_user_schema_params
 
 get_first_page_params = (

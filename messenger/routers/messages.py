@@ -16,7 +16,7 @@ from messenger.helpers.group_chats import GroupChatHandler
 from messenger.helpers.messages import MessageHandler
 from messenger.helpers.user_handler import UserHandler
 from messenger.helpers.users import get_current_active_user
-from messenger.models.message_model import BaseMessageModel, CreateMessageModel
+from messenger.models.fastapi.message_model import BaseMessageModel, CreateMessageModel
 
 
 router = APIRouter(

@@ -14,7 +14,7 @@ from messenger.constants.pagination import (
 )
 from messenger.helpers.get_model_dict import get_model_dict
 
-from messenger.models.pagination_model import CursorModel, CursorPaginationModel
+from messenger.models.fastapi.pagination_model import CursorModel, CursorPaginationModel
 
 
 T = TypeVar("T", bound=Table)

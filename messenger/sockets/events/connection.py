@@ -1,6 +1,5 @@
 import logging
 from typing import Optional
-import urllib.parse
 from fastapi import HTTPException
 from messenger_schemas.schema import DatabaseSessionContext
 from messenger_schemas.schema.user_schema import UserSchema
@@ -44,7 +43,7 @@ async def connect(sid, environ):
         except HTTPException:
             logger.info("Invalid credentials for socket with sid %s", sid)
             await sio.disconnect(sid)
-    
+
     if current_user is None:
         return
 
