@@ -9,7 +9,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.models.friendship_model import FriendshipModel
+from messenger.models.fastapi.friendship_model import FriendshipModel
 from tests.conftest import (
     add_initial_friendship_status_codes,
     valid_usernames,

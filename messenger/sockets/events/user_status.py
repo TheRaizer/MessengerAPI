@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 from messenger_schemas.schema import DatabaseSessionContext
 from messenger_schemas.schema.user_schema import UserSchema
 
@@ -6,6 +6,7 @@ from messenger.helpers.dependencies.queries.query_accepted_friendships import (
     query_accepted_friendships,
 )
 from messenger.helpers.pubsub.subscriber import Subscriber
+from messenger.models.socketio.status_change import StatusChange
 from messenger.sockets import (
     sio,
 )
@@ -53,17 +54,13 @@ async def emit_status_to_friends(sid: str, current_user_id: int) -> None:
     for (friend_id,) in friend_ids:
         await sio.emit(
             "status change",
-            {
-                "status": "active",
-                "user_id": current_user_id,
-                "session_id": sid,
-            },
+            StatusChange(user_id=current_user_id, status="active").dict(),
             to=friend_id,
         )
 
 
 @sio.event
-async def broadcast_current_status_to_friend(sid, data):
+async def broadcast_current_status_to_friend(sid, data: Dict[str, Any]):
     """When a user comes online he emits an event to all friends about their status.
     Each friend upon hearing this new status (through listening to the "status change" event),
     should send back their status through this event.
@@ -71,7 +68,9 @@ async def broadcast_current_status_to_friend(sid, data):
     # data contains your status, id,
     # and the session id of the friend to broadcast this info too.
     # when we recieve a friend status update we will emit the new update too the client
-    await sio.emit("status change", data, to=data["session_id"])
+
+    status_change_data = StatusChange(**data)
+    await sio.emit("status change", data, to=status_change_data.user_id)
     print(sid)
     print(data)
 
@@ -91,7 +90,7 @@ async def on_disconnect_emit_user_status(
     for (friend_id,) in friend_ids:
         await sio.emit(
             "status change",
-            {"status": "offline", "user_id": session["user_id"]},
+            StatusChange(user_id=session["user_id"], status="offline").dict(),
             to=friend_id,
         )
 
