@@ -1,22 +1,14 @@
 from typing import Any, List, Tuple
 from unittest.mock import MagicMock
-from pydantic import BaseModel
 import pytest
 from pytest_mock import MockerFixture
 from messenger.helpers.pubsub.event_aggregator import EventAggregator
 from messenger.helpers.pubsub.subscriber import Subscriber
-
-
-class EventParams1(BaseModel):
-    pass
-
-
-class EventParams2(BaseModel):
-    pass
-
-
-class EventParams3(BaseModel):
-    pass
+from tests.helpers.pubsub.conftest import (
+    EventParams1,
+    EventParams2,
+    EventParams3,
+)
 
 
 @pytest.mark.asyncio
