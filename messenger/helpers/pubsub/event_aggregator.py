@@ -21,7 +21,9 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class EventAggregator:
-    events: Dict[Type, List[Callable[[Any], Union[Awaitable[None], None]]]] = {}
+    _events: Dict[
+        Type, List[Callable[[Any], Union[Awaitable[None], None]]]
+    ] = {}
 
     def subscribe(
         self,
@@ -33,13 +35,14 @@ class EventAggregator:
 
         Args:
             action_params_type (Type[T]): the parameter type to identify the event with
-            action (Callable[[T], Union[Awaitable[None], None]]): the action to subscribe to a given event
+            action (Callable[[T], Union[Awaitable[None], None]]): the action to subscribe to a
+            given event
         """
         key = id(action_params_type)
-        if key not in self.events:
-            self.events[id(action_params_type)] = []
+        if key not in self._events:
+            self._events[id(action_params_type)] = []
 
-        self.events[id(action_params_type)].append(action)
+        self._events[id(action_params_type)].append(action)
 
     async def publish(self, params: T):
         """Publishes all subscribers that are subscribed to the
@@ -50,16 +53,16 @@ class EventAggregator:
             params (T): the parameters that the subscriber expected
             to recieve as arguments to its action.
         """
-        for action in self.events[id(type(params))]:
+        for action in self._events[id(type(params))]:
             if inspect.iscoroutinefunction(action):
                 await action(params)
             else:
                 action(params)
 
     def unsubscribe(self, subscription: Subscription[T]):
-        self.events[id(subscription.action_param_type)].remove(
+        self._events[id(subscription.action_param_type)].remove(
             subscription.action
         )
 
     def clear_subscriptions(self, event_type: Type[T]):
-        del self.events[id(type(event_type))]
+        del self._events[id(event_type)]
