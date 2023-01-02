@@ -6,7 +6,9 @@ from messenger.helpers.dependencies.queries.query_accepted_friendships import (
     query_accepted_friendships,
 )
 from messenger.helpers.pubsub.subscriber import Subscriber
-from messenger.models.socketio.status_change import StatusChange
+from messenger.models.socketio.status_change import (
+    StatusChange,
+)
 from messenger.sockets import (
     sio,
 )
@@ -64,15 +66,17 @@ async def broadcast_current_status_to_friend(sid, data: Dict[str, Any]):
     """When a user comes online he emits an event to all friends about their status.
     Each friend upon hearing this new status (through listening to the "status change" event),
     should send back their status through this event.
-    """
-    # data contains your status, id,
-    # and the session id of the friend to broadcast this info too.
-    # when we recieve a friend status update we will emit the new update too the client
 
-    status_change_data = StatusChange(**data)
-    await sio.emit("status change", data, to=status_change_data.user_id)
-    print(sid)
-    print(data)
+    data contains your status, id,
+    and the user id of the friend to broadcast this info too.
+    when we recieve a friend status update we will emit the new update too the client
+    """
+
+    await sio.emit(
+        "friend status change",
+        StatusChange(**data).dict(),
+        to=data["friend_id"],
+    )
 
 
 async def on_connect_emit_user_status(connection_params: OnConnectionParams):
