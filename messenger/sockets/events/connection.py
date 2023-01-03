@@ -1,4 +1,5 @@
 import logging
+import urllib.parse
 from typing import Optional
 from fastapi import HTTPException
 from messenger_schemas.schema import DatabaseSessionContext
@@ -31,9 +32,8 @@ async def connect(sid, environ):
         sid (_type_): the sockets unique identified
         environ (_type_): the environment of the socket
     """
-
-    access_token_cookie = environ["HTTP_COOKIE"]
-    access_token = access_token_cookie.split("access_token=")[1]
+    query_params = urllib.parse.parse_qs(environ["QUERY_STRING"])
+    access_token = query_params["access_token"][0]
 
     current_user: Optional[UserSchema] = None
 
