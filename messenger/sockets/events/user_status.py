@@ -7,7 +7,7 @@ from messenger.helpers.dependencies.queries.query_accepted_friendships import (
 )
 from messenger.helpers.pubsub.subscriber import Subscriber
 from messenger.models.socketio.status_change import (
-    StatusChange,
+    StatusChangeEventData,
 )
 from messenger.sockets import (
     sio,
@@ -56,7 +56,9 @@ async def emit_status_to_friends(sid: str, current_user_id: int) -> None:
     for (friend_id,) in friend_ids:
         await sio.emit(
             "status change",
-            StatusChange(user_id=current_user_id, status="active").dict(),
+            StatusChangeEventData(
+                user_id=current_user_id, status="active"
+            ).dict(),
             to=friend_id,
         )
 
@@ -74,7 +76,7 @@ async def broadcast_current_status_to_friend(sid, data: Dict[str, Any]):
 
     await sio.emit(
         "friend status change",
-        StatusChange(**data).dict(),
+        StatusChangeEventData(**data).dict(),
         to=data["friend_id"],
     )
 
@@ -94,7 +96,9 @@ async def on_disconnect_emit_user_status(
     for (friend_id,) in friend_ids:
         await sio.emit(
             "status change",
-            StatusChange(user_id=session["user_id"], status="offline").dict(),
+            StatusChangeEventData(
+                user_id=session["user_id"], status="offline"
+            ).dict(),
             to=friend_id,
         )
 

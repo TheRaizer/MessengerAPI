@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
 
-class StatusChange(BaseModel):
+class StatusChangeEventData(BaseModel):
     user_id: int
     status: str
 
 
-class FriendStatusChange(StatusChange):
+class FriendStatusChangeEventData(StatusChangeEventData):
     friend_id: int
