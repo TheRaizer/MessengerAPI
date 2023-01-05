@@ -32,7 +32,7 @@ async def connect(sid, environ):
         environ (_type_): the environment of the socket
     """
 
-    access_token_cookie, access_token = ""
+    access_token_cookie, access_token = "", ""
 
     try:
         access_token_cookie = environ["HTTP_COOKIE"]
