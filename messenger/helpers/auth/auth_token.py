@@ -1,12 +1,13 @@
 """Defines functions related to authentication tokens"""
 
 from datetime import datetime, timedelta
+import os
 from typing import Optional, Union
 from jose import JWTError, jwt
 from argon2 import PasswordHasher
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Response, status
 
 from messenger_schemas.schema.user_schema import (
     UserSchema,
@@ -84,6 +85,13 @@ def create_access_token(
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
 
     return encoded_jwt
+
+
+def set_access_token_cookie(response: Response, access_token: str) -> None:
+    secure = os.getenv("PY_ENV", "PRODUCTION") == "PRODUCTION"
+    response.set_cookie(
+        key="access_token", value=access_token, httponly=True, secure=secure
+    )
 
 
 def create_login_token(user: UserSchema) -> str:
