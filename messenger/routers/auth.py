@@ -1,7 +1,6 @@
 """Contains routes for user authentication."""
-
 from bleach import clean
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.orm import Session
 from messenger_schemas.schema import (
@@ -14,8 +13,14 @@ from messenger.helpers.auth.auth_token import (
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
     Token,
     create_login_token,
+    set_access_token_cookie,
 )
-from messenger.helpers.users import UserHandler, authenticate_user, create_user
+from messenger.helpers.users import (
+    UserHandler,
+    authenticate_user,
+    create_user,
+    get_current_active_user,
+)
 
 
 router = APIRouter(
@@ -29,6 +34,7 @@ router = APIRouter(
     "/sign-up", response_model=Token, status_code=status.HTTP_201_CREATED
 )
 def sign_up(
+    response: Response,
     username: str,
     form_data: OAuth2PasswordRequestFormStrict = Depends(),
     db: Session = Depends(database_session),
@@ -73,6 +79,7 @@ def sign_up(
     )
 
     access_token = create_login_token(user)
+    set_access_token_cookie(response, access_token)
 
     return Token(access_token=access_token, token_type="bearer")
 
@@ -81,6 +88,7 @@ def sign_up(
     "/sign-in", response_model=Token, status_code=status.HTTP_201_CREATED
 )
 def sign_in(
+    response: Response,
     form_data: OAuth2PasswordRequestFormStrict = Depends(),
     db: Session = Depends(database_session),
 ):
@@ -112,5 +120,22 @@ def sign_in(
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
     access_token = create_login_token(user)
+    set_access_token_cookie(response, access_token)
 
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.put("/sign-out", status_code=status.HTTP_200_OK)
+def sign_out(
+    response: Response,
+    current_user: UserSchema = Depends(get_current_active_user),
+):
+    """Deletes the access token cookie.
+
+    Args:
+        response (Response): the response of this route
+        current_user (UserSchema, optional): the currently signed in user.
+        Defaults to Depends(get_current_active_user).
+    """
+
+    response.delete_cookie("access_token")
