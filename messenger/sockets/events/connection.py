@@ -1,5 +1,4 @@
 import logging
-import urllib.parse
 from typing import Optional
 from fastapi import HTTPException
 from messenger_schemas.schema import DatabaseSessionContext
@@ -32,8 +31,18 @@ async def connect(sid, environ):
         sid (_type_): the sockets unique identified
         environ (_type_): the environment of the socket
     """
-    access_token_cookie = environ["HTTP_COOKIE"]
-    access_token = access_token_cookie.split("access_token=")[1]
+
+    access_token_cookie, access_token = ""
+
+    try:
+        access_token_cookie = environ["HTTP_COOKIE"]
+        access_token = access_token_cookie.split("access_token=")[1]
+    except KeyError:
+        logger.error(
+            "Socket connected with sid %s was unable to send cookie", sid
+        )
+        await sio.disconnect(sid)
+        return
 
     current_user: Optional[UserSchema] = None
 
