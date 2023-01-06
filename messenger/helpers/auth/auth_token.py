@@ -93,6 +93,7 @@ def set_access_token_cookie(response: Response, access_token: str) -> None:
         key="access_token",
         value=access_token,
         httponly=True,
+        domain="localhost",
         secure=secure,
         samesite="none",
     )
