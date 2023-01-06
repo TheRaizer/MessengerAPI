@@ -90,7 +90,11 @@ def create_access_token(
 def set_access_token_cookie(response: Response, access_token: str) -> None:
     secure = os.getenv("PY_ENV", "PRODUCTION") == "PRODUCTION"
     response.set_cookie(
-        key="access_token", value=access_token, httponly=True, secure=secure
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=secure,
+        samesite="none",
     )
 
 

@@ -19,7 +19,6 @@ from messenger.helpers.users import (
     UserHandler,
     authenticate_user,
     create_user,
-    get_current_active_user,
 )
 
 
@@ -128,14 +127,11 @@ def sign_in(
 @router.put("/sign-out", status_code=status.HTTP_200_OK)
 def sign_out(
     response: Response,
-    current_user: UserSchema = Depends(get_current_active_user),
 ):
     """Deletes the access token cookie.
 
     Args:
         response (Response): the response of this route
-        current_user (UserSchema, optional): the currently signed in user.
-        Defaults to Depends(get_current_active_user).
     """
 
     response.delete_cookie("access_token")
