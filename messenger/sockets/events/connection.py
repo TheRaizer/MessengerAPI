@@ -3,9 +3,9 @@ from typing import Optional
 from fastapi import HTTPException
 from messenger_schemas.schema import DatabaseSessionContext
 from messenger_schemas.schema.user_schema import UserSchema
-from messenger.helpers.auth.token.auth_tokens import SocketioAccessTokenData
+from messenger.helpers.tokens.auth_tokens import SocketioAccessTokenData
 from messenger.helpers.user_handler import UserHandler
-from messenger.helpers.auth.token.validate_token import validate_token
+from messenger.helpers.tokens.validate_token import validate_token
 from messenger.models.socketio.connection_params import (
     OnConnectionParams,
     OnDisconnectionParams,

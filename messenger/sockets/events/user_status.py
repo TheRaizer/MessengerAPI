@@ -6,6 +6,10 @@ from messenger.helpers.dependencies.queries.query_accepted_friendships import (
     query_accepted_friendships,
 )
 from messenger.helpers.pubsub.subscriber import Subscriber
+from messenger.models.socketio.connection_params import (
+    OnConnectionParams,
+    OnDisconnectionParams,
+)
 from messenger.models.socketio.status_change import (
     StatusChangeEventData,
 )
@@ -14,8 +18,6 @@ from messenger.sockets import (
 )
 
 from messenger.sockets.events.event_system import (
-    OnConnectionParams,
-    OnDisconnectionParams,
     socket_event_aggregator,
 )
 

@@ -4,7 +4,7 @@ from freezegun import freeze_time
 import pytest
 from jose import ExpiredSignatureError, JWTError, jwt
 from messenger.settings import JWT_SECRET
-from messenger.helpers.auth.token.auth_tokens import (
+from messenger.helpers.tokens.auth_tokens import (
     ALGORITHM,
     create_access_token,
 )

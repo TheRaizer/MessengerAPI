@@ -13,7 +13,7 @@ from messenger.constants.token import (
     Token,
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
 )
-from messenger.helpers.auth.token.auth_tokens import (
+from messenger.helpers.tokens.auth_tokens import (
     create_login_token,
     create_socketio_token,
 )

@@ -6,7 +6,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.settings import JWT_SECRET
-from messenger.helpers.auth.token.auth_tokens import AccessTokenData
+from messenger.helpers.tokens.auth_tokens import AccessTokenData
 
 from messenger.helpers.users import get_current_user
 from tests.conftest import (

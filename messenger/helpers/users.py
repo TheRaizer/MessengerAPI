@@ -19,10 +19,10 @@ from messenger.helpers.auth.is_email_valid import is_email_valid
 from messenger.helpers.auth.is_password_valid import is_password_valid
 from messenger.helpers.auth.is_username_valid import is_username_valid
 from messenger.helpers.user_handler import UserHandler
-from messenger.helpers.auth.token.validate_token import (
+from messenger.helpers.tokens.validate_token import (
     validate_token,
 )
-from messenger.helpers.auth.token.auth_tokens import (
+from messenger.helpers.tokens.auth_tokens import (
     oauth2_scheme,
     AccessTokenData,
 )
