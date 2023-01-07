@@ -1,12 +1,10 @@
-from typing import Optional, Type, TypeVar
+from typing import Optional, Type
 from jose import JWTError, jwt
-from pydantic import BaseModel
 from messenger.constants.token import ALGORITHM
+from messenger.constants.generics import B
 
-T = TypeVar("T", bound=BaseModel)
 
-
-def validate_token(token: str, secret: str, TokenModel: Type[T]) -> Optional[T]:
+def validate_token(token: str, secret: str, TokenModel: Type[B]) -> Optional[B]:
     """Validates a given access token and if valid it decodes the token, and
     returns the decoded data. Otherwise it returns None.
 

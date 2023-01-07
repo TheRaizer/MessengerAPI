@@ -1,18 +1,14 @@
-from typing import Awaitable, Callable, Generic, Type, TypeVar, Union
-
-from pydantic import BaseModel
+from typing import Awaitable, Callable, Generic, Type, Union
 
 from messenger.helpers.pubsub.event_aggregator import EventAggregator
+from messenger.constants.generics import B
 
 
-T = TypeVar("T", bound=BaseModel)
-
-
-class Subscription(Generic[T]):
+class Subscription(Generic[B]):
     def __init__(
         self,
-        action_param_type: Type[T],
-        action: Callable[[T], Union[Awaitable[None], None]],
+        action_param_type: Type[B],
+        action: Callable[[B], Union[Awaitable[None], None]],
         event_aggregator: EventAggregator,
     ):
         self.action_param_type = action_param_type

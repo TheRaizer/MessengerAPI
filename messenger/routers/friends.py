@@ -34,8 +34,8 @@ from messenger.helpers.user_handler import UserHandler
 from messenger.models.fastapi.friendship_model import FriendshipModel
 from messenger.models.fastapi.pagination_model import CursorPaginationModel
 from messenger.models.fastapi.user_model import UserModel
+from messenger.constants.generics import T
 
-T = TypeVar("T", bound=Table)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(

@@ -1,12 +1,13 @@
-from typing import List, Optional, Tuple, Type, Callable, TypeVar
+from typing import List, Optional, Tuple, Type, Callable
 from fastapi import HTTPException
 import pytest
-from sqlalchemy import Column, Table
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.pagination import CursorState
+from messenger.constants.generics import T
 from messenger.helpers.dependencies.pagination import cursor_pagination
 from tests.helpers.dependencies.pagination.conftest import (
     null_cursors_test_params,
@@ -16,8 +17,6 @@ from tests.helpers.dependencies.pagination.conftest import (
     incorrect_parsed_cursors,
     add_schemas,
 )
-
-T = TypeVar("T", bound=Table)
 
 
 class TestCursorPaginationQuery:

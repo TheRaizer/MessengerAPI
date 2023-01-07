@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Callable, List, Type, TypeVar
+from typing import Callable, List, Type
 from sqlalchemy.orm import Session
-from sqlalchemy import Table
+from messenger.constants.generics import T
 from messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
@@ -250,8 +250,6 @@ valid_cursor_params = [
         (CursorState.NEXT.value, "a_valid_value"),
     ),
 ]
-
-T = TypeVar("T", bound=Table)
 
 
 def add_schemas(
