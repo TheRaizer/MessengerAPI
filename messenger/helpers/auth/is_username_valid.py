@@ -8,7 +8,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.auth_details import UsernameError
-from messenger.helpers.user_handler import UserHandler
+from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.models.fastapi.validity_data import ValidityData
 
 """

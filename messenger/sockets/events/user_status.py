@@ -44,7 +44,7 @@ def get_friendlist_ids(
         return friend_ids
 
 
-async def emit_status_to_friends(sid: str, current_user_id: int) -> None:
+async def emit_status_to_friends(_: str, current_user_id: int) -> None:
     """Emits to all active friends that the we are active.
 
     Args:
@@ -66,7 +66,7 @@ async def emit_status_to_friends(sid: str, current_user_id: int) -> None:
 
 
 @sio.event
-async def broadcast_current_status_to_friend(sid, data: Dict[str, Any]):
+async def broadcast_current_status_to_friend(_, data: Dict[str, Any]):
     """When a user comes online he emits an event to all friends about their status.
     Each friend upon hearing this new status (through listening to the "status change" event),
     should send back their status through this event.

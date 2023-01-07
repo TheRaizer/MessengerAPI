@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.helpers.db import DatabaseHandler
+from messenger.helpers.handlers.database_handler import DatabaseHandler
 
 
 class UserHandler(DatabaseHandler):

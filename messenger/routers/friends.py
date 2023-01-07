@@ -25,12 +25,14 @@ from messenger.helpers.dependencies.pagination import cursor_pagination
 from messenger.helpers.dependencies.queries.query_accepted_friendships import (
     query_accepted_friendships,
 )
-from messenger.helpers.friends import (
+from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
+)
+from messenger.helpers.address_friendship_request import (
     address_friendship_request_as_route,
 )
 from messenger.helpers.users import get_current_active_user
-from messenger.helpers.user_handler import UserHandler
+from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.models.fastapi.friendship_model import FriendshipModel
 from messenger.models.fastapi.pagination_model import CursorPaginationModel
 from messenger.models.fastapi.user_model import UserModel
@@ -167,10 +169,8 @@ def send_friendship_request(
 
         already_requested_friendship = (
             latest_status is not None
-            and (
-                friendship.requester_id == current_user.user_id
-                or friendship.addressee_id == current_user.user_id
-            )
+            and current_user.user_id
+            in (friendship.requester_id, friendship.addressee_id)
             and latest_status.status_code_id
             == FriendshipStatusCode.REQUESTED.value
         )

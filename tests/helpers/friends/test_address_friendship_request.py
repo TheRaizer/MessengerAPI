@@ -12,8 +12,10 @@ from messenger_schemas.schema.friendship_status_schema import (
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
-from messenger.helpers.friends import (
+from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
+)
+from messenger.helpers.address_friendship_request import (
     address_friendship_request,
 )
 from tests.helpers.friends import FROZEN_DATE

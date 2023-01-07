@@ -1,4 +1,4 @@
-"""Declare validity pydantic model that will be used in validation of 
+"""Declare validity pydantic model that will be used in validation of
 username, email and password.
 """
 

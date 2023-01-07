@@ -8,7 +8,7 @@ from messenger_schemas.schema.group_chat_member_schema import (
 from messenger_schemas.schema.group_chat_schema import (
     GroupChatSchema,
 )
-from messenger.helpers.db import DatabaseHandler
+from messenger.helpers.handlers.database_handler import DatabaseHandler
 
 
 class GroupChatHandler(DatabaseHandler):

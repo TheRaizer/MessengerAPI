@@ -1,13 +1,13 @@
 from datetime import datetime
 from typing import Callable, List, Type
 from sqlalchemy.orm import Session
-from messenger.constants.generics import T
 from messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
+from messenger.constants.generics import T
 from messenger.constants.pagination import CursorState
 from tests.conftest import (
     generate_email,
@@ -32,7 +32,8 @@ def get_message_schema_params(message_id: int):
 # be made from one of get_..._params functions.
 # These params are passed too pytest.mark.parametrize.
 paginate_next_when_last_page_test_params = (
-    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_prev_cursor, expected_result_ids",
+    """table, unique_column, parsed_cursor, limit, records_to_create,
+        get_table_params, expected_prev_cursor, expected_result_ids""",
     [
         (
             UserSchema,
@@ -68,7 +69,10 @@ paginate_next_when_last_page_test_params = (
 )
 
 when_first_page_test_params = (
-    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_result_ids",
+    """
+    table, unique_column, parsed_cursor, limit, records_to_create,
+    get_table_params, expected_next_cursor, expected_result_ids
+    """,
     [
         (
             UserSchema,
@@ -135,7 +139,10 @@ when_first_page_test_params = (
 
 
 when_middle_page_test_params = (
-    "table, unique_column, parsed_cursor, limit, records_to_create, get_table_params, expected_next_cursor, expected_prev_cursor, expected_result_ids",
+    """
+    table, unique_column, parsed_cursor, limit, records_to_create,
+    get_table_params, expected_next_cursor, expected_prev_cursor, expected_result_ids
+    """,
     [
         (
             UserSchema,

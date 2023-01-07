@@ -17,8 +17,8 @@ from messenger.helpers.tokens.auth_tokens import (
     create_login_token,
     create_socketio_token,
 )
+from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.helpers.users import (
-    UserHandler,
     authenticate_user,
     create_user,
 )

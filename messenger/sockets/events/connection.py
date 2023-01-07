@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from messenger_schemas.schema import DatabaseSessionContext
 from messenger_schemas.schema.user_schema import UserSchema
 from messenger.helpers.tokens.auth_tokens import SocketioAccessTokenData
-from messenger.helpers.user_handler import UserHandler
+from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.helpers.tokens.validate_token import validate_token
 from messenger.models.socketio.connection_params import (
     OnConnectionParams,
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @sio.event
-async def connect(sid, environ, data):
+async def connect(sid, _, data):
     """During connection we must verify that the user has authentication.
     If they are not we disconnect the socket.
 
