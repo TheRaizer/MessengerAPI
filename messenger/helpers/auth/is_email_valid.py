@@ -8,8 +8,8 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.auth_details import EmailError
-from messenger.helpers.auth import ValidityData
 from messenger.helpers.user_handler import UserHandler
+from messenger.models.fastapi.validity_data import ValidityData
 
 
 # Ensures emails entered are in the proper format ****@***.***

@@ -2,10 +2,10 @@
 
 from datetime import datetime
 import logging
-from typing import Callable, List, Optional, Type, TypeVar
+from typing import Callable, List, Optional, Type
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import Column, Table
+from sqlalchemy import Column
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from messenger_schemas.schema import (

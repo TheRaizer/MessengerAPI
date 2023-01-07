@@ -1,9 +1,8 @@
 """Defines functions related to authentication tokens"""
 
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Union
 from jose import jwt
-from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 
 from messenger_schemas.schema.user_schema import (
@@ -13,20 +12,13 @@ from messenger.constants.token import (
     ALGORITHM,
     LOGIN_TOKEN_EXPIRE_MINUTES,
 )
+from messenger.models.fastapi.access_token_data import AccessTokenData
+from messenger.models.fastapi.socketio_access_token_data import (
+    SocketioAccessTokenData,
+)
 from messenger.settings import JWT_SECRET
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/sign-in")
-
-
-class SocketioAccessTokenData(BaseModel):
-    user_id: Optional[str] = None
-    type: str = "socket"
-
-
-class AccessTokenData(BaseModel):
-    user_id: Optional[str] = None
-    username: Optional[str] = None
-    email: Optional[str] = None
 
 
 def create_access_token(
@@ -55,6 +47,7 @@ def create_access_token(
     return encoded_jwt
 
 
+# TODO: reduce code duplication in these two functions
 def create_socketio_token(user: UserSchema) -> str:
     """Create a ticket for authentication during socketio connection.
 

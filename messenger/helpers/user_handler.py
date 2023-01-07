@@ -2,10 +2,10 @@
 
 from typing import Optional
 from sqlalchemy.orm import Session
-from messenger.helpers.db import DatabaseHandler
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
+from messenger.helpers.db import DatabaseHandler
 
 
 class UserHandler(DatabaseHandler):
