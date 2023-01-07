@@ -14,10 +14,8 @@ from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.helpers.tokens.validate_token import (
     validate_token,
 )
-from messenger.helpers.tokens.auth_tokens import (
-    oauth2_scheme,
-    AccessTokenData,
-)
+from messenger.helpers.tokens.auth_tokens import oauth2_scheme
+from messenger.models.fastapi.access_token_data import AccessTokenData
 
 
 logger = logging.getLogger(__name__)

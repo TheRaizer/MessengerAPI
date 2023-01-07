@@ -1,28 +1,19 @@
-"""Defines functions related to authentication tokens"""
-
 from datetime import datetime, timedelta
 from typing import Union
 from jose import jwt
 from fastapi.security import OAuth2PasswordBearer
 
-from messenger_schemas.schema.user_schema import (
-    UserSchema,
-)
 from messenger.constants.token import (
     ALGORITHM,
-    LOGIN_TOKEN_EXPIRE_MINUTES,
 )
-from messenger.models.fastapi.access_token_data import AccessTokenData
-from messenger.models.fastapi.socketio_access_token_data import (
-    SocketioAccessTokenData,
-)
+from messenger.constants.generics import B
 from messenger.settings import JWT_SECRET
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/sign-in")
 
 
 def create_access_token(
-    data: dict, expires_delta: Union[timedelta, None] = None
+    data: B, expires_delta: Union[timedelta, None] = None
 ) -> str:
     """Creates a JWT access token that can expire.
 
@@ -34,7 +25,7 @@ def create_access_token(
     Returns:
         str: an encoded JWT access token.
     """
-    to_encode = data.copy()
+    to_encode = data.dict().copy()
 
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -45,46 +36,3 @@ def create_access_token(
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
 
     return encoded_jwt
-
-
-# TODO: reduce code duplication in these two functions
-def create_socketio_token(user: UserSchema) -> str:
-    """Create a ticket for authentication during socketio connection.
-
-    Args:
-        user (UserSchema): The users data from the database.
-
-    Returns:
-        str: the token in the form of a JWT.
-    """
-    token_data: SocketioAccessTokenData = SocketioAccessTokenData(
-        user_id=user.user_id,
-    )
-    access_token_expires = timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)
-
-    access_token = create_access_token(
-        data=token_data.dict(), expires_delta=access_token_expires
-    )
-
-    return access_token
-
-
-def create_login_token(user: UserSchema) -> str:
-    """Create a new login token that will be used to authorize the user and label them as logged in.
-
-    Args:
-        user (UserSchema): The users data from the database.
-
-    Returns:
-        str: the access token in the form of a JWT.
-    """
-    token_data: AccessTokenData = AccessTokenData(
-        user_id=user.user_id, username=user.username, email=user.email
-    )
-    access_token_expires = timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)
-
-    access_token = create_access_token(
-        data=token_data.dict(), expires_delta=access_token_expires
-    )
-
-    return access_token

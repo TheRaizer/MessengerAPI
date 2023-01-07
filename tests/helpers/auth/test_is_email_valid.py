@@ -7,7 +7,7 @@ from tests.conftest import (
     valid_emails,
     invalid_emails,
 )
-from tests.helpers.auth import test_user_records
+from tests.helpers.auth.conftest import test_user_records
 
 
 class TestIsEmailValid:

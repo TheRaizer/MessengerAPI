@@ -1,4 +1,5 @@
 """Contains routes for user authentication."""
+from datetime import timedelta
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
@@ -10,17 +11,20 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.token import (
+    LOGIN_TOKEN_EXPIRE_MINUTES,
     Token,
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
 )
-from messenger.helpers.tokens.auth_tokens import (
-    create_login_token,
-    create_socketio_token,
-)
+from messenger.helpers.tokens.auth_tokens import create_access_token
+
 from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.helpers.auth.user import (
     authenticate_user,
     create_user,
+)
+from messenger.models.fastapi.access_token_data import AccessTokenData
+from messenger.models.fastapi.socketio_access_token_data import (
+    SocketioAccessTokenData,
 )
 
 
@@ -121,7 +125,12 @@ def sign_in(
     if not user:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
-    access_token = create_login_token(user)
+    access_token = create_access_token(
+        AccessTokenData(
+            user_id=user.user_id, username=user.username, email=user.email
+        ),
+        timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES),
+    )
 
     return Token(access_token=access_token, token_type="bearer")
 
@@ -160,6 +169,11 @@ def socket_ticket(
     if not user:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
-    socketio_token = create_socketio_token(user)
+    socketio_token = create_access_token(
+        SocketioAccessTokenData(
+            user_id=user.user_id
+        ),
+        timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES),
+    )
 
     return Token(access_token=socketio_token, token_type="socketio")
