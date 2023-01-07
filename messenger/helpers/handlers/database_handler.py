@@ -2,14 +2,12 @@ from typing import (
     List,
     Optional,
     Type,
-    TypeVar,
 )
 
 from fastapi import (
     HTTPException,
     status,
 )
-from sqlalchemy import Table
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import (
     NoResultFound,
@@ -17,9 +15,7 @@ from sqlalchemy.orm.exc import (
 from sqlalchemy.exc import (
     MultipleResultsFound,
 )
-
-
-T = TypeVar("T", bound=Table)
+from messenger.constants.generics import T
 
 
 class DatabaseHandler:

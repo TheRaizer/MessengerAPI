@@ -194,17 +194,17 @@ def add_friendships(
     # the users we expect to recieve as output from the route.
     expected_users: List[UserModel] = []
 
-    for i, (id, status) in enumerate(friend_data):
-        if id not in users_created:
-            users_created.append(id)
-            friend_user = UserSchema(**get_user_schema_params(id))
+    for i, (friend_id, status) in enumerate(friend_data):
+        if friend_id not in users_created:
+            users_created.append(friend_id)
+            friend_user = UserSchema(**get_user_schema_params(friend_id))
 
-            if id in accepted_friend_ids:
+            if friend_id in accepted_friend_ids:
                 expected_users.append(UserModel.from_orm(friend_user))
 
             friendship = FriendshipSchema(
                 requester_id=current_active_user_id,
-                addressee_id=id,
+                addressee_id=friend_id,
                 created_date_time=datetime.now() + timedelta(hours=i),
             )
             session.add(friendship)
@@ -212,10 +212,10 @@ def add_friendships(
 
         friendship_status = FriendshipStatusSchema(
             requester_id=current_active_user_id,
-            addressee_id=id,
+            addressee_id=friend_id,
             specified_date_time=datetime.now() + timedelta(hours=i),
             status_code_id=status.value,
-            specifier_id=id,
+            specifier_id=friend_id,
         )
 
         session.add(friendship_status)

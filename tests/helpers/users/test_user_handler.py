@@ -6,7 +6,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 
-from messenger.helpers.user_handler import UserHandler
+from messenger.helpers.handlers.user_handler import UserHandler
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ from messenger.helpers.user_handler import UserHandler
     ],
 )
 @patch(
-    "messenger.helpers.user_handler.UserHandler._get_record_with_not_found_raise"
+    "messenger.helpers.handlers.user_handler.UserHandler._get_record_with_not_found_raise"
 )
 def test_get_user(
     _get_record_with_not_found_raise_mock: MagicMock,

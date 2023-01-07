@@ -11,12 +11,15 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
-from messenger.helpers.friends import FriendshipHandler
-from messenger.helpers.group_chats import GroupChatHandler
-from messenger.helpers.messages import MessageHandler
-from messenger.helpers.user_handler import UserHandler
-from messenger.helpers.users import get_current_active_user
-from messenger.models.fastapi.message_model import BaseMessageModel, CreateMessageModel
+from messenger.helpers.handlers.friendship_handler import FriendshipHandler
+from messenger.helpers.handlers.group_chat_handler import GroupChatHandler
+from messenger.helpers.handlers.message_handler import MessageHandler
+from messenger.helpers.handlers.user_handler import UserHandler
+from messenger.helpers.dependencies.user import get_current_active_user
+from messenger.models.fastapi.message_model import (
+    BaseMessageModel,
+    CreateMessageModel,
+)
 
 
 router = APIRouter(
@@ -24,6 +27,7 @@ router = APIRouter(
     tags=["messages"],
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
+
 
 @router.get(
     "/", response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK

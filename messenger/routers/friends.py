@@ -2,10 +2,10 @@
 
 from datetime import datetime
 import logging
-from typing import Callable, List, Optional, Type, TypeVar
+from typing import Callable, List, Optional, Type
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import Column, Table
+from sqlalchemy import Column
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from messenger_schemas.schema import (
@@ -25,17 +25,19 @@ from messenger.helpers.dependencies.pagination import cursor_pagination
 from messenger.helpers.dependencies.queries.query_accepted_friendships import (
     query_accepted_friendships,
 )
-from messenger.helpers.friends import (
+from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
+)
+from messenger.helpers.address_friendship_request import (
     address_friendship_request_as_route,
 )
-from messenger.helpers.users import get_current_active_user
-from messenger.helpers.user_handler import UserHandler
+from messenger.helpers.dependencies.user import get_current_active_user
+from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.models.fastapi.friendship_model import FriendshipModel
 from messenger.models.fastapi.pagination_model import CursorPaginationModel
 from messenger.models.fastapi.user_model import UserModel
+from messenger.constants.generics import T
 
-T = TypeVar("T", bound=Table)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -167,10 +169,8 @@ def send_friendship_request(
 
         already_requested_friendship = (
             latest_status is not None
-            and (
-                friendship.requester_id == current_user.user_id
-                or friendship.addressee_id == current_user.user_id
-            )
+            and current_user.user_id
+            in (friendship.requester_id, friendship.addressee_id)
             and latest_status.status_code_id
             == FriendshipStatusCode.REQUESTED.value
         )

@@ -1,8 +1,8 @@
 import logging
-from typing import Optional, Tuple, Type, TypeVar
+from typing import Optional, Tuple, Type
 from fastapi import Depends, HTTPException, Query, status
 
-from sqlalchemy import Column, Table
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 from messenger_schemas.schema import (
     database_session,
@@ -12,12 +12,14 @@ from messenger.constants.pagination import (
     PREVIOUS_PREFIX,
     CursorState,
 )
+from messenger.constants.generics import T
 from messenger.helpers.get_model_dict import get_model_dict
 
-from messenger.models.fastapi.pagination_model import CursorModel, CursorPaginationModel
+from messenger.models.fastapi.pagination_model import (
+    CursorModel,
+    CursorPaginationModel,
+)
 
-
-T = TypeVar("T", bound=Table)
 logger = logging.getLogger(__name__)
 
 INVALID_CURSOR_HTTP_EXCEPTION = HTTPException(

@@ -1,6 +1,7 @@
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, List, Optional
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
+from messenger.constants.generics import S
 
 
 class CursorModel(BaseModel):
@@ -8,9 +9,6 @@ class CursorModel(BaseModel):
     next_page: Optional[str]
 
 
-T = TypeVar("T")
-
-
-class CursorPaginationModel(GenericModel, Generic[T]):
+class CursorPaginationModel(GenericModel, Generic[S]):
     cursor: CursorModel
-    results: List[T]
+    results: List[S]

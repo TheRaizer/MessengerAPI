@@ -9,7 +9,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.fastApi import app
-from messenger.helpers.users import get_current_active_user
+from messenger.helpers.dependencies.user import get_current_active_user
 
 
 @pytest.fixture

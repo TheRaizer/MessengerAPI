@@ -8,7 +8,7 @@ from messenger_schemas.schema.message_schema import (
     MessageSchema,
 )
 
-from messenger.helpers.messages import MessageHandler
+from messenger.helpers.handlers.message_handler import MessageHandler
 from tests.helpers.messages import FROZEN_DATE
 
 
@@ -22,8 +22,8 @@ from tests.helpers.messages import FROZEN_DATE
         (2332, None, "this is a message to multiple people", 231),
     ],
 )
-@patch("messenger.helpers.messages.MessageSchema")
-@patch("messenger.helpers.messages.datetime")
+@patch("messenger.helpers.handlers.message_handler.MessageSchema")
+@patch("messenger.helpers.handlers.message_handler.datetime")
 def test_send_message(
     datetime_mock: MagicMock,
     MessageSchemaMock: MagicMock,
@@ -74,7 +74,7 @@ def test_send_message(
     ],
 )
 @patch(
-    "messenger.helpers.messages.MessageHandler._get_record_with_not_found_raise"
+    "messenger.helpers.handlers.message_handler.MessageHandler._get_record_with_not_found_raise"
 )
 def test_get_message(
     _get_record_with_not_found_raise_mock: MagicMock,

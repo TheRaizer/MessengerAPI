@@ -11,7 +11,7 @@ from messenger_schemas.schema.group_chat_schema import (
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.helpers.group_chats import GroupChatHandler
+from messenger.helpers.handlers.group_chat_handler import GroupChatHandler
 
 
 @pytest.mark.parametrize(
@@ -101,7 +101,7 @@ class TestIsUserInGroupChat:
     ],
 )
 @patch(
-    "messenger.helpers.group_chats.GroupChatHandler._get_record_with_not_found_raise"
+    "messenger.helpers.handlers.group_chat_handler.GroupChatHandler._get_record_with_not_found_raise"
 )
 def test_get_group_chat(
     _get_record_with_not_found_raise_mock: MagicMock,

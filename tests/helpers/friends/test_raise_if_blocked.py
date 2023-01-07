@@ -10,7 +10,7 @@ from messenger_schemas.schema.friendship_status_schema import (
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
-from messenger.helpers.friends import (
+from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
 )
 from tests.helpers.friends import FROZEN_DATE
@@ -18,7 +18,7 @@ from tests.helpers.friends import FROZEN_DATE
 
 @freeze_time(FROZEN_DATE)
 @patch(
-    "messenger.helpers.friends.FriendshipHandler.get_latest_friendship_status"
+    "messenger.helpers.handlers.friendship_handler.FriendshipHandler.get_latest_friendship_status"
 )
 class TestRaiseIfBlocked:
     def test_when_friendship_blocked(

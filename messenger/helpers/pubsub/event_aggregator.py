@@ -7,17 +7,15 @@ from typing import (
     Dict,
     List,
     Type,
-    TypeVar,
     TYPE_CHECKING,
     Union,
     Any,
 )
-from pydantic import BaseModel
+
+from messenger.constants.generics import B
 
 if TYPE_CHECKING:
     from messenger.helpers.pubsub.subscription import Subscription
-
-T = TypeVar("T", bound=BaseModel)
 
 
 class EventAggregator:
@@ -27,8 +25,8 @@ class EventAggregator:
 
     def subscribe(
         self,
-        action_params_type: Type[T],
-        action: Callable[[T], Union[Awaitable[None], None]],
+        action_params_type: Type[B],
+        action: Callable[[B], Union[Awaitable[None], None]],
     ) -> None:
         """Subscribes a given action to a certain event. This event
         is identified by the id() of the param type the action will recieve.
@@ -44,7 +42,7 @@ class EventAggregator:
 
         self._events[id(action_params_type)].append(action)
 
-    async def publish(self, params: T):
+    async def publish(self, params: B):
         """Publishes all subscribers that are subscribed to the
         event: id(type(params)). Params is the instance of the event identifer type
         that will be fed as arguments to each subscribers action.
@@ -59,10 +57,10 @@ class EventAggregator:
             else:
                 action(params)
 
-    def unsubscribe(self, subscription: Subscription[T]):
+    def unsubscribe(self, subscription: Subscription[B]):
         self._events[id(subscription.action_param_type)].remove(
             subscription.action
         )
 
-    def clear_subscriptions(self, event_type: Type[T]):
+    def clear_subscriptions(self, event_type: Type[B]):
         del self._events[id(event_type)]

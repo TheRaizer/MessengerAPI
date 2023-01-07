@@ -6,12 +6,12 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 
-from messenger.helpers.users import authenticate_user
+from messenger.helpers.auth.user import authenticate_user
 from tests.conftest import valid_emails, valid_passwords
 
 
-@patch("messenger.helpers.users.UserHandler")
-@patch("messenger.helpers.users.password_hasher")
+@patch("messenger.helpers.auth.user.UserHandler")
+@patch("messenger.helpers.auth.user.password_hasher")
 class TestAuthenticateUser:
     @pytest.mark.parametrize(
         "email, password, password_hash",

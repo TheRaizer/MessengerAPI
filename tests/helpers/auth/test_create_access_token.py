@@ -1,26 +1,25 @@
 from datetime import datetime, timedelta
-from typing import Any
 from freezegun import freeze_time
 import pytest
 from jose import ExpiredSignatureError, JWTError, jwt
 from messenger.settings import JWT_SECRET
-from messenger.helpers.auth.token.auth_tokens import (
+from messenger.constants.generics import B
+from messenger.helpers.tokens.auth_tokens import (
     ALGORITHM,
     create_access_token,
 )
 
-from tests.helpers.auth import test_datas, test_time_deltas
+from tests.helpers.auth.conftest import test_token_datas, test_time_deltas
 
 
 @freeze_time("2022-11-06")
 class TestCreateAccessToken:
-    @pytest.mark.parametrize("test_data", test_datas)
-    def test_access_token_has_correct_data(self, test_data: dict[str, Any]):
-        # test WITH NO given expires_delta param
-        expected_payload = test_data.copy()
+    @pytest.mark.parametrize("token_data", test_token_datas)
+    def test_access_token_has_correct_data(self, token_data: B):
+        expected_payload = token_data.dict()
 
         # create token
-        access_token = create_access_token(test_data)
+        access_token = create_access_token(token_data)
 
         # decode token
         payload = jwt.decode(access_token, JWT_SECRET, algorithms=[ALGORITHM])
@@ -33,11 +32,11 @@ class TestCreateAccessToken:
 
         assert payload == expected_payload
 
-    @pytest.mark.parametrize("test_data", test_datas)
+    @pytest.mark.parametrize("token_data", test_token_datas)
     def test_decoding_access_token_fails_with_invalid_secret(
-        self, test_data: dict[str, Any]
+        self, token_data: B
     ):
-        access_token = create_access_token(test_data)
+        access_token = create_access_token(token_data)
 
         with pytest.raises(JWTError):
             jwt.decode(
@@ -45,16 +44,16 @@ class TestCreateAccessToken:
             )
 
     @pytest.mark.parametrize(
-        "test_data,test_time_delta", zip(test_datas, test_time_deltas)
+        "token_data,test_time_delta", zip(test_token_datas, test_time_deltas)
     )
     def test_access_token_with_timedelta_has_correct_data(
-        self, test_data: dict[str, Any], test_time_delta: timedelta
+        self, token_data: B, test_time_delta: timedelta
     ):
 
         # test WITH a given expires_delta param
-        expected_payload = test_data.copy()
+        expected_payload = token_data.dict().copy()
 
-        access_token = create_access_token(test_data, test_time_delta)
+        access_token = create_access_token(token_data, test_time_delta)
 
         payload = jwt.decode(access_token, JWT_SECRET, algorithms=[ALGORITHM])
 
@@ -70,12 +69,12 @@ class TestCreateAccessToken:
             )
 
     @pytest.mark.parametrize(
-        "test_data,test_time_delta", zip(test_datas, test_time_deltas)
+        "token_data,test_time_delta", zip(test_token_datas, test_time_deltas)
     )
     def test_access_token_with_timedelta_fails_with_invalid_secret(
-        self, test_data: dict[str, Any], test_time_delta: timedelta
+        self, token_data: B, test_time_delta: timedelta
     ):
-        access_token = create_access_token(test_data, test_time_delta)
+        access_token = create_access_token(token_data, test_time_delta)
 
         with pytest.raises(JWTError):
             jwt.decode(
@@ -84,7 +83,9 @@ class TestCreateAccessToken:
 
     def test_that_token_expires(self):
         # set expires delta to a negative value
-        access_token = create_access_token(test_datas[0], timedelta(days=-10))
+        access_token = create_access_token(
+            test_token_datas[0], timedelta(days=-10)
+        )
 
         # the access token should therefore be expired
         with pytest.raises(ExpiredSignatureError):

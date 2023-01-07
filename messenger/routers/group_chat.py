@@ -8,7 +8,7 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 
-from messenger.helpers.users import get_current_active_user
+from messenger.helpers.dependencies.user import get_current_active_user
 from messenger.models.fastapi.group_chat_model import CreateGroupChatModel
 
 router = APIRouter(

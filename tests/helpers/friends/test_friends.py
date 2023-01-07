@@ -15,7 +15,7 @@ from messenger_schemas.schema.user_schema import (
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 
-from messenger.helpers.friends import (
+from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
 )
 from tests.helpers.friends import FROZEN_DATE
@@ -57,6 +57,7 @@ def test_get_latest_friendship_status(mocker: MockerFixture):
     assert latest_status == status
 
 
+# TODO: add some negative test params
 @freeze_time(FROZEN_DATE)
 @pytest.mark.parametrize(
     "user_a_id, user_b_id",
@@ -110,7 +111,7 @@ def test_get_friendship_bidirectional_query(
         (4, 0, 4, FriendshipStatusCode.BLOCKED),
     ],
 )
-@patch("messenger.helpers.friends.FriendshipStatusSchema")
+@patch("messenger.helpers.handlers.friendship_handler.FriendshipStatusSchema")
 def test_add_new_status(
     FriendshipStatusSchemaMock: MagicMock,
     mocker: MockerFixture,

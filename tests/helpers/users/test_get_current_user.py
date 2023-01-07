@@ -6,9 +6,9 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.settings import JWT_SECRET
-from messenger.helpers.auth.token.auth_tokens import AccessTokenData
+from messenger.models.fastapi.access_token_data import AccessTokenData
 
-from messenger.helpers.users import get_current_user
+from messenger.helpers.dependencies.user import get_current_user
 from tests.conftest import (
     valid_usernames,
     valid_emails,
@@ -21,8 +21,8 @@ class TestGetCurrentUser:
         "username, email, token",
         zip(valid_usernames, valid_emails, valid_passwords),
     )
-    @patch("messenger.helpers.users.UserHandler")
-    @patch("messenger.helpers.users.validate_token")
+    @patch("messenger.helpers.dependencies.user.UserHandler")
+    @patch("messenger.helpers.dependencies.user.validate_token")
     def test_when_successfully_retrieved_user(
         self,
         validate_token_mock: MagicMock,
@@ -50,7 +50,7 @@ class TestGetCurrentUser:
         "token",
         valid_passwords,
     )
-    @patch("messenger.helpers.users.validate_token")
+    @patch("messenger.helpers.dependencies.user.validate_token")
     def test_raises_when_no_valid_token_was_found(
         self,
         validate_token_mock: MagicMock,
@@ -69,8 +69,8 @@ class TestGetCurrentUser:
         "username, email, token",
         zip(valid_usernames, valid_emails, valid_passwords),
     )
-    @patch("messenger.helpers.users.UserHandler")
-    @patch("messenger.helpers.users.validate_token")
+    @patch("messenger.helpers.dependencies.user.UserHandler")
+    @patch("messenger.helpers.dependencies.user.validate_token")
     def test_raises_when_no_user_found(
         self,
         validate_token_mock: MagicMock,
