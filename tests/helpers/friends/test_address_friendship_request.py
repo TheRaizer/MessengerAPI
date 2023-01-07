@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from freezegun import freeze_time
 
@@ -20,37 +21,60 @@ from messenger.helpers.address_friendship_request import (
 )
 from tests.helpers.friends import FROZEN_DATE
 
-# TODO: these tests do not properly test that a friendship is addressed
-
 
 class TestAddressFriendshipRequest:
     @freeze_time(FROZEN_DATE)
-    def test_adds_new_accepted_status(self, mocker: MockerFixture):
-        friendship_handler = FriendshipHandler(
-            mocker.MagicMock(),
-            FriendshipSchema(
-                requester_id=1, addressee_id=2, created_date_time=datetime.now()
-            ),
+    @patch(
+        "messenger.helpers.handlers.friendship_handler.FriendshipStatusSchema"
+    )
+    def test_adds_new_accepted_status(
+        self, FriendshipStatusSchemaMock: MagicMock, mocker: MockerFixture
+    ):
+        db_mock = mocker.MagicMock()
+        friendship = FriendshipSchema(
+            requester_id=1, addressee_id=2, created_date_time=datetime.now()
         )
-        new_status = address_friendship_request(
+
+        friendship_handler = FriendshipHandler(db_mock, friendship)
+        address_friendship_request(
             friendship_handler, FriendshipStatusCode.ACCEPTED
         )
 
-        assert new_status.status_code_id == FriendshipStatusCode.ACCEPTED.value
+        db_mock.add.assert_called_with(FriendshipStatusSchemaMock.return_value)
+        FriendshipStatusSchemaMock.assert_called_once_with(
+            requester_id=friendship.requester_id,
+            addressee_id=friendship.addressee_id,
+            specified_date_time=datetime.now(),
+            status_code_id=FriendshipStatusCode.ACCEPTED.value,
+            specifier_id=friendship.addressee_id,
+        )
 
     @freeze_time(FROZEN_DATE)
-    def test_adds_new_declined_status(self, mocker: MockerFixture):
-        friendship_handler = FriendshipHandler(
-            mocker.MagicMock(),
-            FriendshipSchema(
-                requester_id=1, addressee_id=2, created_date_time=datetime.now()
-            ),
+    @patch(
+        "messenger.helpers.handlers.friendship_handler.FriendshipStatusSchema"
+    )
+    def test_adds_new_declined_status(
+        self,
+        FriendshipStatusSchemaMock: MagicMock,
+        mocker: MockerFixture,
+    ):
+        db_mock = mocker.MagicMock()
+        friendship = FriendshipSchema(
+            requester_id=12, addressee_id=21, created_date_time=datetime.now()
         )
-        new_status = address_friendship_request(
+        friendship_handler = FriendshipHandler(db_mock, friendship)
+        address_friendship_request(
             friendship_handler, FriendshipStatusCode.DECLINED
         )
 
-        assert new_status.status_code_id == FriendshipStatusCode.DECLINED.value
+        db_mock.add.assert_called_with(FriendshipStatusSchemaMock.return_value)
+        FriendshipStatusSchemaMock.assert_called_once_with(
+            requester_id=friendship.requester_id,
+            addressee_id=friendship.addressee_id,
+            specified_date_time=datetime.now(),
+            status_code_id=FriendshipStatusCode.DECLINED.value,
+            specifier_id=friendship.addressee_id,
+        )
 
     def test_raises_when_friendship_blocked(self, mocker: MockerFixture):
         friendship = FriendshipSchema(
