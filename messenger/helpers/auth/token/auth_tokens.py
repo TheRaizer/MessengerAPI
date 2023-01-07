@@ -1,64 +1,32 @@
 """Defines functions related to authentication tokens"""
 
 from datetime import datetime, timedelta
-import os
 from typing import Optional, Union
-from jose import JWTError, jwt
-from argon2 import PasswordHasher
+from jose import jwt
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, Response, status
 
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
+from messenger.constants.token import (
+    ALGORITHM,
+    LOGIN_TOKEN_EXPIRE_MINUTES,
+)
 from messenger.settings import JWT_SECRET
 
-ALGORITHM = "HS256"
-LOGIN_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/sign-in")
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class SocketioAccessTokenData(BaseModel):
+    user_id: Optional[str] = None
+    type: str = "socket"
 
 
-class TokenData(BaseModel):
+class AccessTokenData(BaseModel):
     user_id: Optional[str] = None
     username: Optional[str] = None
     email: Optional[str] = None
-
-
-password_hasher = PasswordHasher()
-
-UNAUTHORIZED_CREDENTIALS_EXCEPTION = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
-)
-
-
-def validate_access_token(token: str, secret: str) -> Optional[TokenData]:
-    """Validates a given access token and if valid it decodes the token, and
-    returns the decoded data. Otherwise it returns None.
-
-    Args:
-        token (str): the token to validate.
-        secret (str): the secret used to validate the token.
-
-    Returns:
-        Optional[TokenData]: if token was valid, return the decoded data, otherwise
-            return None
-    """
-    try:
-        payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
-        token_data = TokenData(**payload)
-
-    except JWTError:
-        return None
-
-    return token_data
 
 
 def create_access_token(
@@ -87,16 +55,25 @@ def create_access_token(
     return encoded_jwt
 
 
-def set_access_token_cookie(response: Response, access_token: str) -> None:
-    secure = os.getenv("PY_ENV", "PRODUCTION") == "PRODUCTION"
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        domain="localhost",
-        secure=secure,
-        samesite="none",
+def create_socketio_token(user: UserSchema) -> str:
+    """Create a ticket for authentication during socketio connection.
+
+    Args:
+        user (UserSchema): The users data from the database.
+
+    Returns:
+        str: the token in the form of a JWT.
+    """
+    token_data: SocketioAccessTokenData = SocketioAccessTokenData(
+        user_id=user.user_id,
     )
+    access_token_expires = timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)
+
+    access_token = create_access_token(
+        data=token_data.dict(), expires_delta=access_token_expires
+    )
+
+    return access_token
 
 
 def create_login_token(user: UserSchema) -> str:
@@ -108,7 +85,7 @@ def create_login_token(user: UserSchema) -> str:
     Returns:
         str: the access token in the form of a JWT.
     """
-    token_data: TokenData = TokenData(
+    token_data: AccessTokenData = AccessTokenData(
         user_id=user.user_id, username=user.username, email=user.email
     )
     access_token_expires = timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES)

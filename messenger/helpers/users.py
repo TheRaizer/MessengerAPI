@@ -2,7 +2,7 @@
 
 import logging
 from typing import Union
-from argon2 import exceptions
+from argon2 import PasswordHasher, exceptions
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,20 +13,25 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.auth_details import PasswordError
+from messenger.constants.token import UNAUTHORIZED_CREDENTIALS_EXCEPTION
 from messenger.settings import JWT_SECRET
 from messenger.helpers.auth.is_email_valid import is_email_valid
 from messenger.helpers.auth.is_password_valid import is_password_valid
 from messenger.helpers.auth.is_username_valid import is_username_valid
 from messenger.helpers.user_handler import UserHandler
-from .auth.auth_token import (
-    password_hasher,
-    validate_access_token,
-    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
+from messenger.helpers.auth.token.validate_token import (
+    validate_token,
 )
-from .auth.auth_token import oauth2_scheme
+from messenger.helpers.auth.token.auth_tokens import (
+    oauth2_scheme,
+    AccessTokenData,
+)
 
 
 logger = logging.getLogger(__name__)
+
+
+password_hasher = PasswordHasher()
 
 
 def get_current_user(
@@ -54,7 +59,7 @@ def get_current_user(
         UserSchema: The users data from the database.
     """
 
-    valid_token = validate_access_token(token, JWT_SECRET)
+    valid_token = validate_token(token, JWT_SECRET, AccessTokenData)
 
     if valid_token is None:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION

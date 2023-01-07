@@ -6,10 +6,10 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.settings import JWT_SECRET
-from messenger.helpers.auth.auth_token import (
+from messenger.helpers.auth.token.auth_tokens import (
     ALGORITHM,
     LOGIN_TOKEN_EXPIRE_MINUTES,
-    TokenData,
+    AccessTokenData,
     create_login_token,
 )
 from tests.helpers.auth import test_user_records
@@ -31,7 +31,7 @@ class TestCreateLoginToken:
         )
 
         # here we generate the expected token data
-        expected_payload = TokenData(
+        expected_payload = AccessTokenData(
             user_id=test_user_record.user_id,
             username=test_user_record.username,
             email=test_user_record.email,
