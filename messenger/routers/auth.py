@@ -1,6 +1,6 @@
 """Contains routes for user authentication."""
 from bleach import clean
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.orm import Session
 from messenger_schemas.schema import (
@@ -9,11 +9,13 @@ from messenger_schemas.schema import (
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.helpers.auth.auth_token import (
-    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
+from messenger.constants.token import (
     Token,
+    UNAUTHORIZED_CREDENTIALS_EXCEPTION,
+)
+from messenger.helpers.auth.token.auth_tokens import (
     create_login_token,
-    set_access_token_cookie,
+    create_socketio_token,
 )
 from messenger.helpers.users import (
     UserHandler,
@@ -30,10 +32,11 @@ router = APIRouter(
 
 
 @router.post(
-    "/sign-up", response_model=Token, status_code=status.HTTP_201_CREATED
+    "/sign-up",
+    response_model=Token,
+    status_code=status.HTTP_201_CREATED,
 )
 def sign_up(
-    response: Response,
     username: str,
     form_data: OAuth2PasswordRequestFormStrict = Depends(),
     db: Session = Depends(database_session),
@@ -78,16 +81,16 @@ def sign_up(
     )
 
     access_token = create_login_token(user)
-    set_access_token_cookie(response, access_token)
 
     return Token(access_token=access_token, token_type="bearer")
 
 
 @router.post(
-    "/sign-in", response_model=Token, status_code=status.HTTP_201_CREATED
+    "/sign-in",
+    response_model=Token,
+    status_code=status.HTTP_201_CREATED,
 )
 def sign_in(
-    response: Response,
     form_data: OAuth2PasswordRequestFormStrict = Depends(),
     db: Session = Depends(database_session),
 ):
@@ -119,19 +122,44 @@ def sign_in(
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
     access_token = create_login_token(user)
-    set_access_token_cookie(response, access_token)
 
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.put("/sign-out", status_code=status.HTTP_200_OK)
-def sign_out(
-    response: Response,
+@router.post(
+    "/socket-ticket", response_model=Token, status_code=status.HTTP_201_CREATED
+)
+def socket_ticket(
+    form_data: OAuth2PasswordRequestFormStrict = Depends(),
+    db: Session = Depends(database_session),
 ):
-    """Deletes the access token cookie.
+    """Using email and password authentication. Produces a
+    JWT token proving the callers authorization for socket connection.
 
     Args:
-        response (Response): the response of this route
+        form_data (OAuth2PasswordRequestFormStrict, optional): FastAPI's
+            formdata that gives access to the user's email and password. Defaults
+            to Depends().
+        db (Session, optional): the database session used to query for a user.
+            Defaults to Depends(database_session).
+
+    Raises:
+        UNAUTHORIZED_CREDENTIALS_EXCEPTION: returns an unauthorized access
+        code when either the user authentication fails, or the user does not
+        exist in the database.
+
+    Returns:
+        Token: the access token and token type
     """
 
-    response.delete_cookie("access_token")
+    # form_data.username represents the user's email
+    user = authenticate_user(
+        db, password=clean(form_data.password), email=clean(form_data.username)
+    )
+
+    if not user:
+        raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
+
+    socketio_token = create_socketio_token(user)
+
+    return Token(access_token=socketio_token, token_type="socketio")
