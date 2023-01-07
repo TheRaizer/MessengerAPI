@@ -20,6 +20,8 @@ from messenger.helpers.address_friendship_request import (
 )
 from tests.helpers.friends import FROZEN_DATE
 
+# TODO: these tests do not properly test that a friendship is addressed
+
 
 class TestAddressFriendshipRequest:
     @freeze_time(FROZEN_DATE)

@@ -15,7 +15,7 @@ from messenger.helpers.handlers.friendship_handler import FriendshipHandler
 from messenger.helpers.handlers.group_chat_handler import GroupChatHandler
 from messenger.helpers.handlers.message_handler import MessageHandler
 from messenger.helpers.handlers.user_handler import UserHandler
-from messenger.helpers.users import get_current_active_user
+from messenger.helpers.dependencies.user import get_current_active_user
 from messenger.models.fastapi.message_model import (
     BaseMessageModel,
     CreateMessageModel,

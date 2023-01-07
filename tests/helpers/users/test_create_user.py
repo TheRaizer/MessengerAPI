@@ -5,7 +5,7 @@ from pytest_mock import MockerFixture
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
-from messenger.helpers.users import create_user
+from messenger.helpers.auth.user import create_user
 from tests.conftest import (
     valid_usernames,
     valid_passwords,
@@ -98,7 +98,7 @@ class TestCreateUser:
             assert exc.value.detail == "username is taken"
 
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
-    @patch("messenger.helpers.users.is_username_valid")
+    @patch("messenger.helpers.auth.user.is_username_valid")
     def test_it_fails_on_existent_email(
         self,
         is_username_valid_mock: MagicMock,
@@ -127,7 +127,7 @@ class TestCreateUser:
     )
     @patch("messenger.helpers.auth.is_email_valid.UserHandler.get_user")
     @patch("messenger.helpers.auth.is_username_valid.UserHandler.get_user")
-    @patch("messenger.helpers.users.password_hasher")
+    @patch("messenger.helpers.auth.user.password_hasher")
     def test_it_adds_user_to_db(
         self,
         password_hasher_mock: MagicMock,

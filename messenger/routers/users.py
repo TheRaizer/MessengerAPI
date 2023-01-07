@@ -6,7 +6,7 @@ from messenger_schemas.schema.user_schema import (
 )
 
 from messenger.models.fastapi.user_model import UserModel
-from messenger.helpers.users import get_current_active_user
+from messenger.helpers.dependencies.user import get_current_active_user
 
 router = APIRouter(
     prefix="/users",

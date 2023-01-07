@@ -31,7 +31,7 @@ from messenger.helpers.handlers.friendship_handler import (
 from messenger.helpers.address_friendship_request import (
     address_friendship_request_as_route,
 )
-from messenger.helpers.users import get_current_active_user
+from messenger.helpers.dependencies.user import get_current_active_user
 from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.models.fastapi.friendship_model import FriendshipModel
 from messenger.models.fastapi.pagination_model import CursorPaginationModel

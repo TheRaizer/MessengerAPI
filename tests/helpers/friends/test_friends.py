@@ -57,6 +57,7 @@ def test_get_latest_friendship_status(mocker: MockerFixture):
     assert latest_status == status
 
 
+# TODO: add some negative test params
 @freeze_time(FROZEN_DATE)
 @pytest.mark.parametrize(
     "user_a_id, user_b_id",
