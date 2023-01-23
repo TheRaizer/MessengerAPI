@@ -25,11 +25,11 @@ from messenger.helpers.dependencies.pagination import cursor_pagination
 from messenger.helpers.dependencies.queries.query_friends import (
     query_friends,
 )
-from messenger.helpers.dependencies.queries.query_requests_recieved import (
-    query_requests_recieved,
+from messenger.helpers.dependencies.queries.query_request_senders import (
+    query_request_senders,
 )
-from messenger.helpers.dependencies.queries.query_requests_sent import (
-    query_requests_sent,
+from messenger.helpers.dependencies.queries.query_request_recievers import (
+    query_request_recievers,
 )
 from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
@@ -66,11 +66,11 @@ def get_friends(
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
-    accepted_friends_table=Depends(query_friends),
+    friends_table=Depends(query_friends),
 ):
     cursor_pagination_model = pagination(
-        accepted_friends_table,
-        accepted_friends_table.username,
+        friends_table,
+        friends_table.username,
     )
     cursor_pagination_model.results = [
         UserModel.from_orm(friend_user)
@@ -81,11 +81,11 @@ def get_friends(
 
 
 @router.get(
-    "/requests/recieved",
+    "/requests/senders",
     status_code=status.HTTP_200_OK,
-    response_model=CursorPaginationModel[FriendshipModel],
+    response_model=CursorPaginationModel[UserModel],
 )
-def get_requests_recieved(
+def get_friend_request_senders(
     pagination: Callable[
         [
             Type[T],
@@ -93,9 +93,10 @@ def get_requests_recieved(
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
-    friend_requests_recieved_table=Depends(query_requests_recieved),
+    friend_request_senders_table=Depends(query_request_senders),
 ):
-    """Retrieves all friendships that are currently unanswered by the current user.
+    """Retrieves all users that have sent friend requests to the current user and
+    are unanswered.
 
     Args:
         current_user (UserSchema, optional): the current signed-in user
@@ -105,23 +106,22 @@ def get_requests_recieved(
         _type_: the friendship requests recieved, and those sent.
     """
     cursor_pagination_model = pagination(
-        friend_requests_recieved_table,
-        friend_requests_recieved_table.requester_id,
+        friend_request_senders_table,
+        friend_request_senders_table.username,
     )
     cursor_pagination_model.results = [
-        FriendshipModel.from_orm(friendship)
-        for friendship in cursor_pagination_model.results
+        UserModel.from_orm(user) for user in cursor_pagination_model.results
     ]
 
     return cursor_pagination_model
 
 
 @router.get(
-    "/requests/sent",
+    "/requests/recievers",
     status_code=status.HTTP_200_OK,
-    response_model=CursorPaginationModel[FriendshipModel],
+    response_model=CursorPaginationModel[UserModel],
 )
-def get_requests_sent(
+def get_friend_request_recievers(
     pagination: Callable[
         [
             Type[T],
@@ -129,10 +129,10 @@ def get_requests_sent(
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
-    friend_requests_sent=Depends(query_requests_sent),
+    friend_request_recievers_table=Depends(query_request_recievers),
 ):
-    """Retrieves all friendship requests that have been sent by the current
-    user.
+    """Retrieves all users that have recieved a friend request from the current
+    user and have yet to answer.
 
     Args:
         current_user (UserSchema, optional): the current signed-in user
@@ -142,12 +142,11 @@ def get_requests_sent(
         _type_: the friendship requests recieved, and those sent.
     """
     cursor_pagination_model = pagination(
-        friend_requests_sent,
-        friend_requests_sent.addressee_id,
+        friend_request_recievers_table,
+        friend_request_recievers_table.username,
     )
     cursor_pagination_model.results = [
-        FriendshipModel.from_orm(friendship)
-        for friendship in cursor_pagination_model.results
+        UserModel.from_orm(user) for user in cursor_pagination_model.results
     ]
 
     return cursor_pagination_model
