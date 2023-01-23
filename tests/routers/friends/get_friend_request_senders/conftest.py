@@ -1,5 +1,6 @@
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.constants.pagination import CursorState
+from tests.conftest import generate_username
 
 get_first_page_params = (
     "friend_data, friend_requester_ids, limit, expected_next_cursor",
@@ -26,7 +27,7 @@ get_first_page_params = (
             ],
             [3, 4, 5],
             "3",
-            CursorState.NEXT.value + "___" + str(5),
+            CursorState.NEXT.value + "___" + generate_username(5),
         ),
         (
             [
@@ -60,9 +61,9 @@ get_middle_page_params = (
             ],
             [6, 7],
             "2",
-            CursorState.NEXT.value + "___" + str(5),
-            CursorState.NEXT.value + "___" + str(7),
-            CursorState.PREVIOUS.value + "___" + str(6),
+            CursorState.NEXT.value + "___" + generate_username(5),
+            CursorState.NEXT.value + "___" + generate_username(7),
+            CursorState.PREVIOUS.value + "___" + generate_username(6),
         ),
         (
             [
@@ -75,9 +76,9 @@ get_middle_page_params = (
             ],
             [4],
             "1",
-            CursorState.PREVIOUS.value + "___" + str(5),
-            CursorState.NEXT.value + "___" + str(4),
-            CursorState.PREVIOUS.value + "___" + str(4),
+            CursorState.PREVIOUS.value + "___" + generate_username(5),
+            CursorState.NEXT.value + "___" + generate_username(4),
+            CursorState.PREVIOUS.value + "___" + generate_username(4),
         ),
         (
             [
@@ -95,9 +96,9 @@ get_middle_page_params = (
             ],
             [4, 5],
             "2",
-            CursorState.PREVIOUS.value + "___" + str(6),
-            CursorState.NEXT.value + "___" + str(5),
-            CursorState.PREVIOUS.value + "___" + str(4),
+            CursorState.PREVIOUS.value + "___" + generate_username(6),
+            CursorState.NEXT.value + "___" + generate_username(5),
+            CursorState.PREVIOUS.value + "___" + generate_username(4),
         ),
     ],
 )
@@ -117,8 +118,8 @@ get_last_page_params = (
             ],
             [6, 7, 8],
             "3",
-            CursorState.NEXT.value + "___" + str(5),
-            CursorState.PREVIOUS.value + "___" + str(6),
+            CursorState.NEXT.value + "___" + generate_username(5),
+            CursorState.PREVIOUS.value + "___" + generate_username(6),
         ),
         (
             [
@@ -131,8 +132,8 @@ get_last_page_params = (
             ],
             [6, 7],
             "5",
-            CursorState.NEXT.value + "___" + str(5),
-            CursorState.PREVIOUS.value + "___" + str(6),
+            CursorState.NEXT.value + "___" + generate_username(5),
+            CursorState.PREVIOUS.value + "___" + generate_username(6),
         ),
         (
             [
@@ -150,8 +151,8 @@ get_last_page_params = (
             ],
             [4, 5, 6],
             "3",
-            CursorState.NEXT.value + "___" + str(3),
-            CursorState.PREVIOUS.value + "___" + str(4),
+            CursorState.NEXT.value + "___" + generate_username(3),
+            CursorState.PREVIOUS.value + "___" + generate_username(4),
         ),
     ],
 )

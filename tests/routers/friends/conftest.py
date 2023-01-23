@@ -112,4 +112,4 @@ def add_friendships(
 
     session.commit()
 
-    return expected_users, expected_friendships
+    return expected_users

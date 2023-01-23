@@ -44,7 +44,7 @@ class TestGetFriends:
         assert response.json() == {"detail": "invalid cursor"}
 
     @pytest.mark.parametrize(get_first_page_params[0], get_first_page_params[1])
-    def test_retrieves_first_page_of_accepted_friendships(
+    def test_retrieves_first_page(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
         accepted_friend_ids: List[int],
@@ -56,7 +56,7 @@ class TestGetFriends:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
-        (expected_users, _) = add_friendships(
+        expected_users = add_friendships(
             friend_data,
             accepted_friend_ids,
             current_active_user.user_id,
@@ -101,7 +101,7 @@ class TestGetFriends:
     @pytest.mark.parametrize(
         get_middle_page_params[0], get_middle_page_params[1]
     )
-    def test_retrieves_middle_page_of_accepted_friendships(
+    def test_retrieves_middle_page(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
         accepted_friend_ids: List[int],
@@ -115,7 +115,7 @@ class TestGetFriends:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
-        (expected_users, _) = add_friendships(
+        expected_users = add_friendships(
             friend_data,
             accepted_friend_ids,
             current_active_user.user_id,
@@ -162,7 +162,7 @@ class TestGetFriends:
         assert response_cursor["prev_page"] == expected_previous_cursor
 
     @pytest.mark.parametrize(get_last_page_params[0], get_last_page_params[1])
-    def test_retrieves_last_page_of_accepted_friendships(
+    def test_retrieves_last_page(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
         accepted_friend_ids: List[int],
@@ -175,7 +175,7 @@ class TestGetFriends:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
-        (expected_users, _) = add_friendships(
+        expected_users = add_friendships(
             friend_data,
             accepted_friend_ids,
             current_active_user.user_id,

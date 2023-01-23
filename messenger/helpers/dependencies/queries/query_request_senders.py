@@ -1,14 +1,11 @@
 from fastapi import Depends
-from sqlalchemy import and_, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session, aliased
 from messenger_schemas.schema import (
     database_session,
 )
 from messenger_schemas.schema.friendship_status_schema import (
     FriendshipStatusSchema,
-)
-from messenger_schemas.schema.friendship_schema import (
-    FriendshipSchema,
 )
 from messenger_schemas.schema.user_schema import (
     UserSchema,
@@ -17,12 +14,12 @@ from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.dependencies.user import get_current_active_user
 
 
-def query_requests_sent(
+def query_request_senders(
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
-    """Produces a subquery table of all users with whom the current user has sent
-    a friendship request too.
+    """Produces a subquery table of all users with whom the current user has recieved
+    a friendship request from.
 
     WITH LatestStatus (requester_id, addressee_id, latest_status_code_id) AS (
         SELECT requester_id, addressee_id, status_code_id as latest_status_code_id
@@ -30,7 +27,7 @@ def query_requests_sent(
         WHERE friendship_status.specified_date_time IN
         (
                 SELECT MAX(specified_date_time) FROM friendship_status
-                        WHERE requester_id=18
+                        WHERE addressee_id=18
                         GROUP BY requester_id, addressee_id
         )
     )
@@ -48,7 +45,7 @@ def query_requests_sent(
     latest_status_dates = (
         db.query(func.max(FriendshipStatusSchema.specified_date_time))
         .filter(
-            FriendshipStatusSchema.requester_id == current_user.user_id,
+            FriendshipStatusSchema.addressee_id == current_user.user_id,
         )
         .group_by(
             FriendshipStatusSchema.addressee_id,
@@ -69,16 +66,13 @@ def query_requests_sent(
         .subquery()
     )
 
-    # get users that recieved the friendship
-    friend_requests_sent = (
-        db.query(FriendshipSchema)
+    # get users that requested a friendship with the current user
+    friend_request_senders_table = (
+        db.query(UserSchema)
         .select_from(latest_statuses)
         .join(
-            FriendshipSchema,
-            and_(
-                FriendshipSchema.addressee_id == latest_statuses.c.addressee_id,
-                FriendshipSchema.requester_id == latest_statuses.c.requester_id,
-            ),
+            UserSchema,
+            UserSchema.user_id == latest_statuses.c.requester_id,
         )
         .filter(
             latest_statuses.c.status_code_id
@@ -87,8 +81,8 @@ def query_requests_sent(
         .subquery()
     )
 
-    friend_requests_sent_table_alias = aliased(
-        FriendshipSchema, friend_requests_sent
+    friend_request_senders_table_alias = aliased(
+        UserSchema, friend_request_senders_table
     )
 
-    return friend_requests_sent_table_alias
+    return friend_request_senders_table_alias
