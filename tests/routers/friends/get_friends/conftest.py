@@ -1,21 +1,7 @@
-from datetime import datetime, timedelta
-from typing import List, Tuple
-from sqlalchemy.orm import Session
-
-from messenger_schemas.schema.friendship_schema import (
-    FriendshipSchema,
-)
-from messenger_schemas.schema.friendship_status_schema import (
-    FriendshipStatusSchema,
-)
-from messenger_schemas.schema.user_schema import (
-    UserSchema,
-)
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.constants.pagination import CursorState
 
-from messenger.models.fastapi.user_model import UserModel
-from tests.conftest import generate_username, get_user_schema_params
+from tests.conftest import generate_username
 
 get_first_page_params = (
     "friend_data, accepted_friend_ids, limit, expected_next_cursor",
@@ -179,47 +165,3 @@ valid_query_params = [
     ("23", CursorState.NEXT.value + "___username-email23"),
     ("1", None),
 ]
-
-
-def add_friendships(
-    friend_data: List[Tuple[int, FriendshipStatusCode]],
-    accepted_friend_ids: List[int],
-    current_active_user_id: int,
-    session: Session,
-):
-    # keep track of users created so we don't attempt to create
-    # multiple users with the same id.
-    users_created: List[int] = []
-
-    # the users we expect to recieve as output from the route.
-    expected_users: List[UserModel] = []
-
-    for i, (friend_id, status) in enumerate(friend_data):
-        if friend_id not in users_created:
-            users_created.append(friend_id)
-            friend_user = UserSchema(**get_user_schema_params(friend_id))
-
-            if friend_id in accepted_friend_ids:
-                expected_users.append(UserModel.from_orm(friend_user))
-
-            friendship = FriendshipSchema(
-                requester_id=current_active_user_id,
-                addressee_id=friend_id,
-                created_date_time=datetime.now() + timedelta(hours=i),
-            )
-            session.add(friendship)
-            session.add(friend_user)
-
-        friendship_status = FriendshipStatusSchema(
-            requester_id=current_active_user_id,
-            addressee_id=friend_id,
-            specified_date_time=datetime.now() + timedelta(hours=i),
-            status_code_id=status.value,
-            specifier_id=friend_id,
-        )
-
-        session.add(friendship_status)
-
-    session.commit()
-
-    return expected_users
