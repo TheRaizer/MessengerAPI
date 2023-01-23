@@ -8,9 +8,8 @@ from messenger_schemas.schema.user_schema import (
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from tests.conftest import add_initial_friendship_status_codes
-from tests.routers.friends.conftest import FROZEN_DATE
-from tests.routers.friends.get_accepted_friendships.conftest import (
-    add_friendships,
+from tests.routers.friends.conftest import FROZEN_DATE, add_friendships
+from tests.routers.friends.get_requests_recieved.conftest import (
     get_first_page_params,
     get_middle_page_params,
     get_last_page_params,
@@ -20,7 +19,7 @@ from tests.helpers.dependencies.pagination.conftest import invalid_cursors
 
 
 @freeze_time(FROZEN_DATE)
-class TestGetAcceptedFriendships:
+class TestGetFriendRequestsRecieved:
     @pytest.mark.parametrize("limit, cursor", valid_query_params)
     def test_produces_200_when_successful(
         self,
@@ -32,7 +31,7 @@ class TestGetAcceptedFriendships:
 
         cursor = "" if cursor is None else f"cursor={cursor}"
         response = test_client.get(
-            f"/friends/requests/accepted?limit={limit}&{cursor}"
+            f"/friends/requests/recieved?limit={limit}&{cursor}"
         )
         assert response.status_code == 200
 
@@ -43,7 +42,7 @@ class TestGetAcceptedFriendships:
         (test_client, _) = client
 
         response = test_client.get(
-            f"/friends/requests/accepted?limit=2&cursor={invalid_cursor}"
+            f"/friends/requests/recieved?limit=2&cursor={invalid_cursor}"
         )
         assert response.status_code == 400
         assert response.json() == {"detail": "invalid cursor"}
@@ -52,7 +51,7 @@ class TestGetAcceptedFriendships:
     def test_retrieves_first_page_of_accepted_friendships(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        accepted_friend_ids: List[int],
+        friend_requester_ids: List[int],
         limit: str,
         expected_next_cursor: str,
         client: Tuple[TestClient, UserSchema],
@@ -61,26 +60,39 @@ class TestGetAcceptedFriendships:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
-        expected_users = add_friendships(
+        (_, expected_friendships) = add_friendships(
             friend_data,
-            accepted_friend_ids,
+            friend_requester_ids,
             current_active_user.user_id,
             session,
+            active_user_is_requester=False,
         )
 
-        response = test_client.get(f"/friends/requests/accepted?limit={limit}")
+        response = test_client.get(f"/friends/requests/recieved?limit={limit}")
 
-        assert len(response.json()["results"]) == len(expected_users)
-        assert sorted(
-            response.json()["results"],
-            key=lambda user_model: user_model["user_id"],
-        ) == sorted(expected_users, key=lambda user_model: user_model.user_id)
+        assert len(response.json()["results"]) == len(expected_friendships)
+        response.json()["results"].sort(
+            key=lambda friendship_model: friendship_model["requester_id"]
+        )
+        expected_friendships.sort(
+            key=lambda friendship_model: friendship_model.requester_id
+        )
+
+        for expected_friendship, friendship in zip(
+            expected_friendships, response.json()["results"]
+        ):
+            assert (
+                expected_friendship.addressee_id == friendship["addressee_id"]
+            )
+            assert (
+                expected_friendship.requester_id == friendship["requester_id"]
+            )
 
     @pytest.mark.parametrize(get_first_page_params[0], get_first_page_params[1])
     def test_retrieves_correct_cursor_when_first_page(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        accepted_friend_ids: List[int],
+        friend_requester_ids: List[int],
         limit: str,
         expected_next_cursor: str,
         client: Tuple[TestClient, UserSchema],
@@ -91,12 +103,13 @@ class TestGetAcceptedFriendships:
 
         add_friendships(
             friend_data,
-            accepted_friend_ids,
+            friend_requester_ids,
             current_active_user.user_id,
             session,
+            active_user_is_requester=False,
         )
 
-        response = test_client.get(f"/friends/requests/accepted?limit={limit}")
+        response = test_client.get(f"/friends/requests/recieved?limit={limit}")
 
         cursor = response.json()["cursor"]
 
@@ -109,7 +122,7 @@ class TestGetAcceptedFriendships:
     def test_retrieves_middle_page_of_accepted_friendships(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        accepted_friend_ids: List[int],
+        friend_requester_ids: List[int],
         limit: str,
         cursor: str,
         expected_next_cursor: str,
@@ -120,22 +133,36 @@ class TestGetAcceptedFriendships:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
-        expected_users = add_friendships(
+        (_, expected_friendships) = add_friendships(
             friend_data,
-            accepted_friend_ids,
+            friend_requester_ids,
             current_active_user.user_id,
             session,
+            active_user_is_requester=False,
         )
 
         response = test_client.get(
-            f"/friends/requests/accepted?limit={limit}&cursor={cursor}"
+            f"/friends/requests/recieved?limit={limit}&cursor={cursor}"
         )
 
-        assert len(response.json()["results"]) == len(expected_users)
-        assert sorted(
-            response.json()["results"],
-            key=lambda user_model: user_model["user_id"],
-        ) == sorted(expected_users, key=lambda user_model: user_model.user_id)
+        assert len(response.json()["results"]) == len(expected_friendships)
+
+        response.json()["results"].sort(
+            key=lambda friendship_model: friendship_model["requester_id"]
+        )
+        expected_friendships.sort(
+            key=lambda friendship_model: friendship_model.requester_id
+        )
+
+        for expected_friendship, friendship in zip(
+            expected_friendships, response.json()["results"]
+        ):
+            assert (
+                expected_friendship.addressee_id == friendship["addressee_id"]
+            )
+            assert (
+                expected_friendship.requester_id == friendship["requester_id"]
+            )
 
     @pytest.mark.parametrize(
         get_middle_page_params[0], get_middle_page_params[1]
@@ -143,7 +170,7 @@ class TestGetAcceptedFriendships:
     def test_retrieves_correct_cursor_when_middle_page(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        accepted_friend_ids: List[int],
+        friend_requester_ids: List[int],
         limit: str,
         cursor: str,
         expected_next_cursor: str,
@@ -156,13 +183,14 @@ class TestGetAcceptedFriendships:
 
         add_friendships(
             friend_data,
-            accepted_friend_ids,
+            friend_requester_ids,
             current_active_user.user_id,
             session,
+            active_user_is_requester=False,
         )
 
         response = test_client.get(
-            f"/friends/requests/accepted?limit={limit}&cursor={cursor}"
+            f"/friends/requests/recieved?limit={limit}&cursor={cursor}"
         )
 
         response_cursor = response.json()["cursor"]
@@ -174,7 +202,7 @@ class TestGetAcceptedFriendships:
     def test_retrieves_last_page_of_accepted_friendships(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        accepted_friend_ids: List[int],
+        friend_requester_ids: List[int],
         limit: str,
         cursor: str,
         expected_previous_cursor: str,
@@ -184,28 +212,41 @@ class TestGetAcceptedFriendships:
         (test_client, current_active_user) = client
         add_initial_friendship_status_codes(session)
 
-        expected_users = add_friendships(
+        (_, expected_friendships) = add_friendships(
             friend_data,
-            accepted_friend_ids,
+            friend_requester_ids,
             current_active_user.user_id,
             session,
+            active_user_is_requester=False,
         )
 
         response = test_client.get(
-            f"/friends/requests/accepted?limit={limit}&cursor={cursor}"
+            f"/friends/requests/recieved?limit={limit}&cursor={cursor}"
         )
 
-        assert len(response.json()["results"]) == len(expected_users)
-        assert sorted(
-            response.json()["results"],
-            key=lambda user_model: user_model["user_id"],
-        ) == sorted(expected_users, key=lambda user_model: user_model.user_id)
+        assert len(response.json()["results"]) == len(expected_friendships)
+        response.json()["results"].sort(
+            key=lambda friendship_model: friendship_model["requester_id"]
+        )
+        expected_friendships.sort(
+            key=lambda friendship_model: friendship_model.requester_id
+        )
+
+        for expected_friendship, friendship in zip(
+            expected_friendships, response.json()["results"]
+        ):
+            assert (
+                expected_friendship.addressee_id == friendship["addressee_id"]
+            )
+            assert (
+                expected_friendship.requester_id == friendship["requester_id"]
+            )
 
     @pytest.mark.parametrize(get_last_page_params[0], get_last_page_params[1])
     def test_retrieves_correct_cursor_when_last_page(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
-        accepted_friend_ids: List[int],
+        friend_requester_ids: List[int],
         limit: str,
         cursor: str,
         expected_previous_cursor: str,
@@ -217,13 +258,14 @@ class TestGetAcceptedFriendships:
 
         add_friendships(
             friend_data,
-            accepted_friend_ids,
+            friend_requester_ids,
             current_active_user.user_id,
             session,
+            active_user_is_requester=False,
         )
 
         response = test_client.get(
-            f"/friends/requests/accepted?limit={limit}&cursor={cursor}"
+            f"/friends/requests/recieved?limit={limit}&cursor={cursor}"
         )
 
         response_cursor = response.json()["cursor"]

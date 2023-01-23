@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import logging
-from typing import Callable, List, Optional, Type
+from typing import Callable, Optional, Type
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import Column
@@ -22,8 +22,14 @@ from messenger_schemas.schema.user_schema import (
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.dependencies.pagination import cursor_pagination
-from messenger.helpers.dependencies.queries.query_accepted_friendships import (
-    query_accepted_friendships,
+from messenger.helpers.dependencies.queries.query_friends import (
+    query_friends,
+)
+from messenger.helpers.dependencies.queries.query_requests_recieved import (
+    query_requests_recieved,
+)
+from messenger.helpers.dependencies.queries.query_requests_sent import (
+    query_requests_sent,
 )
 from messenger.helpers.handlers.friendship_handler import (
     FriendshipHandler,
@@ -48,61 +54,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/requests/recieved",
-    status_code=status.HTTP_200_OK,
-    response_model=List[FriendshipModel],
-)
-def get_friendship_requests_recieved(
-    current_user: UserSchema = Depends(get_current_active_user),
-):
-    """Retrieves a users friendship requests recieved
-
-    Args:
-        current_user (UserSchema, optional): the current signed-in user
-            whose data will be retrieved. Defaults to Depends(get_current_active_user).
-
-    Returns:
-        _type_: the friendship requests recieved, and those sent.
-    """
-    friendship_requests_recieved_models = [
-        FriendshipModel.from_orm(friendship_schema)
-        for friendship_schema in current_user.friend_requests_recieved
-    ]
-
-    return friendship_requests_recieved_models
-
-
-@router.get(
-    "/requests/sent",
-    status_code=status.HTTP_200_OK,
-    response_model=List[FriendshipModel],
-)
-def get_friendship_requests_sent(
-    current_user: UserSchema = Depends(get_current_active_user),
-):
-    """Retrieves a users friendship requests sent
-
-    Args:
-        current_user (UserSchema, optional): the current signed-in user
-            whose data will be retrieved. Defaults to Depends(get_current_active_user).
-
-    Returns:
-        _type_: the friendship requests recieved, and those sent.
-    """
-    friendship_requests_sent_models = [
-        FriendshipModel.from_orm(friendship_schema)
-        for friendship_schema in current_user.friend_requests_sent
-    ]
-
-    return friendship_requests_sent_models
-
-
-@router.get(
-    "/requests/accepted",
+    "/",
     response_model=CursorPaginationModel[UserModel],
     status_code=status.HTTP_200_OK,
 )
-def get_accepted_friendships(
+def get_friends(
     pagination: Callable[
         [
             Type[T],
@@ -110,15 +66,88 @@ def get_accepted_friendships(
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
-    accepted_friendships_table=Depends(query_accepted_friendships),
+    accepted_friends_table=Depends(query_friends),
 ):
     cursor_pagination_model = pagination(
-        accepted_friendships_table,
-        accepted_friendships_table.username,
+        accepted_friends_table,
+        accepted_friends_table.username,
     )
     cursor_pagination_model.results = [
         UserModel.from_orm(friend_user)
         for friend_user in cursor_pagination_model.results
+    ]
+
+    return cursor_pagination_model
+
+
+@router.get(
+    "/requests/recieved",
+    status_code=status.HTTP_200_OK,
+    response_model=CursorPaginationModel[FriendshipModel],
+)
+def get_requests_recieved(
+    pagination: Callable[
+        [
+            Type[T],
+            Column,
+        ],
+        CursorPaginationModel,
+    ] = Depends(cursor_pagination),
+    friend_requests_recieved_table=Depends(query_requests_recieved),
+):
+    """Retrieves all friendships that are currently unanswered by the current user.
+
+    Args:
+        current_user (UserSchema, optional): the current signed-in user
+            whose data will be retrieved. Defaults to Depends(get_current_active_user).
+
+    Returns:
+        _type_: the friendship requests recieved, and those sent.
+    """
+    cursor_pagination_model = pagination(
+        friend_requests_recieved_table,
+        friend_requests_recieved_table.requester_id,
+    )
+    cursor_pagination_model.results = [
+        FriendshipModel.from_orm(friendship)
+        for friendship in cursor_pagination_model.results
+    ]
+
+    return cursor_pagination_model
+
+
+@router.get(
+    "/requests/sent",
+    status_code=status.HTTP_200_OK,
+    response_model=CursorPaginationModel[FriendshipModel],
+)
+def get_requests_sent(
+    pagination: Callable[
+        [
+            Type[T],
+            Column,
+        ],
+        CursorPaginationModel,
+    ] = Depends(cursor_pagination),
+    friend_requests_sent=Depends(query_requests_sent),
+):
+    """Retrieves all friendship requests that have been sent by the current
+    user.
+
+    Args:
+        current_user (UserSchema, optional): the current signed-in user
+            whose data will be retrieved. Defaults to Depends(get_current_active_user).
+
+    Returns:
+        _type_: the friendship requests recieved, and those sent.
+    """
+    cursor_pagination_model = pagination(
+        friend_requests_sent,
+        friend_requests_sent.addressee_id,
+    )
+    cursor_pagination_model.results = [
+        FriendshipModel.from_orm(friendship)
+        for friendship in cursor_pagination_model.results
     ]
 
     return cursor_pagination_model

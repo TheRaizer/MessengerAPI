@@ -2,8 +2,8 @@ from typing import Any, Dict, List, Tuple
 from messenger_schemas.schema import DatabaseSessionContext
 from messenger_schemas.schema.user_schema import UserSchema
 
-from messenger.helpers.dependencies.queries.query_accepted_friendships import (
-    query_accepted_friendships,
+from messenger.helpers.dependencies.queries.query_friends import (
+    query_friends,
 )
 from messenger.helpers.pubsub.subscriber import Subscriber
 from messenger.models.socketio.connection_params import (
@@ -38,7 +38,7 @@ def get_friendlist_ids(
     with DatabaseSessionContext() as db:
         current_user = UserSchema(user_id=current_user_id)
 
-        friends_table = query_accepted_friendships(current_user, db)
+        friends_table = query_friends(current_user, db)
         friend_ids = db.query(friends_table.user_id).all()
 
         return friend_ids

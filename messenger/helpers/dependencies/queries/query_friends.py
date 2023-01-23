@@ -14,7 +14,7 @@ from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.helpers.dependencies.user import get_current_active_user
 
 
-def query_accepted_friendships(
+def query_friends(
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
