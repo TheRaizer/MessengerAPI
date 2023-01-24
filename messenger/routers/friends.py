@@ -434,7 +434,11 @@ def cancel_friendship_request(
             "Cannot cancel friendship that does not currently have a requested status",
         )
 
-    db.delete(friendship)
+    db.query(FriendshipSchema).filter(
+        FriendshipSchema.addressee_id == friendship.addressee_id,
+        FriendshipSchema.requester_id == friendship.requester_id,
+    ).delete()
+
     db.commit()
 
     logger.info(
