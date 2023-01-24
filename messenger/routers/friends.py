@@ -389,3 +389,60 @@ def block_friendship_request(
         friendship.addressee_id,
         FriendshipStatusCode.BLOCKED,
     )
+
+
+@router.post("/requests/cancel", status_code=status.HTTP_201_CREATED)
+def cancel_friendship_request(
+    request_addressee_username: str,
+    current_user: UserSchema = Depends(get_current_active_user),
+    db: Session = Depends(database_session),
+):
+    """Cancels a friendship request sent by the current active user.
+
+    Args:
+        request_addressee_username (str): the username of the user who recieved the request.
+        current_user (UserSchema, optional): The currently signed in user that
+            will be canceling the friendship request.
+        db (Session, optional): the database session to use for database reads/writes.
+            Defaults to Depends(database_session).
+    """
+
+    friendship_handler = FriendshipHandler(db)
+    request_addressee_handler = UserHandler(db)
+
+    request_addressee = request_addressee_handler.get_user(
+        UserSchema.username == clean(request_addressee_username)
+    )
+
+    friendship: Optional[FriendshipSchema] = None
+
+    try:
+        friendship = friendship_handler.get_friendship(
+            request_addressee.user_id, current_user.user_id
+        )
+    except HTTPException:
+        pass
+
+    latest_status = friendship_handler.get_latest_friendship_status()
+
+    if (
+        latest_status is None
+        or latest_status.status_code_id != FriendshipStatusCode.REQUESTED.value
+    ):
+        raise HTTPException(
+            400,
+            "Cannot cancel friendship that does not currently have a requested status",
+        )
+
+    db.query(FriendshipSchema).filter(
+        FriendshipSchema.addressee_id == friendship.addressee_id,
+        FriendshipSchema.requester_id == friendship.requester_id,
+    ).delete()
+
+    db.commit()
+
+    logger.info(
+        "(requester_id: %s, addressee_id: %s) friendship has been deleted.",
+        friendship.requester_id,
+        friendship.addressee_id,
+    )

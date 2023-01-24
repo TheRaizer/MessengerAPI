@@ -19,7 +19,6 @@ from messenger_schemas.schema.friendship_status_schema import (
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
 from messenger.fastApi import app
 from messenger.helpers.dependencies.user import get_current_active_user
-from messenger.models.fastapi.friendship_model import FriendshipModel
 from messenger.models.fastapi.user_model import UserModel
 from tests.conftest import get_user_schema_params
 
@@ -72,7 +71,6 @@ def add_friendships(
 
     # the users we expect to recieve as output from the route.
     expected_users: List[UserModel] = []
-    expected_friendships: List[FriendshipModel] = []
 
     for i, (friend_id, status) in enumerate(friend_data):
         requester_id = (
@@ -93,9 +91,6 @@ def add_friendships(
 
             if friend_id in friend_ids:
                 expected_users.append(UserModel.from_orm(friend_user))
-                expected_friendships.append(
-                    FriendshipModel.from_orm(friendship)
-                )
 
             session.add(friendship)
             session.add(friend_user)
