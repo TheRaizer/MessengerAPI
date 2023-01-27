@@ -153,7 +153,7 @@ def get_friend_request_recievers(
 
 
 @router.post(
-    "/requests/send-request",
+    "/requests/send",
     response_model=FriendshipModel,
     status_code=status.HTTP_201_CREATED,
 )
