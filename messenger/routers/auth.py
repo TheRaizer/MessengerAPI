@@ -10,19 +10,22 @@ from messenger_schemas.schema import (
 from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
+from messenger.constants.auth_details import EmailError
 from messenger.constants.token import (
     LOGIN_TOKEN_EXPIRE_MINUTES,
     Token,
     UNAUTHORIZED_CREDENTIALS_EXCEPTION,
 )
-from messenger.helpers.tokens.auth_tokens import create_access_token
+from messenger.helpers.tokens.auth_tokens import (
+    create_access_token,
+    create_login_token,
+)
 
 from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.helpers.auth.user import (
     authenticate_user,
     create_user,
 )
-from messenger.models.fastapi.access_token_data import AccessTokenData
 from messenger.models.fastapi.socketio_access_token_data import (
     SocketioAccessTokenData,
 )
@@ -68,10 +71,11 @@ def sign_up(
         user = user_handler.get_user(
             UserSchema.email == clean(form_data.username)
         )
+
         if user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Account exists",
+                detail=EmailError.ACCOUNT_EXISTS.value,
             )
     except HTTPException:
         pass
@@ -125,12 +129,7 @@ def sign_in(
     if not user:
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
-    access_token = create_access_token(
-        AccessTokenData(
-            user_id=user.user_id, username=user.username, email=user.email
-        ),
-        timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES),
-    )
+    access_token = create_login_token(user)
 
     return Token(access_token=access_token, token_type="bearer")
 
@@ -170,9 +169,7 @@ def socket_ticket(
         raise UNAUTHORIZED_CREDENTIALS_EXCEPTION
 
     socketio_token = create_access_token(
-        SocketioAccessTokenData(
-            user_id=user.user_id
-        ),
+        SocketioAccessTokenData(user_id=user.user_id),
         timedelta(minutes=LOGIN_TOKEN_EXPIRE_MINUTES),
     )
 
