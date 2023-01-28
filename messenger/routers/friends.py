@@ -41,7 +41,7 @@ from messenger.helpers.dependencies.user import get_current_active_user
 from messenger.helpers.handlers.user_handler import UserHandler
 from messenger.models.fastapi.friendship_model import FriendshipModel
 from messenger.models.fastapi.pagination_model import CursorPaginationModel
-from messenger.models.fastapi.user_model import UserModel
+from messenger.models.fastapi.user_model import PublicUserModel
 from messenger.constants.generics import T
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=CursorPaginationModel[UserModel],
+    response_model=CursorPaginationModel[PublicUserModel],
     status_code=status.HTTP_200_OK,
 )
 def get_friends(
@@ -73,7 +73,7 @@ def get_friends(
         friends_table.username,
     )
     cursor_pagination_model.results = [
-        UserModel.from_orm(friend_user)
+        PublicUserModel.from_orm(friend_user)
         for friend_user in cursor_pagination_model.results
     ]
 
@@ -83,7 +83,7 @@ def get_friends(
 @router.get(
     "/requests/senders",
     status_code=status.HTTP_200_OK,
-    response_model=CursorPaginationModel[UserModel],
+    response_model=CursorPaginationModel[PublicUserModel],
 )
 def get_friend_request_senders(
     pagination: Callable[
@@ -110,7 +110,8 @@ def get_friend_request_senders(
         friend_request_senders_table.username,
     )
     cursor_pagination_model.results = [
-        UserModel.from_orm(user) for user in cursor_pagination_model.results
+        PublicUserModel.from_orm(user)
+        for user in cursor_pagination_model.results
     ]
 
     return cursor_pagination_model
@@ -119,7 +120,7 @@ def get_friend_request_senders(
 @router.get(
     "/requests/recievers",
     status_code=status.HTTP_200_OK,
-    response_model=CursorPaginationModel[UserModel],
+    response_model=CursorPaginationModel[PublicUserModel],
 )
 def get_friend_request_recievers(
     pagination: Callable[
@@ -146,7 +147,8 @@ def get_friend_request_recievers(
         friend_request_recievers_table.username,
     )
     cursor_pagination_model.results = [
-        UserModel.from_orm(user) for user in cursor_pagination_model.results
+        PublicUserModel.from_orm(user)
+        for user in cursor_pagination_model.results
     ]
 
     return cursor_pagination_model
