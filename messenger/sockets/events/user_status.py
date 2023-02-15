@@ -54,10 +54,9 @@ async def emit_status_to_friends(_: str, current_user_id: int) -> None:
     friend_ids = get_friendlist_ids(current_user_id)
 
     # notify friends of your status change from offline to some custom status
-    # give your session id so that the friend can emit their status back to your socket
     for (friend_id,) in friend_ids:
         await sio.emit(
-            "status change",
+            "ping status change",
             StatusChangeEventData(
                 user_id=current_user_id, status="active"
             ).dict(),
@@ -65,8 +64,7 @@ async def emit_status_to_friends(_: str, current_user_id: int) -> None:
         )
 
 
-@sio.event
-async def broadcast_current_status_to_friend(_, data: Dict[str, Any]):
+async def pong_status_change(_, data: Dict[str, Any]):
     """When a user comes online he emits an event to all friends about their status.
     Each friend upon hearing this new status (through listening to the "status change" event),
     should send back their status through this event.
@@ -77,10 +75,13 @@ async def broadcast_current_status_to_friend(_, data: Dict[str, Any]):
     """
 
     await sio.emit(
-        "friend status change",
+        "friend status changed",
         StatusChangeEventData(**data).dict(),
         to=data["friend_id"],
     )
+
+
+sio.on("pong status change", handler=pong_status_change)
 
 
 async def on_connect_emit_user_status(connection_params: OnConnectionParams):
@@ -97,7 +98,7 @@ async def on_disconnect_emit_user_status(
     friend_ids = get_friendlist_ids(session["user_id"])
     for (friend_id,) in friend_ids:
         await sio.emit(
-            "status change",
+            "ping status change",
             StatusChangeEventData(
                 user_id=session["user_id"], status="offline"
             ).dict(),
