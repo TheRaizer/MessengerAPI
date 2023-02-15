@@ -81,6 +81,15 @@ async def pong_status_change(_, data: Dict[str, Any]):
     )
 
 
+async def ping_status_change(_, data: Dict[str, Any]):
+    await sio.emit(
+        "ping status change",
+        StatusChangeEventData(**data).dict(),
+        to=data["friend_id"],
+    )
+
+
+sio.on("ping status change", handler=ping_status_change)
 sio.on("pong status change", handler=pong_status_change)
 
 
