@@ -178,6 +178,13 @@ def send_friendship_request(
     Returns:
         FriendshipModel: the friendship that was created and inserted into the database.
     """
+
+    if username == current_user.username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="cannot send friendship request to yourself",
+        )
+
     addressee_handler = UserHandler(db)
     addressee = addressee_handler.get_user(
         UserSchema.username == clean(username),
