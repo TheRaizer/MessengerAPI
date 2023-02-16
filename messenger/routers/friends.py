@@ -400,9 +400,9 @@ def block_friendship_request(
     )
 
 
-@router.post("/requests/cancel", status_code=status.HTTP_201_CREATED)
-def cancel_friendship_request(
-    request_addressee_username: str,
+@router.delete("/requests", status_code=status.HTTP_200_OK)
+def delete_friendship_request(
+    friend_username: str,
     current_user: UserSchema = Depends(get_current_active_user),
     db: Session = Depends(database_session),
 ):
@@ -417,31 +417,20 @@ def cancel_friendship_request(
     """
 
     friendship_handler = FriendshipHandler(db)
-    request_addressee_handler = UserHandler(db)
+    friend_handler = UserHandler(db)
 
-    request_addressee = request_addressee_handler.get_user(
-        UserSchema.username == clean(request_addressee_username)
+    friend = friend_handler.get_user(
+        UserSchema.username == clean(friend_username)
     )
 
     friendship: Optional[FriendshipSchema] = None
 
     try:
-        friendship = friendship_handler.get_friendship(
-            request_addressee.user_id, current_user.user_id
+        friendship = friendship_handler.get_friendship_bidirectional_query(
+            friend.user_id, current_user.user_id
         )
     except HTTPException:
         pass
-
-    latest_status = friendship_handler.get_latest_friendship_status()
-
-    if (
-        latest_status is None
-        or latest_status.status_code_id != FriendshipStatusCode.REQUESTED.value
-    ):
-        raise HTTPException(
-            400,
-            "Cannot cancel friendship that does not currently have a requested status",
-        )
 
     db.query(FriendshipSchema).filter(
         FriendshipSchema.addressee_id == friendship.addressee_id,

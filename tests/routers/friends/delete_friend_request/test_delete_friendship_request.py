@@ -18,14 +18,13 @@ from tests.conftest import (
     generate_username,
 )
 from tests.routers.friends.conftest import add_friendships
-from tests.routers.friends.cancel_friend_request.conftest import (
-    produce_400_data,
-    cancellable_friend_request_data,
+from tests.routers.friends.delete_friend_request.conftest import (
+    friend_request_data,
 )
 
 
 class TestCancelFriendshipRequest:
-    def test_produces_201_when_successful(
+    def test_produces_200_when_successful(
         self,
         client: Tuple[TestClient, UserSchema],
         session: Session,
@@ -41,10 +40,10 @@ class TestCancelFriendshipRequest:
             session,
         )
 
-        response = test_client.post(
-            f"/friends/requests/cancel?request_addressee_username={generate_username(2)}"
+        response = test_client.delete(
+            f"/friends/requests?friend_username={generate_username(2)}"
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
 
     def test_produces_404_when_friendship_does_not_exist(
         self,
@@ -52,40 +51,15 @@ class TestCancelFriendshipRequest:
     ):
         (test_client, _) = client
 
-        response = test_client.post(
-            f"/friends/requests/cancel?request_addressee_username={generate_username(2)}"
+        response = test_client.delete(
+            f"/friends/requests?friend_username={generate_username(2)}"
         )
         assert response.status_code == 404
 
-    @pytest.mark.parametrize(produce_400_data[0], produce_400_data[1])
-    def test_produces_400_when_friendship_does_not_have_requested_latest_status(
-        self,
-        friend_data: List[Tuple[int, FriendshipStatusCode]],
-        addressee_user_id: int,
-        addressee_username: str,
-        client: Tuple[TestClient, UserSchema],
-        session: Session,
-    ):
-        (test_client, current_active_user) = client
-
-        add_initial_friendship_status_codes(session)
-
-        add_friendships(
-            friend_data,
-            [addressee_user_id],
-            current_active_user.user_id,
-            session,
-        )
-
-        response = test_client.post(
-            f"/friends/requests/cancel?request_addressee_username={addressee_username}"
-        )
-        assert response.status_code == 400
-
     @pytest.mark.parametrize(
-        cancellable_friend_request_data[0], cancellable_friend_request_data[1]
+        friend_request_data[0], friend_request_data[1]
     )
-    def test_successfully_cancels_friend_request(
+    def test_successfully_deletes_friend_request(
         self,
         friend_data: List[Tuple[int, FriendshipStatusCode]],
         addressee_user_id: int,
@@ -104,11 +78,11 @@ class TestCancelFriendshipRequest:
             session,
         )
 
-        response = test_client.post(
-            f"/friends/requests/cancel?request_addressee_username={addressee_username}"
+        response = test_client.delete(
+            f"/friends/requests?friend_username={addressee_username}"
         )
 
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         # friendship and its statuses should be removed from the database
         friendship = (
