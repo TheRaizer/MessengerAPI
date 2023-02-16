@@ -69,7 +69,7 @@ class TestSendFriendshipRequest:
         )
 
         response = test_client.post(
-            f"friends/requests/send?username={user_to_friend_request.username}"
+            f"friends/requests?username={user_to_friend_request.username}"
         )
 
         assert response.status_code == 201
@@ -93,7 +93,7 @@ class TestSendFriendshipRequest:
         )
 
         test_client.post(
-            f"friends/requests/send?username={user_to_friend_request.username}"
+            f"friends/requests?username={user_to_friend_request.username}"
         )
 
         # if no friendship was created then this will throw an exception and test will fail
@@ -121,11 +121,11 @@ class TestSendFriendshipRequest:
         )
 
         test_client.post(
-            f"friends/requests/send?username={user_to_friend_request.username}"
+            f"friends/requests?username={user_to_friend_request.username}"
         )
 
         response = test_client.post(
-            f"friends/requests/send?username={user_to_friend_request.username}"
+            f"friends/requests?username={user_to_friend_request.username}"
         )
 
         assert response.status_code == 400
@@ -175,7 +175,7 @@ class TestSendFriendshipRequest:
         session.commit()
 
         response = test_client.post(
-            f"friends/requests/send?username={user_to_friend_request.username}"
+            f"friends/requests?username={user_to_friend_request.username}"
         )
 
         assert response.status_code == 400
@@ -192,7 +192,7 @@ class TestSendFriendshipRequest:
         add_initial_friendship_status_codes(session)
 
         response = test_client.post(
-            f"friends/requests/send?username={current_active_user.username}"
+            f"friends/requests?username={current_active_user.username}"
         )
 
         assert response.status_code == 400
