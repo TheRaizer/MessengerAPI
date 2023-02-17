@@ -13,6 +13,9 @@ class BaseMessageModel(CreateMessageModel):
     last_edited_date_time: Optional[datetime]
     seen: bool
 
+    class Config:
+        orm_mode = True
+
 
 class MessageModel(BaseMessageModel):
     message_id: int
