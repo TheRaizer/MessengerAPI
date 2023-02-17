@@ -95,45 +95,49 @@ def send_message(
     Returns:
         OKModel: whether the message was successfully sent
     """
-    must_be_their_friend_detail = (
-        "you cannot message this person if you are not their friend"
-    )
-
     addressee_handler = UserHandler(db)
-    addressee = None
 
-    if body.group_chat_id:
+    if body.group_chat_id is not None:
         group_chat_handler = GroupChatHandler(db)
 
         if not group_chat_handler.is_user_in_group_chat(
             body.group_chat_id, current_user.user_id
         ):
             raise HTTPException(status.HTTP_404_NOT_FOUND, "user not found")
-    else:
+    elif addressee_username is not None:
         addressee = addressee_handler.get_user(
             UserSchema.username == clean(addressee_username),
         )
 
         friendship_handler = FriendshipHandler(db)
+
         friendship_handler.get_friendship_bidirectional_query(
             current_user.user_id, addressee.user_id
         )
 
         latest_status = friendship_handler.get_latest_friendship_status()
+
         # friendship must be accepted
         if (
             latest_status is None
-            or latest_status != FriendshipStatusCode.ACCEPTED.value
+            or latest_status.status_code_id
+            != FriendshipStatusCode.ACCEPTED.value
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=must_be_their_friend_detail,
+                detail="you cannot message this person if you are not their friend",
             )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="no addressee or groupchat specified",
+        )
 
     message_handler = MessageHandler(db)
+
     message = message_handler.send_message(
         current_user.user_id,
-        getattr(addressee, "user_id", None),
+        getattr(addressee_handler.user, "user_id", None),
         body.content,
         getattr(body, "group_chat_id", None),
     )
