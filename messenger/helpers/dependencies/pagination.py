@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Tuple, Type
+from typing import Any, Optional, Tuple, Type
 from fastapi import Depends, HTTPException, Query, status
 
 from sqlalchemy import Column
@@ -29,21 +29,24 @@ INVALID_CURSOR_HTTP_EXCEPTION = HTTPException(
 
 
 def get_pagination_filter(
-    unique_column: Column, cursor_state: str, column_value: str
+    unique_column: Column,
+    cursor_state: str,
+    column_value: str,
+    default_column_value: Any,
 ):
-    if cursor_state == CursorState.NEXT.value:
-        pagination_filter = unique_column > column_value
-    elif cursor_state == CursorState.PREVIOUS.value:
-        pagination_filter = unique_column < column_value
-    else:
-        raise INVALID_CURSOR_HTTP_EXCEPTION
+    value = default_column_value if column_value == "" else column_value
 
-    return pagination_filter
+    if cursor_state == CursorState.NEXT.value:
+        return unique_column > value
+    if cursor_state == CursorState.PREVIOUS.value:
+        return unique_column < value
+
+    raise INVALID_CURSOR_HTTP_EXCEPTION
 
 
 def cursor_parser(
     cursor: Optional[str] = None,
-) -> Tuple[str, str]:
+) -> Tuple[str, Optional[str]]:
     if cursor is None:
         cursor_state = CursorState.NEXT.value
         column_value = ""
@@ -117,6 +120,7 @@ def cursor_pagination(
     def pagination(
         table: Type[T],
         unique_column: Column,
+        default_column_value: Any,
     ) -> CursorPaginationModel:
         """Paginates a database query using cursors.
 
@@ -144,7 +148,7 @@ def cursor_pagination(
         """
 
         pagination_filter = get_pagination_filter(
-            unique_column, cursor_state, column_value
+            unique_column, cursor_state, column_value, default_column_value
         )
         order_by = determine_cursor_query_order(unique_column, cursor_state)
 

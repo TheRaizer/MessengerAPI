@@ -1,7 +1,9 @@
 """Contains routes for messages."""
 
-from typing import List, Optional
+from datetime import date
+from typing import Any, Callable, Optional, Type
 from bleach import clean
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
 from messenger_schemas.schema import (
@@ -11,6 +13,9 @@ from messenger_schemas.schema.user_schema import (
     UserSchema,
 )
 from messenger.constants.friendship_status_codes import FriendshipStatusCode
+from messenger.constants.generics import T
+from messenger.helpers.dependencies.pagination import cursor_pagination
+from messenger.helpers.dependencies.queries.query_messages import query_messages
 from messenger.helpers.handlers.friendship_handler import FriendshipHandler
 from messenger.helpers.handlers.group_chat_handler import GroupChatHandler
 from messenger.helpers.handlers.message_handler import MessageHandler
@@ -20,6 +25,7 @@ from messenger.models.fastapi.message_model import (
     BaseMessageModel,
     CreateMessageModel,
 )
+from messenger.models.fastapi.pagination_model import CursorPaginationModel
 
 
 router = APIRouter(
@@ -30,9 +36,17 @@ router = APIRouter(
 
 
 @router.get(
-    "/", response_model=List[BaseMessageModel], status_code=status.HTTP_200_OK
+    "/",
+    response_model=CursorPaginationModel[BaseMessageModel],
+    status_code=status.HTTP_200_OK,
 )
-def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
+def get_messages(
+    pagination: Callable[
+        [Type[T], Column, Any],
+        CursorPaginationModel,
+    ] = Depends(cursor_pagination),
+    messages_table=Depends(query_messages),
+):
     """Returns all messages this user has recieved.
 
     Args:
@@ -40,21 +54,21 @@ def get_messages(current_user: UserSchema = Depends(get_current_active_user)):
             Defaults to Depends(get_current_active_user).
 
     Returns:
-        List[BaseMessageModel]: the messages this user has recieved
+        CursorPaginationModel[BaseMessageModel]: the messages this user has recieved
     """
-    message_models = list(
-        map(
-            lambda message_schema: BaseMessageModel(
-                content=message_schema.content,
-                group_chat_id=message_schema.group_chat_id,
-                created_date_time=message_schema.created_date_time,
-                last_edited_date_time=message_schema.last_edited_date_time,
-                seen=message_schema.seen,
-            ),
-            current_user.messages_recieved,
-        )
+
+    cursor_pagination_model = pagination(
+        messages_table,
+        messages_table.created_date_time,
+        date(2019, 4, 13),
     )
-    return message_models
+
+    cursor_pagination_model.results = [
+        BaseMessageModel.from_orm(message)
+        for message in cursor_pagination_model.results
+    ]
+
+    return cursor_pagination_model
 
 
 @router.post(
@@ -81,55 +95,53 @@ def send_message(
     Returns:
         OKModel: whether the message was successfully sent
     """
-    must_be_their_friend_detail = (
-        "you cannot message this person if you are not their friend"
-    )
-
     addressee_handler = UserHandler(db)
-    addressee = None
 
-    if body.group_chat_id:
+    if body.group_chat_id is not None:
         group_chat_handler = GroupChatHandler(db)
 
         if not group_chat_handler.is_user_in_group_chat(
             body.group_chat_id, current_user.user_id
         ):
             raise HTTPException(status.HTTP_404_NOT_FOUND, "user not found")
-    else:
+    elif addressee_username is not None:
         addressee = addressee_handler.get_user(
             UserSchema.username == clean(addressee_username),
         )
 
         friendship_handler = FriendshipHandler(db)
+
         friendship_handler.get_friendship_bidirectional_query(
             current_user.user_id, addressee.user_id
         )
 
         latest_status = friendship_handler.get_latest_friendship_status()
+
         # friendship must be accepted
         if (
             latest_status is None
-            or latest_status != FriendshipStatusCode.ACCEPTED.value
+            or latest_status.status_code_id
+            != FriendshipStatusCode.ACCEPTED.value
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=must_be_their_friend_detail,
+                detail="you cannot message this person if you are not their friend",
             )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="no addressee or groupchat specified",
+        )
 
     message_handler = MessageHandler(db)
+
     message = message_handler.send_message(
         current_user.user_id,
-        getattr(addressee, "user_id", None),
+        getattr(addressee_handler.user, "user_id", None),
         body.content,
         getattr(body, "group_chat_id", None),
     )
 
-    message_model = BaseMessageModel(
-        content=message.content,
-        group_chat_id=message.group_chat_id,
-        created_date_time=message.created_date_time,
-        last_edited_date_time=message.last_edited_date_time,
-        seen=message.seen,
-    )
+    message_model = BaseMessageModel.from_orm(message)
 
     return message_model

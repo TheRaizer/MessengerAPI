@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import logging
-from typing import Callable, Optional, Type
+from typing import Any, Callable, Optional, Type
 from bleach import clean
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import Column
@@ -63,14 +63,14 @@ def get_friends(
         [
             Type[T],
             Column,
+            Any,
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
     friends_table=Depends(query_friends),
 ):
     cursor_pagination_model = pagination(
-        friends_table,
-        friends_table.username,
+        friends_table, friends_table.username, ""
     )
     cursor_pagination_model.results = [
         PublicUserModel.from_orm(friend_user)
@@ -90,6 +90,7 @@ def get_friend_request_senders(
         [
             Type[T],
             Column,
+            Any,
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
@@ -106,8 +107,7 @@ def get_friend_request_senders(
         _type_: the friendship requests recieved, and those sent.
     """
     cursor_pagination_model = pagination(
-        friend_request_senders_table,
-        friend_request_senders_table.username,
+        friend_request_senders_table, friend_request_senders_table.username, ""
     )
     cursor_pagination_model.results = [
         PublicUserModel.from_orm(user)
@@ -127,6 +127,7 @@ def get_friend_request_recievers(
         [
             Type[T],
             Column,
+            Any,
         ],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
@@ -145,6 +146,7 @@ def get_friend_request_recievers(
     cursor_pagination_model = pagination(
         friend_request_recievers_table,
         friend_request_recievers_table.username,
+        "",
     )
     cursor_pagination_model.results = [
         PublicUserModel.from_orm(user)

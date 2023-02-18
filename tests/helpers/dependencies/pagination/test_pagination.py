@@ -48,7 +48,7 @@ class TestCursorPaginationQuery:
         pagination = cursor_pagination(
             limit, (CursorState.NEXT.value, ""), session
         )
-        pagination_model = pagination(table, unique_column)
+        pagination_model = pagination(table, unique_column, "")
 
         assert pagination_model.cursor.prev_page is None
         assert pagination_model.cursor.next_page is None
@@ -79,7 +79,7 @@ class TestCursorPaginationQuery:
         )
 
         pagination = cursor_pagination(limit, parsed_cursor, session)
-        pagination_model = pagination(table, unique_column)
+        pagination_model = pagination(table, unique_column, "")
 
         assert pagination_model.cursor.next_page is None
         assert pagination_model.cursor.prev_page == expected_prev_cursor
@@ -111,7 +111,7 @@ class TestCursorPaginationQuery:
         )
 
         pagination = cursor_pagination(limit, parsed_cursor, session)
-        pagination_model = pagination(table, unique_column)
+        pagination_model = pagination(table, unique_column, "")
 
         assert pagination_model.cursor.next_page == expected_next_cursor
         assert pagination_model.cursor.prev_page == expected_prev_cursor
@@ -142,7 +142,7 @@ class TestCursorPaginationQuery:
         )
 
         pagination = cursor_pagination(limit, parsed_cursor, session)
-        pagination_model = pagination(table, unique_column)
+        pagination_model = pagination(table, unique_column, "")
 
         assert pagination_model.cursor.next_page == expected_next_cursor
         assert pagination_model.cursor.prev_page is None
@@ -158,7 +158,7 @@ class TestCursorPaginationQuery:
         pagination = cursor_pagination(
             limit, (CursorState.NEXT.value, ""), session
         )
-        pagination_model = pagination(UserSchema, UserSchema.username)
+        pagination_model = pagination(UserSchema, UserSchema.username, "")
 
         assert pagination_model.cursor.next_page is None
         assert pagination_model.cursor.prev_page is None
@@ -175,7 +175,7 @@ class TestCursorPaginationQuery:
         pagination = cursor_pagination(1, incorrect_parsed_cursor, session)
 
         with pytest.raises(HTTPException) as exc:
-            pagination(UserSchema, UserSchema.username)
+            pagination(UserSchema, UserSchema.username, "")
 
             assert exc.value.status_code == 400
             assert exc.value.detail == "invalid cursor"
