@@ -36,7 +36,6 @@ async def connect(sid, _, data):
         sid (_type_): the sockets unique identified
         environ (_type_): the environment of the socket
     """
-    print(data)
     access_token_data = await validate_access_token(sid, data)
 
     if access_token_data is None:
