@@ -3,11 +3,7 @@ from typing import Optional
 from fastapi import HTTPException
 from messenger_schemas.schema import DatabaseSessionContext
 from messenger_schemas.schema.user_schema import UserSchema
-from messenger.models.fastapi.socketio_access_token_data import (
-    SocketioAccessTokenData,
-)
 from messenger.helpers.handlers.user_handler import UserHandler
-from messenger.helpers.tokens.validate_token import validate_token
 from messenger.models.socketio.connection_params import (
     OnConnectionParams,
     OnDisconnectionParams,
@@ -18,7 +14,9 @@ from messenger.sockets import (
 from messenger.sockets.events.event_system import (
     socket_event_aggregator,
 )
-from messenger.settings import JWT_SECRET
+from messenger.sockets.helpers.validate_access_token import (
+    validate_access_token,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,24 +36,10 @@ async def connect(sid, _, data):
         sid (_type_): the sockets unique identified
         environ (_type_): the environment of the socket
     """
-
-    access_token = ""
-
-    try:
-        access_token = data["access_token"]
-    except KeyError:
-        logger.error(
-            "Socket connected with sid %s was unable to send cookie", sid
-        )
-        await sio.disconnect(sid)
-        return
-
-    access_token_data = validate_token(
-        access_token, JWT_SECRET, SocketioAccessTokenData
-    )
+    print(data)
+    access_token_data = await validate_access_token(sid, data)
 
     if access_token_data is None:
-        await sio.disconnect(sid)
         return
 
     current_user: Optional[UserSchema] = None
