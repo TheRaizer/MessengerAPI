@@ -31,18 +31,18 @@ def query_messages(
             Defaults to Depends(database_session).
     """
 
-    sender_handler = UserHandler(db)
-    sender = sender_handler.get_user(
+    user_handler = UserHandler(db)
+    friend = user_handler.get_user(
         UserSchema.username == clean(friend_username),
     )
 
     filter_a = and_(
-        MessageSchema.sender_id == sender.user_id,
+        MessageSchema.sender_id == friend.user_id,
         MessageSchema.reciever_id == current_user.user_id,
     ).self_group()
     filter_b = and_(
         MessageSchema.sender_id == current_user.user_id,
-        MessageSchema.reciever_id == sender.user_id,
+        MessageSchema.reciever_id == friend.user_id,
     ).self_group()
 
     messages_table = (
