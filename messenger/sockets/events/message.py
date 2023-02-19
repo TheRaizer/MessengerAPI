@@ -13,7 +13,7 @@ from messenger.sockets.helpers.validate_access_token import (
 logger = logging.getLogger(__name__)
 
 
-async def emit_message(sid, _, data: Dict[str, Any]):
+async def emit_message(sid, data: Dict[str, Any]):
     access_token_data = await validate_access_token(sid, data)
 
     if access_token_data is None or access_token_data.user_id is None:
@@ -41,4 +41,4 @@ async def emit_message(sid, _, data: Dict[str, Any]):
     )
 
 
-sio.on("send message", handler=emit_message)
+sio.on("message", handler=emit_message)
