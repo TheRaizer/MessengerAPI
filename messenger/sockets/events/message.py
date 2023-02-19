@@ -37,7 +37,7 @@ async def emit_message(sid, data: Dict[str, Any]):
             return
 
     await sio.emit(
-        "message response", message_model, to=message_model.reciever_id
+        "message response", message_model.dict(), to=message_model.reciever_id
     )
 
 
