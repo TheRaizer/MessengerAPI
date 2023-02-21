@@ -22,7 +22,10 @@ def query_messages(
 ):
     """Produces a subquery table of all messages between the sender and the current user.
 
-    SELECT * FROM message WHERE sender_id={...} and reciever_id={current_user.user_id}
+    SELECT * FROM message WHERE
+    (sender_id={...} AND reciever_id={current_user.user_id})
+    OR
+    (sender_id={current_user.user_id} AND reciever_id={...})
 
     Args:
         current_user (UserSchema, optional): the currently signed in user.
