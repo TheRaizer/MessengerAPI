@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, case, func, or_
 from sqlalchemy.orm import Session, aliased
 from messenger_schemas.schema import (
     database_session,
@@ -26,30 +26,23 @@ def query_friends(
     of the users that have accepted friendship requests with the current user or have had
     their friendship request accepted by the current user.
 
-    WITH LatestStatus (requester_id, addressee_id, latest_status_code_id) AS (
-        SELECT requester_id, addressee_id, status_code_id as latest_status_code_id
+    SELECT username
+    FROM friendship_status fs
+    INNER JOIN (
+        SELECT requester_id, addressee_id, MAX(specified_date_time) as max_date_time
         FROM friendship_status
-        WHERE friendship_status.specified_date_time IN
-        (
-                SELECT MAX(specified_date_time) FROM friendship_status
-                        WHERE (addressee_id=18 OR requester_id=18)
-                        GROUP BY requester_id, addressee_id
-        )
-    )
-
-    SELECT username FROM LatestStatus
-    INNER JOIN user ON
-        (
-            LatestStatus.addressee_id=user.user_id
-            AND
-            LatestStatus.addressee_id != :current_user_id
-        )
-        OR
-        (
-            LatestStatus.requester_id=user.user_id
-            AND
-            LatestStatus.requester_id != :current_user_id)
-    WHERE LatestStatus.latest_status_code_id = "A";
+        WHERE addressee_id=:current_user_id OR requester_id=:current_user_id
+        GROUP BY requester_id, addressee_id
+    ) latest_status
+    ON fs.requester_id = latest_status.requester_id
+    AND fs.addressee_id = latest_status.addressee_id
+    AND fs.specified_date_time = latest_status.max_date_time
+    INNER JOIN user
+    ON user.user_id = CASE
+        WHEN fs.addressee_id = :current_user_id THEN fs.requester_id
+        ELSE fs.addressee_id
+    END
+    WHERE fs.status_code_id = "A"
 
     Args:
         current_user (UserSchema, optional): the currently signed in user.
@@ -61,7 +54,13 @@ def query_friends(
     # Get all the requester and addressee id's from friendships where the addressee or requester
     # is the current user and whose latest friendship status code is accepted
     latest_status_dates = (
-        db.query(func.max(FriendshipStatusSchema.specified_date_time))
+        db.query(
+            FriendshipStatusSchema.requester_id,
+            FriendshipStatusSchema.addressee_id,
+            func.max(FriendshipStatusSchema.specified_date_time).label(
+                "max_date_time"
+            ),
+        )
         .filter(
             or_(
                 FriendshipStatusSchema.addressee_id == current_user.user_id,
@@ -72,39 +71,36 @@ def query_friends(
             FriendshipStatusSchema.addressee_id,
             FriendshipStatusSchema.requester_id,
         )
-    )
-
-    latest_statuses = (
-        db.query(FriendshipStatusSchema)
-        .with_entities(
-            FriendshipStatusSchema.requester_id,
-            FriendshipStatusSchema.addressee_id,
-            FriendshipStatusSchema.status_code_id,
-        )
-        .filter(
-            FriendshipStatusSchema.specified_date_time.in_(latest_status_dates)
-        )
         .subquery()
     )
 
     accepted_friends_table = (
         db.query(UserSchema)
-        .select_from(latest_statuses)
+        .select_from(FriendshipStatusSchema)
+        .join(
+            latest_status_dates,
+            and_(
+                FriendshipStatusSchema.requester_id
+                == latest_status_dates.c.requester_id,
+                FriendshipStatusSchema.addressee_id
+                == latest_status_dates.c.addressee_id,
+                FriendshipStatusSchema.specified_date_time
+                == latest_status_dates.c.max_date_time,
+            ),
+        )
         .join(
             UserSchema,
-            or_(
-                and_(
-                    UserSchema.user_id == latest_statuses.c.requester_id,
-                    latest_statuses.c.requester_id != current_user.user_id,
+            UserSchema.user_id
+            == case(
+                (
+                    FriendshipStatusSchema.addressee_id == current_user.user_id,
+                    FriendshipStatusSchema.requester_id,
                 ),
-                and_(
-                    UserSchema.user_id == latest_statuses.c.addressee_id,
-                    latest_statuses.c.addressee_id != current_user.user_id,
-                ),
+                else_=FriendshipStatusSchema.addressee_id,
             ),
         )
         .filter(
-            latest_statuses.c.status_code_id
+            FriendshipStatusSchema.status_code_id
             == FriendshipStatusCode.ACCEPTED.value
         )
         .subquery()
