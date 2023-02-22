@@ -1,6 +1,6 @@
 """Contains routes for messages."""
 
-from datetime import date
+from datetime import timedelta, datetime
 from typing import Any, Callable, Optional, Type
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
@@ -37,7 +37,7 @@ router = APIRouter(
 )
 def get_messages(
     pagination: Callable[
-        [Type[T], Column, Any],
+        [Type[T], Column, Any, bool],
         CursorPaginationModel,
     ] = Depends(cursor_pagination),
     messages_table=Depends(query_messages),
@@ -55,7 +55,8 @@ def get_messages(
     cursor_pagination_model = pagination(
         messages_table,
         messages_table.created_date_time,
-        date(2019, 4, 13),
+        datetime.now() + timedelta(weeks=100),
+        False,
     )
 
     cursor_pagination_model.results = [
