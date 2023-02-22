@@ -29,6 +29,7 @@ INVALID_CURSOR_HTTP_EXCEPTION = HTTPException(
 
 
 def get_pagination_filter(
+    order_asc: bool,
     unique_column: Column,
     cursor_state: str,
     column_value: str,
@@ -37,9 +38,9 @@ def get_pagination_filter(
     value = default_column_value if column_value == "" else column_value
 
     if cursor_state == CursorState.NEXT.value:
-        return unique_column > value
+        return (unique_column > value) if order_asc else (unique_column < value)
     if cursor_state == CursorState.PREVIOUS.value:
-        return unique_column < value
+        return (unique_column < value) if order_asc else (unique_column > value)
 
     raise INVALID_CURSOR_HTTP_EXCEPTION
 
@@ -63,6 +64,7 @@ def cursor_parser(
 
 
 def determine_cursor_query_order(
+    order_asc: bool,
     unique_column: Column,
     cursor_state: str,
 ):
@@ -83,13 +85,18 @@ def determine_cursor_query_order(
     Now try setting order by with desc. You will now see that it queries the expected records
     albeit in reverse order.
     """
-    order_by = (
-        unique_column.asc()
-        if cursor_state == CursorState.NEXT.value
-        else unique_column.desc()
-    )
+    if order_asc:
+        return (
+            unique_column.asc()
+            if cursor_state == CursorState.NEXT.value
+            else unique_column.desc()
+        )
 
-    return order_by
+    return (
+        unique_column.desc()
+        if cursor_state == CursorState.NEXT.value
+        else unique_column.asc()
+    )
 
 
 def cursor_pagination(
@@ -121,6 +128,7 @@ def cursor_pagination(
         table: Type[T],
         unique_column: Column,
         default_column_value: Any,
+        order_asc=True,
     ) -> CursorPaginationModel:
         """Paginates a database query using cursors.
 
@@ -148,9 +156,17 @@ def cursor_pagination(
         """
 
         pagination_filter = get_pagination_filter(
-            unique_column, cursor_state, column_value, default_column_value
+            order_asc,
+            unique_column,
+            cursor_state,
+            column_value,
+            default_column_value,
         )
-        order_by = determine_cursor_query_order(unique_column, cursor_state)
+
+        print(pagination_filter)
+        order_by = determine_cursor_query_order(
+            order_asc, unique_column, cursor_state
+        )
 
         page_results = (
             db.query(table)

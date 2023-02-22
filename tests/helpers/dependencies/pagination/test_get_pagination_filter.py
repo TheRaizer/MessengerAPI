@@ -18,7 +18,7 @@ class TestGetPaginationFilter:
         cursor_state, column_value = invalid_parsed_cursor
         with pytest.raises(HTTPException) as exc:
             get_pagination_filter(
-                UserSchema.username, cursor_state, column_value, ""
+                True, UserSchema.username, cursor_state, column_value, ""
             )
             assert exc.value.status_code == 400
             assert exc.value.detail == "invalid cursor"
