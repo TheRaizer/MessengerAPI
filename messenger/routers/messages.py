@@ -19,6 +19,7 @@ from messenger.helpers.send_message import send_message
 from messenger.models.fastapi.message_model import (
     BaseMessageModel,
     CreateMessageModel,
+    MessageModel,
 )
 from messenger.models.fastapi.pagination_model import CursorPaginationModel
 
@@ -32,7 +33,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=CursorPaginationModel[BaseMessageModel],
+    response_model=CursorPaginationModel[MessageModel],
     status_code=status.HTTP_200_OK,
 )
 def get_messages(
@@ -49,7 +50,7 @@ def get_messages(
             Defaults to Depends(get_current_active_user).
 
     Returns:
-        CursorPaginationModel[BaseMessageModel]: the messages this user has recieved
+        CursorPaginationModel[MessageModel]: the messages this user has recieved
     """
 
     cursor_pagination_model = pagination(
@@ -60,7 +61,7 @@ def get_messages(
     )
 
     cursor_pagination_model.results = [
-        BaseMessageModel.from_orm(message)
+        MessageModel.from_orm(message)
         for message in cursor_pagination_model.results
     ]
 
