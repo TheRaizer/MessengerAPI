@@ -163,7 +163,6 @@ def cursor_pagination(
             default_column_value,
         )
 
-        print(pagination_filter)
         order_by = determine_cursor_query_order(
             order_asc, unique_column, cursor_state
         )
