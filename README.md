@@ -1,70 +1,42 @@
 ## Intro
 
-This is a simple messenger API, with authentication, friendships, group chats, and private messages.
-
+This is a simple messenger API, with authentication, friendships, and private messages.
 It uses a AWS RDS MySQL database to store message, friendship, and user data.
+It utilizes alembic migrations.
 
-And has alembic migrations.
+## Running Locally
 
-It also utilizes docker.
-
-## CI/CD
-
-We have a github action that is executed with the config called deploy-to-ECR.yml which will deploy a built image of this api to ECR.
-
-It will then fetch this image and deploy it to ECS.
-We also have a task definition which is pulled by this github action.
-
-This task definition defines a running task in ECS. It allows you to define the environment of the Docker container as well as other options.
-
-In the task definition we fetch secrets from AWS parameter store or AWS secrets manager. We also declare that we will run ECS with Fargate.
-
-## Running in Locally
-
-Before running locally ensure that you have a SSH deploy key for the private repos' that are used.
-You will need the SSH key on your local machine to install the private repositories.
+Before running locally ensure that you have a SSH deploy key for the repos that are used.
+You will need the SSH key on your local machine to install the repositories.
 Once you have a SSH key on your local machine, change the key path
 in run_locally.sh to your SSH key path.
 
 Run locally using the command:
 sh run_locally.sh
 
-There are two deployment cases I will cover.
+## Deployment
 
-1. ECR and ECS
+Deployment is done using github actions which does the following steps.
 
-This deployment generates an image using a docker file and github actions.
+1. Checkout AWS credentials
+2. Login to ECR
+3. Prepare SSH agent
+4. Build image which uses the SSH agent to pull the utils repos using a deploy key
+5. tag and push the built image to ECR
+6. Create a task definition which references the previously built image in ECR
+7. Deploy the task definition to ECS
+8. de-register the previously used task definition
 
-It uses a single uvicorn process per a container, and we allow ECS and the application load balancer handle scaling.
-
+It uses a single uvicorn process per a container, and we allow ECS and the application load balancer to handle scaling.
 We ensure that the RDS instances are running privately, and are only accessible from microservices running in the same VPC.
-
 Then make sure that the ECS' launched EC2's are also running in the same VPC as the RDS to allow the api access to the database.
-
 or we can use nginx instead of application load balancer.
 
-2. VM (EC2 ubuntu AMI for our case)
+Although it is not implemented here, you would want to use something like redis adapter to manage
+socket events across multiple socketio servers/EC2 instances.
 
-This deployment uses a docker image.
-
-We then use GUnicorn as a process manager to manage multiple uvicorn processees on one docker container.
-
-This docker container will then run in an ubuntu EC2 instance.
-
-The EC2 instance will be setup in the same availability zone and VPC as the RDS as to allow the RDS to run privately.
-
-We can then configure the VM to only allow HTTP requests from certain domains and etc.
-
-We could then setup nginx as a TLS Termination Proxy
-
-Right now we only have a single MySQL database in AWS that is publically accessible to anyone who has credentials.
-This normally would not be the case.
-You would normally have a dev database that is publically accessible to anyone who has credentials.
-Then a production database that has only private subnets.
-But I don't want to spend money to have 2 databases for a personal project.
-
-## How it's setup in AWS
 ### The Components:
+
     1. Secrets Manager
     2. ECS
     3. ECR
@@ -99,6 +71,7 @@ The Virtual private cloud (VPC) is integral in maintaining security and isolatio
 The Identity and Access Management (IAM) is important for maintaining security. It restricts user and service access. For example the github action that deploys the development API to AWS is given a task exection role that allows it to read and write to only very specific actions in certain AWS microservices. There are also many different roles for both real users, and services like this API that interact with the AWS microservices.
 
 ### ECS:
+
 ECS is used to deploy the api to EC2 instances. These EC2 instances are managed through an auto scaling group that contains a custom launch template.
 
 ## Testing
@@ -126,5 +99,3 @@ start_test_db.sh
 
 _Run pytests:_
 python -m pytest -s
-
-
